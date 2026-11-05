@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AfterDegree - People like you (Orienteering)</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1B1B1B;--mute:#5A5A4E;--line:#E4E1D3;--yel:#FFD966;--grn:#7EC07E;--brn:#B5651D;--blu:#2E86C1;--pur:#A0218C;--rail:#2B3720;--cream:#F3F0E2}
+html,body{width:1440px;height:900px;overflow:hidden;margin:0}
+body{font:400 15px/1.4 "Source Sans 3",sans-serif;color:var(--ink);background:#fff;display:grid;grid-template-columns:248px 1fr}
+.num{font-family:"Barlow Condensed",sans-serif;font-weight:600;letter-spacing:.01em}
+aside{background:var(--rail);color:var(--cream);padding:26px 16px;display:flex;flex-direction:column}
+.logo{font:700 22px "Barlow Condensed";letter-spacing:.04em;text-transform:uppercase;padding:0 12px 24px}
+.logo i{font-style:normal;color:var(--yel)}
+nav a{display:flex;gap:12px;align-items:center;padding:9px 12px;border-radius:6px;color:#D9D6C2;font-size:15px;margin-bottom:2px}
+nav a b{font:600 14px "Barlow Condensed";width:20px;color:#9DAA84}
+nav a.on{background:rgba(255,255,255,.1);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--yel)}
+nav hr{border:0;border-top:1px solid rgba(255,255,255,.14);margin:10px 12px}
+.ex{margin-top:auto;font-size:13px;color:#B9C3A3;padding:0 12px}
+main{padding:26px 36px 0;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px}
+h1{font:600 30px/1.1 "Source Sans 3";margin:0 0 6px;letter-spacing:-.01em}
+.prof{color:var(--mute);font-size:15px}.prof b{color:var(--ink);font-weight:600}
+.tag{font:600 12px "Source Sans 3";letter-spacing:.06em;text-transform:uppercase;border:1.5px dashed var(--brn);color:#7A430F;padding:4px 10px;border-radius:4px}
+.grid{display:grid;grid-template-columns:1fr 316px;gap:24px}
+.panel{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ph{padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+.ph .eye{font:600 12px "Source Sans 3";letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.ph h2{margin:2px 0 0;font:600 22px/1.25 "Source Sans 3"}.ph h2 .num{font-size:34px;font-weight:700;vertical-align:-2px}
+.ph p{margin:2px 0 0;color:var(--mute);font-size:14px}
+.r{display:grid;grid-template-columns:62px 142px 150px 1fr 1fr 118px;align-items:stretch;border-bottom:1px solid var(--line);min-height:57px}
+.r:last-child{border-bottom:0}
+.r>div{padding:8px 12px;display:flex;flex-direction:column;justify-content:center;font-size:14px}
+.h{min-height:34px;background:#FAF9F3;font:600 12px "Source Sans 3";letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
+.h>div{font-size:12px!important;justify-content:center}
+.band{padding:0!important;border-right:1px solid var(--brn)}
+.d{font-weight:600;font-size:16px}.d small{display:block;font-weight:400;font-size:12.5px;color:var(--mute)}
+.cnt{flex-direction:row!important;align-items:center;gap:10px}.cnt .num{font-size:26px;width:36px;text-align:right}
+.bar{height:8px;background:var(--blu);border-radius:2px;opacity:.85}
+.mute{color:var(--mute)}
+/* terrain bands: tint = market feel, contour spacing = crowding */
+.t-y{background:var(--yel)}.t-w{background:#fff}.t-g{background:var(--grn)}
+.c1{background-image:repeating-linear-gradient(172deg,transparent 0 17px,var(--brn) 17px 18px)}
+.c2{background-image:repeating-linear-gradient(172deg,transparent 0 11px,var(--brn) 11px 12px)}
+.c3{background-image:repeating-linear-gradient(172deg,transparent 0 7px,var(--brn) 7px 8px)}
+.c4{background-image:repeating-linear-gradient(172deg,transparent 0 5px,var(--brn) 5px 6px)}
+.side{display:flex;flex-direction:column;gap:16px}
+.course{border:1px solid var(--line);border-radius:10px;padding:16px 18px 18px}
+.course .eye{font:600 12px "Source Sans 3";letter-spacing:.08em;text-transform:uppercase;color:var(--pur)}
+.course h3{margin:2px 0 4px;font:600 18px/1.25 "Source Sans 3"}
+.course p{margin:0;font-size:13.5px;color:var(--mute)}
+.btn{display:block;background:var(--pur);color:#fff;text-decoration:none;font:600 16px/1.3 "Source Sans 3";padding:13px 16px;border-radius:8px;margin-top:12px;text-align:left}
+.leg{border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:13.5px}
+.leg h4{margin:0 0 8px;font:600 12px "Source Sans 3";letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.leg div{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.sw{width:28px;height:18px;border:1px solid var(--brn);flex:none;border-radius:2px}
+.foot{position:absolute;left:36px;right:36px;bottom:16px;display:flex;justify-content:space-between;font-size:13px;color:var(--mute);border-top:1px solid var(--line);padding-top:10px}
+.foot b{color:var(--ink);font-weight:600}
+</style></head><body>
+<aside>
+ <div class="logo">After<i>Degree</i></div>
+ <nav>
+  <a class="on"><b>&#8962;</b>Home</a><hr>
+  <a><b>1</b>People Like Me</a><a><b>2</b>Internship-to-Job Chances</a><a><b>3</b>Conversion Map</a>
+  <a><b>4</b>Reverse Career GPS</a><a><b>5</b>Routes to Positions</a><a><b>6</b>Job Posting Analysis</a>
+  <a><b>7</b>Indian-Friendly Companies</a><a><b>8</b>Market Saturation</a>
+ </nav>
+ <div class="ex">Riya Menon<br>Signed in with LinkedIn</div>
+</aside>
+<main>
+ <header>
+  <div><h1>Hi Riya, here is where people like you landed.</h1>
+  <div class="prof"><b>Riya Menon</b> &middot; BTech CSE, VIT Vellore '22 &middot; 2 yrs at Infosys &middot; aiming for <b>MS + data role in Germany</b></div></div>
+  <span class="tag">Example data</span>
+ </header>
+ <div class="grid">
+  <section class="panel">
+   <div class="ph"><div class="eye">1 &middot; People like me</div>
+    <h2>At least <span class="num">214</span> of <span class="num">312</span> people with your background now work abroad.</h2>
+    <p>Same kind of BTech, same field, 1 to 3 years of work. The other 98 are still in India.</p></div>
+   <div class="r h"><div class="band"></div><div>Where</div><div>People</div><div>Top roles</div><div>Top employers</div><div>Further degree</div></div>
+   <div class="r"><div class="band t-g c4"></div><div class="d">United States<small>Crowded</small></div><div class="cnt"><span class="num">74</span><span class="bar" style="width:74px"></span></div><div>Software Engineer, Data Analyst</div><div class="mute">Amazon, Microsoft, Cognizant US</div><div>MS: 61 of 74</div></div>
+   <div class="r"><div class="band t-g c3"></div><div class="d">United Kingdom<small>Crowded</small></div><div class="cnt"><span class="num">48</span><span class="bar" style="width:48px"></span></div><div>Data Analyst, Consultant</div><div class="mute">Accenture, Barclays, Deloitte UK</div><div>MS: 39 of 48</div></div>
+   <div class="r"><div class="band t-y c1"></div><div class="d">Germany<small>Open</small></div><div class="cnt"><span class="num">41</span><span class="bar" style="width:41px"></span></div><div>Data Engineer, Software Engineer</div><div class="mute">SAP, Siemens, Zalando</div><div>MS: 33 of 41</div></div>
+   <div class="r"><div class="band t-g c2"></div><div class="d">Canada<small>Fairly busy</small></div><div class="cnt"><span class="num">36</span><span class="bar" style="width:36px"></span></div><div>Software Developer, QA Lead</div><div class="mute">RBC, Shopify, TD Bank</div><div>MS: 22 of 36</div></div>
+   <div class="r"><div class="band t-y c1"></div><div class="d">Netherlands<small>Open &middot; small group</small></div><div class="cnt"><span class="num">15</span><span class="bar" style="width:15px"></span></div><div>Data Engineer, Backend Dev</div><div class="mute">Booking.com, ING, Adyen</div><div>MS: 11 of 15</div></div>
+   <div class="r"><div class="band t-w c2"></div><div class="d">Still in India<small>Steady</small></div><div class="cnt"><span class="num">98</span><span class="bar" style="width:98px"></span></div><div>Senior Engineer, Data Scientist</div><div class="mute">Infosys, TCS, Flipkart</div><div>MBA/MTech: 17</div></div>
+  </section>
+  <div class="side">
+   <section class="course">
+    <div class="eye">Your suggested route</div>
+    <h3>How 41 people got to Germany</h3>
+    <svg viewBox="0 0 280 238" width="280" height="238" fill="none" stroke="var(--pur)" stroke-width="3" role="img" aria-label="Course: 1 MS in Germany, 2 Working student, 3 Data Engineer, Berlin">
+     <g stroke="var(--brn)" stroke-width="1" opacity=".35"><path d="M0 40C70 20 140 70 280 30M0 80C80 60 150 120 280 70M0 190C90 160 170 220 280 180M0 230C100 200 180 238 280 220"/></g>
+     <path d="M20 12 L32 32 L8 32Z" stroke-width="2.5"/>
+     <path d="M20 33L34 70M44 92C80 116 100 128 112 140M126 158C108 180 88 190 70 198" stroke-linecap="round"/>
+     <circle cx="40" cy="82" r="14"/><circle cx="120" cy="150" r="14"/><circle cx="60" cy="206" r="14"/><circle cx="60" cy="206" r="9" stroke-width="2"/>
+     <g fill="var(--pur)" stroke="none" font-family="Barlow Condensed" font-weight="700" font-size="18" text-anchor="middle"><text x="40" y="88">1</text><text x="120" y="156">2</text></g>
+     <g fill="var(--pur)" stroke="none" font-family="Barlow Condensed" font-weight="700" font-size="14" text-anchor="middle"><text x="60" y="211">3</text></g>
+     <g fill="var(--ink)" stroke="none" font-family="Source Sans 3" font-size="14" font-weight="600"><text x="64" y="78">MS in Germany</text><text x="144" y="145">Working student</text><text x="84" y="202">Data Engineer, Berlin</text></g>
+     <g fill="var(--mute)" stroke="none" font-family="Source Sans 3" font-size="12"><text x="64" y="94">33 of 41 did this first</text><text x="144" y="161">typically 12 months</text><text x="84" y="218">median 2.5 yrs after MS</text></g>
+    </svg>
+    <a class="btn" href="#">See your Internship-to-Job chances in Germany &rarr;</a>
+   </section>
+   <section class="leg">
+    <h4>Reading the bands</h4>
+    <div><span class="sw" style="background:var(--yel)"></span>Open: few people like you per posting</div>
+    <div><span class="sw" style="background:#fff"></span>Steady: about balanced</div>
+    <div><span class="sw" style="background:var(--grn)"></span>Crowded: many people like you</div>
+    <div style="margin:0"><span class="sw" style="background:repeating-linear-gradient(172deg,#fff 0 4px,var(--brn) 4px 5px)"></span>More lines = more crowded</div>
+   </section>
+  </div>
+ </div>
+ <div class="foot"><span><b>Coverage 86%</b> of 312 profiles show a current location. Counts are "at least"; the rest are unknown, not zero.</span><span>Data date <b>28 Oct 2026</b> &middot; Example data</span></div>
+</main>
+</body></html>

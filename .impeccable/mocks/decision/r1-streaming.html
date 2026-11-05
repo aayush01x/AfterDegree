@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AfterDegree · People like you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0E0E10;--sf:#1C1C21;--ln:#2A2A31;--tx:#FFFFFF;--mu:#A3A3AD;--fa:#8A8A95;--ac:#FF6B4A}
+*{box-sizing:border-box}
+html,body{width:1440px;height:900px;overflow:hidden;margin:0}
+body{background:var(--bg);color:var(--tx);font:14px/1.4 'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.d{font-family:'Bricolage Grotesque',sans-serif;font-stretch:75%;letter-spacing:-.01em}
+header{height:60px;display:flex;align-items:center;gap:24px;padding:0 40px;border-bottom:1px solid #1E1E24}
+.logo{font-size:23px;font-weight:800;display:flex;align-items:center;gap:7px}
+.logo i{width:9px;height:9px;border-radius:50%;background:var(--ac)}
+nav{display:flex;gap:2px}
+nav a{padding:7px 9px;border-radius:6px;font-size:13px;font-weight:500;color:var(--mu);white-space:nowrap}
+nav a.on{color:var(--tx);background:var(--sf)}
+.hr{margin-left:auto;display:flex;align-items:center;gap:14px}
+.ex{font-size:12px;font-weight:600;color:#FFD27A;border:1px dashed rgba(255,210,122,.5);padding:4px 10px;border-radius:99px;white-space:nowrap}
+.av{width:32px;height:32px;border-radius:50%;background:#2E2E36;display:grid;place-items:center;font-size:12px;font-weight:700}
+.hero{height:214px;padding:24px 40px 0;display:grid;grid-template-columns:1fr 520px;gap:72px;align-items:end}
+.hi{margin:0;font-size:15px;color:#D9D9E0}.hi b{color:var(--tx)}
+.prof{display:flex;gap:8px;margin:10px 0 14px;align-items:center}
+.prof span{font-size:12.5px;font-weight:500;background:var(--sf);border:1px solid var(--ln);padding:4px 10px;border-radius:99px;color:#E4E4EA}
+.prof a{font-size:12.5px;color:var(--mu);text-decoration:underline;text-underline-offset:3px;margin-left:4px}
+h1{margin:0;font-size:54px;line-height:.98;font-weight:800}
+h1 em{font-style:normal;color:#8E8E99}
+.lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--mu);margin-bottom:8px}
+.lbl b{color:var(--tx);font-weight:600}
+.bar{display:flex;gap:2px;height:16px;border-radius:4px;overflow:hidden}
+.br{display:flex;gap:2px;margin-top:6px;font-size:12px;color:var(--mu)}
+.br span{border-top:2px solid #fff;padding-top:5px}.br span+span{border-color:#4A4A54}.br b{color:var(--tx)}
+.cta{display:flex;align-items:center;gap:16px;margin-top:16px}
+.btn{background:var(--ac);color:#140804;font-weight:700;font-size:15px;padding:13px 20px;border-radius:8px;white-space:nowrap}
+.cov{font-size:12px;color:var(--mu);line-height:1.45}.cov u{text-underline-offset:3px;color:#D0D0D8}
+.row{padding:12px 0 0 40px;height:156px}
+.row.act{height:314px;background:linear-gradient(180deg,var(--bg),#141418 22%,#141418 80%,var(--bg))}
+.rh{display:flex;align-items:baseline;gap:14px;padding-right:40px;height:24px}
+.rh h2{margin:0;font-size:21px;font-weight:700;color:#8E8E99}
+.act .rh{height:30px}.act .rh h2{font-size:28px;font-weight:800;color:var(--tx)}
+.rh p{margin:0;font-size:13px;color:var(--fa)}.act .rh p{color:var(--mu)}
+.ctl{margin-left:auto;display:flex;gap:8px;align-self:center}
+.ctl span{width:32px;height:32px;border-radius:50%;border:1px solid #3A3A43;display:grid;place-items:center;font-size:16px;color:#E4E4EA}
+.trk{display:flex;gap:14px;align-items:center;margin-top:8px}
+.act .trk{margin-top:12px;height:260px}
+.dim .trk{filter:brightness(.5) saturate(.75)}
+.p{position:relative;flex:none;width:156px;height:234px;border-radius:8px;overflow:hidden;filter:brightness(.8)}
+.p svg,.c svg{position:absolute;inset:0;width:100%;height:100%}
+.t{position:absolute;left:12px;right:10px;bottom:12px;font-size:25px;font-weight:800;line-height:.95}
+.n{position:absolute;left:10px;top:10px;font-size:12px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(14,14,16,.82);color:#fff}
+.f{flex:none;width:452px;height:260px;border-radius:11px;border:3px solid var(--ac);background:var(--sf);overflow:hidden;box-shadow:0 0 0 6px rgba(255,107,74,.16),0 30px 60px rgba(0,0,0,.75)}
+.f svg{display:block;width:100%;height:136px}
+.fi{padding:11px 16px 0}
+.f1{display:flex;align-items:center;gap:10px}
+.f1 .d{font-size:30px;font-weight:800;line-height:1}
+.chip{font-size:12.5px;font-weight:700;border:1.5px solid #fff;border-radius:4px;padding:2px 7px}
+.tag{font-size:12px;font-weight:700;background:#fff;color:#111;border-radius:4px;padding:3px 7px}
+.f2{margin:7px 0 0;font-size:14px;color:#E2E2E8}.f2 b{font-weight:600;color:#fff}
+.f3{display:flex;justify-content:space-between;margin-top:8px;font-size:12.5px;color:var(--mu)}.f3 a{color:#fff;font-weight:600}
+.c{position:relative;flex:none;width:212px;height:116px;border-radius:8px;overflow:hidden}
+.c .t{font-size:28px;bottom:10px}.k{color:#142000}
+.more{flex:none;width:212px;height:116px;border-radius:8px;background:var(--sf);border:1px solid var(--ln);padding:14px;display:flex;flex-direction:column;justify-content:space-between;font-size:14px;font-weight:600}
+.more span{font-size:12.5px;color:var(--mu);font-weight:500}
+.r{flex:none;width:344px;height:116px;border-radius:8px;background:var(--sf);border:1px solid var(--ln);padding:12px 16px}
+.r svg{display:block;width:100%;height:22px}
+.r b{display:block;margin-top:9px;font-size:15px;font-weight:600;line-height:1.3}
+.r span{display:block;margin-top:5px;font-size:12.5px;color:var(--mu)}
+</style></head><body>
+<header>
+<div class="logo d"><i></i>AfterDegree</div>
+<nav><a class="on" href="#">Home</a><a href="#">People Like Me</a><a href="#">Internship-to-Job</a><a href="#">Conversion Map</a><a href="#">Reverse GPS</a><a href="#">Routes to Positions</a><a href="#">Job Postings</a><a href="#">Indian-Friendly Cos</a><a href="#">Market Saturation</a></nav>
+<div class="hr"><span class="ex">Example data</span><span class="av">RM</span></div>
+</header>
+
+<section class="hero">
+<div>
+<p class="hi"><b>Good evening, Riya.</b> Here is where people with your background actually ended up.</p>
+<div class="prof"><span>BTech CSE, VIT Vellore '22</span><span>2 yrs at Infosys</span><span>Aiming: MS + data role in Germany</span><a href="#">Edit profile</a></div>
+<h1 class="d">At least 214 <em>of 312</em> people<br>like you now work abroad.</h1>
+</div>
+<div>
+<div class="lbl"><span><b>Where the 312 are now</b> · by current country</span><span>Germany is the largest group</span></div>
+<div class="bar"><i style="flex:71;background:#FFB800"></i><i style="flex:58;background:#2F5BFF"></i><i style="flex:34;background:#E83F6F"></i><i style="flex:27;background:#14A06F"></i><i style="flex:15;background:#C6F432"></i><i style="flex:9;background:#7A5CFF"></i><i style="flex:98;background:#00B3A6"></i></div>
+<div class="br"><span style="flex:214"><b>214</b> abroad</span><span style="flex:98"><b>98</b> still in India</span></div>
+<div class="cta"><a class="btn" href="#">See your Internship-to-Job chances in Germany →</a>
+<p class="cov">81% of profiles show a current country<br>Data as of 6 Nov 2026 · <u>How we count</u></p></div>
+</div>
+</section>
+
+<section class="row act">
+<div class="rh"><h2 class="d">Where people like you went</h2><p>7 destinations · counts are “at least”, of 312 visible profiles</p><div class="ctl"><span>‹</span><span>›</span></div></div>
+<div class="trk">
+<div class="f">
+<svg viewBox="0 0 452 136" preserveAspectRatio="xMidYMid slice"><defs><pattern id="w" width="10" height="9" patternUnits="userSpaceOnUse"><rect x="2" y="2" width="5" height="4" fill="#FFB800"/></pattern></defs>
+<rect width="452" height="136" fill="#FFB800"/><circle cx="330" cy="66" r="60" fill="#FF8A1F"/><circle cx="64" cy="30" r="12" fill="#FFE07A"/>
+<path fill="#1A1206" d="M16 112V66h78v46zM104 112V44h58v68zM172 112V80h44v32zM372 112V58h66v54z"/>
+<path fill="url(#w)" d="M22 106V72h66v34zM110 106V50h46v56zM378 106V64h54v42z"/>
+<rect y="108" width="452" height="28" fill="#1A1206"/><rect y="116" width="452" height="3" fill="#FFB800"/>
+<path fill="#1A1206" d="M313 112l10-26h8l10 26zM323 40h8v50h-8zM325.5 4h3v32h-3zM321 22h12v5h-12z"/><circle cx="327" cy="50" r="17" fill="#1A1206"/><rect x="310" y="47" width="34" height="3" fill="#FF8A1F"/></svg>
+<div class="fi">
+<div class="f1"><span class="d">Germany</span><span class="chip">at least 71 of 312</span><span class="tag">Your target</span></div>
+<p class="f2">Typical route: <b>MS → working student → Data Engineer</b> · ~2.5 yrs</p>
+<div class="f3"><span>41 took this exact route · coverage 84%</span><a href="#">Open in People Like Me →</a></div>
+</div></div>
+<div class="p"><svg viewBox="0 0 156 234" preserveAspectRatio="xMidYMid slice"><rect width="156" height="234" fill="#2F5BFF"/><circle cx="110" cy="58" r="26" fill="#FFE3C2"/><path fill="#0B1A66" d="M0 234V150h22v84zM24 234V112h22v122zM48 234V92h14V64h6v-20h2v20h6v28h14v142zM92 234V136h20v98zM114 234V104h24v130zM140 234V146h16v88z"/></svg><span class="n">58 people</span><span class="t d">United<br>States</span></div>
+<div class="p"><svg viewBox="0 0 156 234" preserveAspectRatio="xMidYMid slice"><rect width="156" height="234" fill="#E83F6F"/><circle cx="78" cy="40" r="16" fill="#FFC0D0"/><g fill="#3A0A1C"><path d="M28 96l14-30 14 30zM100 96l14-30 14 30z"/><rect x="30" y="96" width="24" height="110"/><rect x="102" y="96" width="24" height="110"/><rect x="54" y="106" width="48" height="7"/><path d="M0 168q40-22 54-12h48q14-10 54 12v8H0z"/><rect y="190" width="156" height="44"/></g></svg><span class="n">34 people</span><span class="t d">United<br>Kingdom</span></div>
+<div class="p"><svg viewBox="0 0 156 234" preserveAspectRatio="xMidYMid slice"><rect width="156" height="234" fill="#14A06F"/><circle cx="40" cy="54" r="18" fill="#D7FF6B"/><path fill="#0A4D36" d="M-10 190L50 96l40 60 28-42 52 76z"/><path fill="#EAFBF1" d="M50 96l-13 20h26zM118 114l-10 15h20z"/><rect y="188" width="156" height="46" fill="#063826"/></svg><span class="n">27 people</span><span class="t d">Canada</span></div>
+<div class="p"><svg viewBox="0 0 156 234" preserveAspectRatio="xMidYMid slice"><rect width="156" height="234" fill="#C6F432"/><circle cx="118" cy="46" r="18" fill="#F4FFC4"/><path fill="#1A2600" d="M6 234V124h6v-10h6v-10h12v10h6v10h6v110zM50 234V108l20-22 20 22v126zM96 234V128h8v-12h8v-10h14v10h8v12h8v106z"/><path fill="#C6F432" d="M16 136h8v12h-8zM28 136h8v12h-8zM62 116h16v14H62zM108 140h8v12h-8zM122 140h8v12h-8z"/></svg><span class="n">15 people</span><span class="t d">Nether&shy;lands</span></div>
+<div class="p"><svg viewBox="0 0 156 234" preserveAspectRatio="xMidYMid slice"><rect width="156" height="234" fill="#00B3A6"/><circle cx="78" cy="70" r="34" fill="#FFD95A"/><g fill="#003F3A"><path d="M28 186a50 50 0 0 1 100 0z"/><rect x="74" y="122" width="8" height="16"/><rect x="12" y="120" width="10" height="70"/><rect x="134" y="120" width="10" height="70"/><rect y="184" width="156" height="50"/></g></svg><span class="n">98 people</span><span class="t d">Still in<br>India</span></div>
+<div class="p"><svg viewBox="0 0 156 234" preserveAspectRatio="xMidYMid slice"><rect width="156" height="234" fill="#7A5CFF"/><g fill="none" stroke="#2A1477" stroke-width="6"><circle cx="78" cy="96" r="52"/><ellipse cx="78" cy="96" rx="22" ry="52"/><path d="M26 96h104M34 70h88M34 122h88"/></g><rect y="186" width="156" height="48" fill="#2A1477"/></svg><span class="n">9 people</span><span class="t d">Other<br>countries</span></div>
+</div>
+</section>
+
+<section class="row dim">
+<div class="rh"><h2 class="d">Companies that hire people like you</h2><p>abroad, by people like you hired</p></div>
+<div class="trk">
+<div class="c"><svg viewBox="0 0 212 116" preserveAspectRatio="none"><rect width="212" height="116" fill="#5B3BFF"/><circle cx="176" cy="18" r="66" fill="#7C63FF"/><circle cx="196" cy="100" r="36" fill="#3A1FD1"/></svg><span class="n">11 people</span><span class="t d">Amazon</span></div>
+<div class="c"><svg viewBox="0 0 212 116" preserveAspectRatio="none"><rect width="212" height="116" fill="#00C2A8"/><path fill="#007A6A" d="M110 0h24l-60 116H50zM150 0h24l-60 116H90zM190 0h22v6l-56 110h-26z"/></svg><span class="n">9 people</span><span class="t d">SAP</span></div>
+<div class="c"><svg viewBox="0 0 212 116" preserveAspectRatio="none"><rect width="212" height="116" fill="#FF5C8A"/><circle cx="212" cy="116" r="96" fill="#E0306A"/><circle cx="212" cy="116" r="54" fill="#FF8FB0"/></svg><span class="n">8 people</span><span class="t d">Microsoft</span></div>
+<div class="c" style="background:#C6F432"><svg viewBox="0 0 212 116" preserveAspectRatio="none"><rect width="212" height="116" fill="#C6F432"/><path fill="none" stroke="#7FA300" stroke-width="12" d="M60 30l26-20 26 20 26-20 26 20 26-20 26 20M60 62l26-20 26 20 26-20 26 20 26-20 26 20"/></svg><span class="n">7 people</span><span class="t d k">Zalando</span></div>
+<div class="c"><svg viewBox="0 0 212 116" preserveAspectRatio="none"><rect width="212" height="116" fill="#3D8BFF"/><path fill="none" stroke="#1A4FB8" stroke-width="9" d="M70 26q18-16 36 0t36 0 36 0 36 0M70 52q18-16 36 0t36 0 36 0 36 0"/></svg><span class="n">6 people</span><span class="t d">Siemens</span></div>
+<a class="more" href="#">Indian-Friendly Companies →<span>Visa-sponsor signals and how long people stay</span></a>
+</div>
+</section>
+
+<section class="row dim">
+<div class="rh"><h2 class="d">Routes that fit you</h2><p>from BTech + 2 yrs work to a data role abroad</p></div>
+<div class="trk">
+<div class="r"><svg viewBox="0 0 312 22"><path d="M8 11h296" stroke="#3A3A43" stroke-width="2"/><circle cx="8" cy="11" r="7" fill="#FFB800"/><circle cx="156" cy="11" r="7" fill="#FF8A1F"/><circle cx="304" cy="11" r="7" fill="#fff"/></svg><b>MS in Germany → working student → Data Engineer</b><span>41 people · ~2.5 yrs</span></div>
+<div class="r"><svg viewBox="0 0 312 22"><path d="M8 11h296" stroke="#3A3A43" stroke-width="2"/><circle cx="8" cy="11" r="7" fill="#FFB800"/><circle cx="156" cy="11" r="7" fill="#FFE07A"/><circle cx="304" cy="11" r="7" fill="#fff"/></svg><b>MS in Germany → thesis at a company → Data Analyst</b><span>23 people · ~2 yrs</span></div>
+<div class="r"><svg viewBox="0 0 312 22"><path d="M8 11h296" stroke="#3A3A43" stroke-width="2"/><circle cx="8" cy="11" r="7" fill="#00B3A6"/><circle cx="304" cy="11" r="7" fill="#fff"/></svg><b>Infosys onsite in Germany → Data Engineer</b><span>17 people · ~3 yrs</span></div>
+<div class="r"><svg viewBox="0 0 312 22"><path d="M8 11h296" stroke="#3A3A43" stroke-width="2"/><circle cx="8" cy="11" r="7" fill="#C6F432"/><circle cx="156" cy="11" r="7" fill="#7A5CFF"/><circle cx="304" cy="11" r="7" fill="#fff"/></svg><b>MS in Netherlands → search year → Data Scientist</b><span>12 people · ~2.5 yrs</span></div>
+</div>
+</section>
+</body></html>

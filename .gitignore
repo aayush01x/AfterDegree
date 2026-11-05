@@ -1,0 +1,10 @@
+.env
+.cache/
+node_modules/
+.venv/
+__pycache__/
+.next/
+.impeccable/tmp/
+.impeccable/mocks/quality/*.webp
+.pytest_cache/
+*.log

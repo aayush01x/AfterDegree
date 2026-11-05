@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AfterDegree - People like you (Star Atlas)</title>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@1,400;1,500&family=Gloock&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0B1633;--chalk:#F4F1E8;--mute:rgba(244,241,232,.72);--faint:rgba(244,241,232,.16);--amber:#FFB547;--red:#E5484D}
+html,body{width:1440px;height:900px;overflow:hidden;margin:0}
+*{box-sizing:border-box}
+body{background:var(--navy);color:var(--chalk);font:400 15px/1.5 "Hanken Grotesk",sans-serif;font-variant-numeric:tabular-nums;display:grid;grid-template-columns:224px 1fr}
+a{color:inherit;text-decoration:none}
+aside{border-right:1px solid var(--faint);padding:32px 16px;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:8px;padding:0 8px;font:400 22px/32px Gloock,serif;margin-bottom:32px}
+.cap{font:600 12px/16px "Hanken Grotesk";letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+nav a{display:flex;align-items:center;height:40px;padding:0 12px;border-radius:4px;color:var(--mute);font-size:14px}
+nav a:hover{color:var(--chalk);background:rgba(244,241,232,.05)}
+nav a.on{background:rgba(244,241,232,.09);color:var(--chalk);font-weight:600}
+nav .cap{display:block;padding:24px 12px 8px}
+.me{margin-top:auto;display:flex;gap:12px;align-items:center;padding:16px 8px 0;border-top:1px solid var(--faint)}
+.av{width:40px;height:40px;border-radius:50%;border:1px solid var(--chalk);display:grid;place-items:center;font-weight:600;font-size:14px}
+.me b{display:block;font-weight:500;font-size:14px;line-height:20px}.me a{font-size:12px;color:var(--amber)}
+main{padding:32px 40px 0}
+.top{display:flex;justify-content:space-between;align-items:center;height:24px}
+.hi{font-size:15px;color:var(--mute)}
+.ex{border:1px solid var(--amber);color:var(--amber);border-radius:4px;padding:3px 10px;font:600 12px/16px "Hanken Grotesk";letter-spacing:.1em;text-transform:uppercase}
+h1{font:400 40px/48px Gloock,serif;margin:12px 0 0;letter-spacing:-.005em}
+h1 em{font-style:normal;color:var(--amber)}
+.chips{display:flex;gap:8px;align-items:center;margin-top:16px;height:28px}
+.chip{border:1px solid var(--faint);border-radius:14px;padding:0 12px;font-size:13px;line-height:26px;color:var(--mute)}
+.chip b{color:var(--chalk);font-weight:500}
+.chips a{font-size:13px;color:var(--amber);text-decoration:underline;text-underline-offset:3px;margin-left:8px}
+.row{display:grid;grid-template-columns:752px 360px;gap:24px;margin-top:24px;height:584px}
+svg text{font-family:"Hanken Grotesk"}
+.lb{font:italic 400 16px Alegreya,serif;fill:var(--chalk)}
+.lb tspan{font:500 13px "Hanken Grotesk";fill:var(--amber)}
+.st{font:600 12px "Hanken Grotesk";letter-spacing:.12em;fill:var(--amber)}
+.sm{font:400 12px "Hanken Grotesk";fill:var(--mute)}
+.tbl{border:1px solid var(--faint);border-radius:4px;padding:16px 24px}
+.tbl h2{font:400 22px/28px Gloock,serif;margin:0}
+.tbl p{margin:0 0 8px;font-size:12px;line-height:16px;color:var(--mute)}
+table{width:100%;border-collapse:collapse}
+th[colspan]{text-align:left;padding:8px 0 4px;border-bottom:1px solid var(--faint)}
+th[colspan] span{float:right;color:var(--mute);font-weight:400;letter-spacing:0;text-transform:none}
+td{height:24px;padding:0;font-size:14px}
+td:first-child{font:italic 400 16px/24px Alegreya,serif}
+td:last-child{text-align:right;font-weight:500}
+tr.tg td{color:var(--chalk)}
+.ring{display:inline-block;width:12px;height:12px;border:2px solid var(--red);border-radius:50%;margin-left:8px;vertical-align:-1px}
+.tag{font:500 12px "Hanken Grotesk";color:var(--red);margin-left:4px;font-style:normal}
+.act{display:flex;justify-content:space-between;align-items:center;margin-top:24px;height:64px}
+.act p{margin:0;font-size:16px;line-height:24px;max-width:600px}
+.act small{display:block;font-size:13px;line-height:20px;color:var(--mute);margin-top:4px}
+.act small a{color:var(--amber);text-decoration:underline;text-underline-offset:3px}
+.btn{background:var(--amber);color:var(--navy);font:600 15px/48px "Hanken Grotesk";height:48px;padding:0 24px;border-radius:4px;border:0;white-space:nowrap}
+.btn:hover{background:#FFC46E}
+.btn:focus-visible,nav a:focus-visible{outline:2px solid var(--chalk);outline-offset:2px}
+</style></head>
+<body>
+<aside>
+  <a class="logo" href="#"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="4" fill="#F4F1E8"/><circle cx="10" cy="10" r="8.5" fill="none" stroke="#FFB547" stroke-width="1.5"/></svg>AfterDegree</a>
+  <nav aria-label="Main">
+    <a class="on" href="#" aria-current="page">Home</a>
+    <span class="cap">Tools</span>
+    <a href="#">People Like Me</a>
+    <a href="#">Internship-to-Job Chances</a>
+    <a href="#">Conversion Map</a>
+    <a href="#">Reverse Career GPS</a>
+    <a href="#">Routes to Positions</a>
+    <a href="#">Job Posting Analysis</a>
+    <a href="#">Indian-Friendly Companies</a>
+    <a href="#">Market Saturation</a>
+  </nav>
+  <div class="me"><span class="av">RM</span><div><b>Riya Menon</b><a href="#">Edit profile</a></div></div>
+</aside>
+<main>
+  <div class="top"><span class="hi">Good evening, Riya. Here is where people who started where you did are today.</span><span class="ex">Example data</span></div>
+  <h1>At least <em>214 of 312</em> people like you now work abroad.</h1>
+  <div class="chips">
+    <span class="chip"><b>BTech CSE</b>, VIT Vellore '22</span>
+    <span class="chip"><b>2 yrs</b> at Infosys</span>
+    <span class="chip">Aiming: <b>MS + data role in Germany</b></span>
+    <a href="#">Edit background</a>
+  </div>
+  <div class="row">
+    <svg width="752" height="584" viewBox="0 0 752 584" role="img" aria-label="Star chart: where 312 people like you are now. Most common route: VIT CSE, then a master's, then Germany, then SAP or Zalando.">
+      <defs><pattern id="g" x="12" y="12" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0V48" fill="none" stroke="#F4F1E8" stroke-opacity=".07"/></pattern></defs>
+      <rect x="6" y="6" width="740" height="572" fill="none" stroke="#F4F1E8" stroke-opacity=".55" stroke-width="3" stroke-dasharray="24 24"/>
+      <rect x="12" y="12" width="728" height="560" fill="url(#g)" stroke="#F4F1E8" stroke-opacity=".22"/>
+      <g stroke="#F4F1E8" stroke-opacity=".12"><path d="M80 48V520M256 48V520M456 48V520M600 48V520"/><path d="M12 528H740"/></g>
+      <g class="st" text-anchor="middle"><text x="80" y="36">START</text><text x="256" y="36">FURTHER DEGREE</text><text x="456" y="36">COUNTRY NOW</text><text x="612" y="36">EMPLOYER NOW</text></g>
+      <!-- other routes, faint dashed -->
+      <g stroke="#F4F1E8" stroke-opacity=".22" stroke-dasharray="3 5" fill="none"><path d="M256 244L448 256M256 244L440 412M256 244L468 464M80 300L472 336"/></g>
+      <!-- the common route constellation -->
+      <g stroke="#F4F1E8" stroke-opacity=".8" stroke-width="1.25" fill="none"><path d="M80 300L256 244L464 172L592 132M464 172L624 196"/></g>
+      <text class="st" transform="rotate(-17.6 104 280)" x="104" y="280">COMMON ROUTE</text>
+      <!-- stars: diameter on fixed ramp 5+:7 10+:11 25+:16 50+:22 75+:28 -->
+      <g fill="#F4F1E8" stroke="#0B1633" stroke-width="3">
+        <circle cx="256" cy="244" r="14"/><circle cx="232" cy="380" r="3.5"/><circle cx="272" cy="440" r="3.5"/>
+        <circle cx="432" cy="96" r="5.5"/><circle cx="464" cy="172" r="11"/><circle cx="448" cy="256" r="11"/><circle cx="472" cy="336" r="14"/>
+        <circle cx="440" cy="412" r="8"/><circle cx="468" cy="464" r="8"/><circle cx="444" cy="504" r="3.5"/>
+        <circle cx="608" cy="84" r="3.5"/><circle cx="592" cy="132" r="3.5"/><circle cx="624" cy="196" r="3.5"/><circle cx="600" cy="236" r="3.5"/>
+        <circle cx="616" cy="300" r="5.5"/><circle cx="604" cy="388" r="3.5"/>
+      </g>
+      <!-- you -->
+      <circle cx="80" cy="300" r="5" fill="#FFB547"/><circle cx="80" cy="300" r="12" fill="none" stroke="#FFB547" stroke-width="1.5"/>
+      <path d="M80 280V286M80 314V320M60 300H66M94 300H100" stroke="#FFB547" stroke-width="1.5"/>
+      <text class="lb" x="80" y="344" text-anchor="middle" style="font-size:20px">You</text>
+      <text class="sm" x="80" y="362" text-anchor="middle">BTech CSE · VIT '22</text>
+      <!-- target ring + callout -->
+      <circle cx="464" cy="172" r="21" fill="none" stroke="#E5484D" stroke-width="2"/>
+      <path d="M448 157L424 130H404" stroke="#FFB547" fill="none"/>
+      <text class="st" x="396" y="112" text-anchor="end">YOUR TARGET</text>
+      <text class="lb" x="396" y="134" text-anchor="end" style="font-size:20px">Germany <tspan dx="4" style="font-size:15px">71</tspan></text>
+      <!-- labels -->
+      <text class="lb" x="256" y="214" text-anchor="middle">MS / MSc <tspan dx="4">121</tspan></text>
+      <text class="lb" x="244" y="385">MBA <tspan dx="4">8</tspan></text>
+      <text class="lb" x="284" y="445">PhD <tspan dx="4">6</tspan></text>
+      <text class="lb" x="446" y="101">Netherlands <tspan dx="4">15</tspan></text>
+      <text class="lb" x="468" y="261">United States <tspan dx="4">58</tspan></text>
+      <text class="lb" x="494" y="341">Still in India <tspan dx="4">98</tspan></text>
+      <text class="lb" x="456" y="417">United Kingdom <tspan dx="4">34</tspan></text>
+      <text class="lb" x="484" y="469">Canada <tspan dx="4">27</tspan></text>
+      <text class="lb" x="456" y="509">Other countries <tspan dx="4">9</tspan></text>
+      <text class="lb" x="620" y="89">Delivery Hero <tspan dx="4">5</tspan></text>
+      <text class="lb" x="604" y="137">SAP <tspan dx="4">9</tspan></text>
+      <text class="lb" x="636" y="201">Zalando <tspan dx="4">7</tspan></text>
+      <text class="lb" x="612" y="241">Siemens <tspan dx="4">6</tspan></text>
+      <text class="lb" x="630" y="305">Amazon <tspan dx="4">11</tspan></text>
+      <text class="lb" x="616" y="393">Microsoft <tspan dx="4">8</tspan></text>
+      <!-- legend -->
+      <g transform="translate(0 552)">
+        <text class="st" x="28" y="4">STAR SIZE</text>
+        <g fill="#F4F1E8"><circle cx="152" cy="0" r="3.5"/><circle cx="192" cy="0" r="5.5"/><circle cx="244" cy="0" r="8"/><circle cx="304" cy="0" r="11"/><circle cx="372" cy="0" r="14"/></g>
+        <g class="sm"><text x="160" y="4">5+</text><text x="202" y="4">10+</text><text x="256" y="4">25+</text><text x="319" y="4">50+</text><text x="390" y="4">75+</text></g>
+        <circle cx="480" cy="0" r="8" fill="none" stroke="#E5484D" stroke-width="2"/><text class="sm" x="496" y="4">Your target</text>
+        <path d="M592 0H620" stroke="#F4F1E8" stroke-opacity=".8" stroke-width="1.25"/><text class="sm" x="628" y="4">Common route</text>
+      </g>
+    </svg>
+    <section class="tbl" aria-labelledby="tt">
+      <h2 id="tt">The counts</h2>
+      <p>312 visible profiles that share your background</p>
+      <table>
+        <tbody>
+          <tr><th colspan="2" class="cap" scope="colgroup">Country now <span>people</span></th></tr>
+          <tr><td>Still in India</td><td>98</td></tr>
+          <tr class="tg"><td>Germany<span class="ring" aria-hidden="true"></span><span class="tag">your target</span></td><td>71</td></tr>
+          <tr><td>United States</td><td>58</td></tr>
+          <tr><td>United Kingdom</td><td>34</td></tr>
+          <tr><td>Canada</td><td>27</td></tr>
+          <tr><td>Netherlands</td><td>15</td></tr>
+          <tr><td>Other countries</td><td>9</td></tr>
+        </tbody>
+        <tbody>
+          <tr><th colspan="2" class="cap" scope="colgroup">Further degree <span>people</span></th></tr>
+          <tr><td>MS / MSc</td><td>121</td></tr>
+          <tr><td>MBA</td><td>8</td></tr>
+          <tr><td>PhD</td><td>6</td></tr>
+        </tbody>
+        <tbody>
+          <tr><th colspan="2" class="cap" scope="colgroup">Top employers now <span>people</span></th></tr>
+          <tr><td>Amazon</td><td>11</td></tr>
+          <tr><td>SAP</td><td>9</td></tr>
+          <tr><td>Microsoft</td><td>8</td></tr>
+          <tr><td>Zalando</td><td>7</td></tr>
+          <tr><td>Siemens</td><td>6</td></tr>
+          <tr><td>Delivery Hero</td><td>5</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <div class="act">
+    <p>Germany is your target, and at least 71 people like you already work there. A good next step: see how often internships there turned into jobs.
+      <small>81% of profiles show a current country · Data as of 6 Nov 2026 · <a href="#">How we count</a></small></p>
+    <a class="btn" href="#">See your Internship-to-Job chances in Germany →</a>
+  </div>
+</main>
+</body></html>

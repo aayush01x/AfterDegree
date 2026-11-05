@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AfterDegree · People like you</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{--navy:#1E2A5A;--navy2:#2B3A74;--bg:#F4F5F7;--ink:#111418;--mute:#5B6270;--line:#E1E4EA;--alert:#E8590C;--tint:#FDF1E9}
+*{box-sizing:border-box}
+html,body{width:1440px;height:900px;overflow:hidden;margin:0}
+body{display:flex;font:400 15px/1.4 Barlow,sans-serif;color:var(--ink);background:var(--bg)}
+.mono{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+aside{width:232px;background:var(--navy);color:#C9D0EA;padding:24px 16px;display:flex;flex-direction:column;flex:none}
+.logo{color:#fff;font:700 21px Barlow;letter-spacing:-.01em;padding:0 12px 24px}
+.logo i{font-style:normal;color:#9FB0F0}
+nav a{display:flex;gap:12px;align-items:center;padding:9px 12px;border-radius:8px;font-weight:500;font-size:14.5px;color:#C9D0EA}
+nav a b{font:500 11px "JetBrains Mono";width:18px;opacity:.55}
+nav a.on{background:#fff;color:var(--navy);font-weight:600}
+nav a.on b{opacity:1}
+nav hr{border:0;border-top:1px solid #34437F;margin:10px 12px}
+.me{margin-top:auto;padding:12px;border-top:1px solid #34437F;font-size:13px}
+.me b{display:block;color:#fff;font-weight:600}
+main{flex:1;padding:28px 36px 0;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:flex-end}
+h1{margin:0;font:700 30px/1.15 Barlow;letter-spacing:-.015em}
+.sub{color:var(--mute);margin:4px 0 0;font-size:15.5px}
+.tag{font:500 11px "JetBrains Mono";letter-spacing:.06em;text-transform:uppercase;border:1px dashed #9AA1B2;color:var(--mute);padding:4px 10px;border-radius:99px}
+.pass{display:grid;grid-template-columns:1.5fr 1.1fr .8fr .9fr;margin:20px 0 20px;background:#fff;border:1px solid var(--line);border-radius:12px;position:relative}
+.pass>div{padding:12px 20px;position:relative}
+.pass>div+div{border-left:2px dashed var(--line)}
+.pass>div+div:before,.pass>div+div:after{content:"";position:absolute;left:-8px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+.pass>div+div:before{top:-8px;clip-path:inset(50% 0 0 0)}.pass>div+div:after{bottom:-8px;clip-path:inset(0 0 50% 0)}
+.k{font:500 11px "JetBrains Mono";letter-spacing:.08em;color:var(--mute);text-transform:uppercase}
+.v{font-weight:600;font-size:16.5px;margin-top:2px;white-space:nowrap}
+.v small{font:400 13px Barlow;color:var(--mute)}
+.grid{display:grid;grid-template-columns:1fr 316px;gap:20px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px}
+.board .hd{padding:16px 22px 12px;display:flex;justify-content:space-between;align-items:baseline}
+h2{margin:0;font:700 19px Barlow;letter-spacing:-.01em}
+.hd p{margin:2px 0 0;color:var(--mute);font-size:14px}
+.big{font:700 34px/1 "JetBrains Mono";letter-spacing:-.03em}
+.row{display:grid;grid-template-columns:150px 1fr 104px 150px 76px;align-items:center;padding:0 22px;height:50px;border-top:1px solid var(--line);position:relative}
+.row.h{height:34px;background:var(--navy);color:#C9D0EA;font:500 11px "JetBrains Mono";letter-spacing:.08em;text-transform:uppercase;border-top:0}
+.row .n{text-align:right;font:500 17px "JetBrains Mono"}
+.row.h .n{font:500 11px "JetBrains Mono"}
+.dest{font-weight:600;font-size:16px;display:flex;gap:10px;align-items:center}
+.dest em{font:500 11px "JetBrains Mono";font-style:normal;color:var(--mute);background:var(--bg);border-radius:4px;padding:2px 5px}
+.route{color:var(--mute);font-size:14.5px;padding:0 12px}
+.share{display:flex;align-items:center;gap:8px;padding-left:20px;font:400 12.5px "JetBrains Mono";color:var(--mute)}
+.share i{display:block;height:8px;background:#B7BED0;border-radius:2px}
+.tr{text-align:right;font:500 13px "JetBrains Mono";color:var(--mute)}
+.row.hot{background:var(--tint);box-shadow:inset 4px 0 0 var(--alert)}
+.row.hot .share i{background:var(--alert)}
+.row.hot .tr{color:var(--alert);font-weight:700}
+.row.hot .dest em{background:var(--alert);color:#fff}
+.note{padding:11px 22px;border-top:1px solid var(--line);font-size:13px;color:var(--mute);display:flex;justify-content:space-between}
+.side{display:flex;flex-direction:column;gap:14px}
+.side .card{padding:14px 18px}
+.side h3{margin:0 0 8px;font:600 11px "JetBrains Mono";letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.li{display:flex;justify-content:space-between;padding:4px 0;font-size:14.5px}
+.li span:last-child{font:500 14px "JetBrains Mono"}
+.next{background:var(--navy);color:#fff;border:0!important}
+.next p{margin:0 0 12px;font-size:14px;color:#C9D0EA}
+.btn{display:block;background:#fff;color:var(--navy);font:600 15px Barlow;text-align:center;padding:11px 12px;border-radius:8px}
+</style></head><body>
+<aside>
+ <div class="logo">After<i>Degree</i></div>
+ <nav>
+  <a class="on"><b>⌂</b>Home</a><hr>
+  <a><b>01</b>People Like Me</a><a><b>02</b>Internship-to-Job Chances</a><a><b>03</b>Conversion Map</a>
+  <a><b>04</b>Reverse Career GPS</a><a><b>05</b>Routes to Positions</a><a><b>06</b>Job Posting Analysis</a>
+  <a><b>07</b>Indian-Friendly Companies</a><a><b>08</b>Market Saturation</a>
+ </nav>
+ <div class="me"><b>Riya Menon</b>Profile and goals</div>
+</aside>
+<main>
+ <div class="top">
+  <div><h1>Welcome, Riya. Here is where people like you went.</h1>
+  <p class="sub">We matched your profile to people with the same start. Here is what happened next for them.</p></div>
+  <span class="tag">Example data</span>
+ </div>
+ <section class="pass">
+  <div><div class="k">From</div><div class="v">VIT CSE '22 <small>· 2 yrs Infosys</small></div></div>
+  <div><div class="k">To</div><div class="v">Data role <small>· Germany</small></div></div>
+  <div><div class="k">Class</div><div class="v">MS route</div></div>
+  <div><div class="k">Evidence</div><div class="v mono">312 <small>profiles</small></div></div>
+ </section>
+ <div class="grid">
+  <section class="card board">
+   <div class="hd"><div><h2>Where people like you are now</h2><p>At least 214 of 312 people with your background live abroad today.</p></div><div class="big">214<span style="color:var(--mute);font-size:18px">/312</span></div></div>
+   <div class="row h"><span>Destination</span><span style="padding:0 12px">Route</span><span class="n">People like you</span><span style="padding-left:20px">Share</span><span class="n">Trend</span></div>
+   <div class="row"><span class="dest">Still in India</span><span class="route">Stayed, moved into data</span><span class="n">83</span><span class="share"><i style="width:80px"></i>26.6%</span><span class="tr">+2</span></div>
+   <div class="row"><span class="dest">United States</span><span class="route">MS → data / ML engineer</span><span class="n">69</span><span class="share"><i style="width:66px"></i>22.1%</span><span class="tr">+1</span></div>
+   <div class="row hot"><span class="dest">Germany <em>NEW</em></span><span class="route" style="color:var(--ink)">MS (TU / RWTH) → data analyst</span><span class="n">58</span><span class="share"><i style="width:56px"></i>18.6%</span><span class="tr">▲ +9</span></div>
+   <div class="row"><span class="dest">United Kingdom</span><span class="route">MS → analyst, consulting</span><span class="n">38</span><span class="share"><i style="width:36px"></i>12.2%</span><span class="tr">0</span></div>
+   <div class="row"><span class="dest">Canada</span><span class="route">MS / PG diploma → software</span><span class="n">33</span><span class="share"><i style="width:32px"></i>10.6%</span><span class="tr">−1</span></div>
+   <div class="row"><span class="dest">Netherlands</span><span class="route">MS → data engineer</span><span class="n">16</span><span class="share"><i style="width:15px"></i>5.1%</span><span class="tr">+1</span></div>
+   <div class="note"><span>15 more are in other countries or have no location.</span><span class="mono">Germany: 9 more people since the last refresh</span></div>
+  </section>
+  <div class="side">
+   <div class="card"><h3>Top roles in Germany</h3>
+    <div class="li"><span>Data Analyst</span><span>21</span></div><div class="li"><span>Data Scientist</span><span>14</span></div><div class="li"><span>Data Engineer</span><span>11</span></div></div>
+   <div class="card"><h3>Top employers in Germany</h3>
+    <div class="li"><span>SAP</span><span>6</span></div><div class="li"><span>Siemens</span><span>5</span></div><div class="li"><span>Bosch</span><span>4</span></div></div>
+   <div class="card"><h3>Further degrees taken</h3>
+    <div class="li"><span>MS, Computer Science / Data</span><span>141</span></div><div class="li"><span>MBA</span><span>22</span></div></div>
+   <div class="card next"><p>Most who made this move did an internship or working-student role first.</p><a class="btn">See your Internship-to-Job chances in Germany →</a></div>
+  </div>
+ </div>
+ <p class="sub mono" style="font-size:12px;margin-top:12px">Coverage 71% of matching profiles visible · data as of 28 Oct 2026 · counts are minimums, not totals</p>
+</main>
+</body></html>

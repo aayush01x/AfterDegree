@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AfterDegree · People like you</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800;900&display=swap">
+<style>
+:root{--y:#FFD200;--k:#111111;--c:#2B2B2B;--w:#FFFFFF;--bg:#F0EFEA;--line:#DCDBD4;--soft:#D6D5CF}
+*{box-sizing:border-box}
+html,body{width:1440px;height:900px;overflow:hidden;margin:0}
+body{font:400 15px/1.5 "Hanken Grotesk",sans-serif;color:var(--k);background:var(--bg);font-variant-numeric:tabular-nums}
+a{color:inherit}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* overhead header band */
+header{height:64px;background:var(--y);border-bottom:4px solid var(--k);display:flex;align-items:center;padding:0 32px 0 24px}
+.logo{width:224px;display:flex;align-items:center;gap:12px;font:800 20px/1 "Hanken Grotesk";letter-spacing:-.01em;text-decoration:none}
+.sq{width:32px;height:32px;background:var(--k);display:grid;place-items:center;flex:none}
+.crumb{font:600 14px/20px "Hanken Grotesk";color:var(--c)}
+.crumb b{color:var(--k);font-weight:800}
+.hr{margin-left:auto;display:flex;align-items:center;gap:16px}
+.tag{background:var(--k);color:var(--w);font:700 12px/16px "Hanken Grotesk";padding:4px 8px}
+.who{display:flex;align-items:center;gap:8px;font:700 14px/20px "Hanken Grotesk";text-decoration:none}
+.av{width:32px;height:32px;border-radius:50%;background:var(--k);color:var(--w);display:grid;place-items:center;font:800 12px/1 "Hanken Grotesk"}
+.wrap{display:flex;height:836px}
+/* standard nav */
+aside{width:248px;flex:none;background:var(--w);border-right:1px solid var(--line);padding:24px 16px;display:flex;flex-direction:column}
+nav a{display:flex;align-items:center;gap:12px;height:40px;padding:0 8px;font:600 14px/1 "Hanken Grotesk";text-decoration:none}
+nav a .n{width:24px;height:24px;background:var(--k);color:var(--w);display:grid;place-items:center;font:800 12px/1 "Hanken Grotesk";flex:none}
+nav a.on{background:var(--k);color:var(--w)}
+nav a.on .n{background:var(--w);color:var(--k)}
+nav a:not(.on):hover{background:var(--bg)}
+.nl{font:700 12px/16px "Hanken Grotesk";color:var(--c);margin:16px 8px 8px}
+.af{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding:16px 8px 0;border-top:1px solid var(--line);font:600 13px/20px "Hanken Grotesk"}
+main{flex:1;padding:24px 32px 16px;display:flex;flex-direction:column;min-width:0}
+.greet{height:68px;display:flex;align-items:flex-end;justify-content:space-between}
+h1{margin:0;font:800 32px/40px "Hanken Grotesk";letter-spacing:-.02em}
+.prof{margin:4px 0 0;font:500 15px/24px "Hanken Grotesk";color:var(--c)}
+.prof a{font-weight:700;color:var(--k);margin-left:8px}
+.btn2{height:40px;padding:0 16px;border:2px solid var(--k);background:var(--w);font:700 14px/1 "Hanken Grotesk";display:inline-flex;align-items:center;cursor:pointer}
+.cols{display:flex;gap:24px;margin-top:32px;height:660px}
+/* signature: junction sign + signed route bands */
+.sign{width:744px;flex:none;background:var(--y);border:6px solid var(--k);display:flex;flex-direction:column}
+.sh{height:104px;flex:none;display:flex;align-items:center;gap:20px;padding:0 24px}
+.pict{width:64px;height:64px;background:var(--k);display:grid;place-items:center;flex:none}
+.sh small{display:block;font:700 14px/20px "Hanken Grotesk";color:var(--c)}
+.sh h2{margin:0;font:900 30px/36px "Hanken Grotesk";letter-spacing:-.02em}
+.r{display:grid;grid-template-columns:48px 1fr 96px 112px 64px;column-gap:16px;align-items:center;height:68px;padding-left:16px;border-top:2px solid var(--k)}
+.cl{height:32px;font:700 12px/16px "Hanken Grotesk";color:var(--c)}
+.cl span:nth-child(3),.cl span:nth-child(4){text-align:right}
+.pc{width:48px;height:48px;background:var(--k);color:var(--w);display:grid;place-items:center;font:800 16px/1 "Hanken Grotesk";letter-spacing:.02em}
+.nm,.rt{display:block}
+.nm{font:800 22px/28px "Hanken Grotesk";letter-spacing:-.01em}
+.rt{font:500 14px/20px "Hanken Grotesk";color:var(--c)}
+.ds{text-align:right;font:800 22px/1 "Hanken Grotesk"}
+.ds small{font:600 13px/1 "Hanken Grotesk"}
+.ct{text-align:right;font:900 44px/40px "Hanken Grotesk";letter-spacing:-.03em}
+.ct small{display:block;font:600 12px/16px "Hanken Grotesk";letter-spacing:0}
+.ar{align-self:stretch;display:grid;place-items:center;border-left:2px solid var(--k);color:var(--k)}
+.ar svg{width:32px;height:32px;fill:currentColor}
+.up svg{transform:rotate(-90deg)}
+.r.on{height:104px;background:var(--k);color:var(--y);border-top-color:var(--k)}
+.r.on .pc{background:var(--y);color:var(--k)}
+.r.on .nm,.rt{display:block}
+.nm{font-size:30px;line-height:36px}
+.r.on .rt{color:var(--y);font-weight:600}
+.r.on .ct{font-size:88px;line-height:80px}
+.r.on .ct small,.r.on .ds{color:var(--y)}
+.r.on .ar{color:var(--y);border-left-color:var(--y)}
+.fol{display:inline-block;vertical-align:middle;margin-left:8px;background:var(--y);color:var(--k);font:700 12px/16px "Hanken Grotesk";padding:2px 8px;letter-spacing:0}
+.low{font-weight:700;color:var(--k)}
+/* calm work panels */
+.side{width:360px;flex:none;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--w);border:1px solid var(--line);padding:20px}
+.lab{font:700 13px/16px "Hanken Grotesk";color:var(--c)}
+.big{font:900 64px/64px "Hanken Grotesk";letter-spacing:-.03em;margin-top:4px}
+.big span{font-size:28px;font-weight:700;letter-spacing:-.01em}
+.card p{margin:4px 0 0;font:500 15px/20px "Hanken Grotesk"}
+.bar{display:flex;height:8px;margin-top:16px;background:var(--soft)}
+.bar i{display:block;width:68.6%;background:var(--k)}
+.lg{display:flex;justify-content:space-between;margin-top:8px;font:600 13px/16px "Hanken Grotesk";color:var(--c)}
+.lg b{color:var(--k)}
+h3{margin:0;font:800 18px/24px "Hanken Grotesk"}
+.sub{font:500 13px/20px "Hanken Grotesk";color:var(--c)}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th{text-align:left;font:700 12px/16px "Hanken Grotesk";color:var(--c);height:32px;border-bottom:2px solid var(--k)}
+td{height:30px;border-bottom:1px solid var(--line);font:600 14px/20px "Hanken Grotesk"}
+.num{text-align:right;font-weight:800;font-size:15px}
+.mb{width:104px;padding-left:16px}
+.mb i{display:block;height:6px;background:var(--k)}
+.fn{margin-top:8px;font:500 13px/18px "Hanken Grotesk";color:var(--c)}
+.next{margin-top:auto}
+.next p{margin:4px 0 12px;font:500 15px/22px "Hanken Grotesk"}
+.cta{display:flex;height:72px;background:var(--y);border:3px solid var(--k);text-decoration:none;color:var(--k)}
+.cta span{flex:1;display:flex;align-items:center;padding:0 16px;font:800 17px/22px "Hanken Grotesk"}
+.cta b{width:64px;flex:none;background:var(--k);color:var(--y);display:grid;place-items:center}
+.cta b svg{width:28px;height:28px;fill:currentColor}
+.cta:hover span{text-decoration:underline}
+.cov{margin-top:16px;height:20px;display:flex;align-items:center;gap:16px;font:500 13px/20px "Hanken Grotesk";color:var(--c)}
+.cov b{color:var(--k);font-weight:700}
+.cov a{margin-left:auto;font-weight:700;color:var(--k)}
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute"><symbol id="arw" viewBox="0 0 32 32"><path d="M2 13h19l-7-7 4-4 14 14-14 14-4-4 7-7H2z"/></symbol></svg>
+<header>
+  <a class="logo" href="#"><span class="sq"><svg width="18" height="18" style="transform:rotate(-45deg);fill:#fff"><use href="#arw"/></svg></span>AfterDegree</a>
+  <div class="crumb">Home <span aria-hidden="true">/</span> <b>People like you</b></div>
+  <div class="hr"><span class="tag">Example data</span><a class="who" href="#"><span class="av">RM</span>Riya Menon</a></div>
+</header>
+<div class="wrap">
+<aside>
+  <nav aria-label="Main">
+    <a class="on" href="#" aria-current="page"><span class="n"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z" fill="#111"/></svg></span>Home</a>
+    <div class="nl">Tools</div>
+    <a href="#"><span class="n">01</span>People Like Me</a>
+    <a href="#"><span class="n">02</span>Internship-to-Job Chances</a>
+    <a href="#"><span class="n">03</span>Conversion Map</a>
+    <a href="#"><span class="n">04</span>Reverse Career GPS</a>
+    <a href="#"><span class="n">05</span>Routes to Positions</a>
+    <a href="#"><span class="n">06</span>Job Posting Analysis</a>
+    <a href="#"><span class="n">07</span>Indian-Friendly Companies</a>
+    <a href="#"><span class="n">08</span>Market Saturation</a>
+  </nav>
+  <div class="af"><a href="#">How we count</a><a href="#">Settings</a></div>
+</aside>
+<main>
+  <div class="greet">
+    <div><h1>Welcome back, Riya. Here’s where people like you went.</h1>
+    <p class="prof">BTech CSE, VIT Vellore ’22 · 2 yrs at Infosys · Aiming: MS + data role in Germany<a href="#">Edit profile</a></p></div>
+    <button class="btn2" type="button">Change goal</button>
+  </div>
+  <div class="cols">
+    <section class="sign" aria-labelledby="jq">
+      <div class="sh">
+        <div class="pict" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="square"><path d="M20 36V22L10 11M20 22l10-11"/><path d="M8 18V9h9M32 18V9h-9"/></svg></div>
+        <div><small>Your next decision</small><h2 id="jq">Master’s in Germany or work first?</h2></div>
+      </div>
+      <div class="r cl"><span></span><span>Where 312 people like you are now · typical route</span><span>Time to role</span><span>People</span><span></span></div>
+      <a class="r on" href="#" style="text-decoration:none">
+        <span class="pc">DE</span>
+        <span><span class="nm">Germany<span class="fol">Following</span></span><span class="rt">MS → working student → Data Engineer</span></span>
+        <span class="ds">≈ 2.5 <small>yrs</small></span>
+        <span class="ct">71<small>people</small></span>
+        <span class="ar"><svg><use href="#arw"/></svg></span>
+      </a>
+      <div class="r"><span class="pc">IN</span><span><span class="nm">Still in India</span><span class="rt">Work first → product company → Senior engineer</span></span><span class="ds">≈ 3 <small>yrs</small></span><span class="ct">98<small>people</small></span><span class="ar up"><svg><use href="#arw"/></svg><span class="vh">straight on</span></span></div>
+      <div class="r"><span class="pc">US</span><span><span class="nm">United States</span><span class="rt">MS → summer internship → Data Scientist</span></span><span class="ds">≈ 3 <small>yrs</small></span><span class="ct">58<small>people</small></span><span class="ar"><svg><use href="#arw"/></svg></span></div>
+      <div class="r"><span class="pc">GB</span><span><span class="nm">United Kingdom</span><span class="rt">1-year MSc → graduate visa → Data Analyst</span></span><span class="ds">≈ 2 <small>yrs</small></span><span class="ct">34<small>people</small></span><span class="ar"><svg><use href="#arw"/></svg></span></div>
+      <div class="r"><span class="pc">CA</span><span><span class="nm">Canada</span><span class="rt">MS → co-op term → Data Analyst</span></span><span class="ds">≈ 3 <small>yrs</small></span><span class="ct">27<small>people</small></span><span class="ar"><svg><use href="#arw"/></svg></span></div>
+      <div class="r"><span class="pc">NL</span><span><span class="nm">Netherlands</span><span class="rt">MSc → thesis internship → ML Engineer</span></span><span class="ds">≈ 2.5 <small>yrs</small></span><span class="ct">15<small>people</small></span><span class="ar"><svg><use href="#arw"/></svg></span></div>
+      <div class="r"><span class="pc"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg></span><span><span class="nm">Other countries</span><span class="rt">Mixed routes · <span class="low">small group, low confidence</span></span></span><span class="ds">—</span><span class="ct">9<small>people</small></span><span class="ar"><svg><use href="#arw"/></svg></span></div>
+    </section>
+    <div class="side">
+      <div class="card">
+        <div class="lab">At least</div>
+        <div class="big">214<span> of 312</span></div>
+        <p>visible profiles like yours now work abroad.</p>
+        <div class="bar" role="img" aria-label="214 abroad, 98 in India"><i></i></div>
+        <div class="lg"><span><b>Abroad</b> 214</span><span><b>Still in India</b> 98</span></div>
+      </div>
+      <div class="card">
+        <h3>Top employers in Germany</h3>
+        <div class="sub">Where the 71 people in Germany work now</div>
+        <table>
+          <thead><tr><th>Employer</th><th class="num" style="font-size:12px;font-weight:700">People</th><th class="mb"><span class="vh">Share</span></th></tr></thead>
+          <tbody>
+            <tr><td>SAP</td><td class="num">9</td><td class="mb"><i style="width:100%"></i></td></tr>
+            <tr><td>Zalando</td><td class="num">7</td><td class="mb"><i style="width:78%"></i></td></tr>
+            <tr><td>Siemens</td><td class="num">6</td><td class="mb"><i style="width:67%"></i></td></tr>
+            <tr><td>Delivery Hero</td><td class="num">5</td><td class="mb"><i style="width:56%"></i></td></tr>
+          </tbody>
+        </table>
+        <div class="fn">Each is under 10 people: a direction, not a promise.</div>
+      </div>
+      <div class="next">
+        <div class="lab">Your next step</div>
+        <p>Most got into Germany through a working-student job. See how often that became an offer.</p>
+        <a class="cta" href="#"><span>See your Internship-to-Job chances in Germany</span><b aria-hidden="true"><svg><use href="#arw"/></svg></b></a>
+      </div>
+    </div>
+  </div>
+  <div class="cov"><span><b>81%</b> of profiles show a current country</span><span>Data as of <b>6 Nov 2026</b></span><span>Counts are “at least N of M visible profiles”</span><span class="tag">Example data</span><a href="#">How we count →</a></div>
+</main>
+</div>
+</body></html>

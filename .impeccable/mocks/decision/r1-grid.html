@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>People like you · AfterDegree</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<style>
+:root{--or:#FF5A1F;--ink:#111111;--paper:#FFFFFF;--rule:#E4DFDA;--mute:#5A5550;--rub:#1F3FFF;--grid:#9DB7FF}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1440px;height:900px;overflow:hidden;margin:0}
+body{position:relative;font-family:"Archivo",sans-serif;color:var(--ink);background-color:var(--or);
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cpath d='M0 .5H32M.5 0V32' fill='none' stroke='%239DB7FF' stroke-opacity='.6'/%3E%3C/svg%3E");
+ font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+a{color:inherit}
+.abs{position:absolute}
+.key{font-size:12px;line-height:16px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--rub)}
+/* rail */
+nav.rail{position:absolute;left:0;top:0;width:224px;height:900px;background:var(--ink);color:#fff;padding:32px 12px}
+.brand{display:flex;align-items:center;gap:10px;padding:0 12px;height:32px;font-weight:800;font-size:18px;font-stretch:112%;letter-spacing:-.01em}
+.mark{display:grid;grid-template-columns:repeat(3,6px);gap:2px}.mark i{width:6px;height:6px;background:var(--or)}.mark i.o{background:none;outline:1px solid #fff;outline-offset:-1px}
+.rail h3{margin:40px 12px 8px;font-size:12px;line-height:16px;letter-spacing:.08em;text-transform:uppercase;color:#B8B2AC;font-weight:600}
+.rail ul{list-style:none}
+.rail li a{display:flex;align-items:center;height:40px;padding:0 12px;text-decoration:none;font-size:14px;font-stretch:90%;font-weight:500;color:#EDE9E5}
+.rail li a[aria-current]{background:var(--or);color:var(--ink);font-weight:800}
+.rail li a:not([aria-current]):hover{background:#2A2826}
+.me{position:absolute;left:12px;right:12px;bottom:24px;display:flex;gap:12px;align-items:center;padding:12px;border-top:1px solid #3A3734}
+.me b{display:grid;place-items:center;width:40px;height:40px;background:var(--or);color:var(--ink);font-weight:800;font-stretch:112%}
+.me span{font-size:14px;font-weight:700;line-height:20px}.me a{display:block;font-size:13px;font-weight:400;color:#C9C3BD}
+/* header */
+.tagrow{left:256px;top:32px;display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600}
+.ex{background:var(--ink);color:#fff;font-size:12px;line-height:24px;padding:0 8px;font-weight:800;letter-spacing:.08em}
+h1{left:256px;top:60px;font-size:44px;line-height:52px;font-weight:800;font-stretch:115%;letter-spacing:-.02em}
+.who{left:256px;top:116px;font-size:16px;line-height:24px;font-weight:500}
+.who b{font-weight:800}
+.cohort{left:1056px;top:32px;width:352px;background:var(--paper);padding:16px;border:1px solid var(--ink)}
+.cohort p{margin-top:4px;font-size:14px;line-height:20px}
+.cohort a{display:inline-block;margin-top:4px;font-size:13px;font-weight:700}
+/* hero */
+.least{left:256px;top:160px;font-size:20px;line-height:24px;font-weight:800;font-stretch:112%}
+.stamp{right:640px;top:156px;height:28px;padding:0 10px;background:var(--paper);border:1px solid var(--rub);display:flex;align-items:center}
+.digits{left:256px;top:192px}
+.say{left:256px;top:432px;width:544px;font-size:26px;line-height:32px;font-weight:800;font-stretch:105%;letter-spacing:-.01em}
+.cta{left:256px;top:512px;height:48px;padding:0 24px;border:0;background:var(--ink);color:#fff;font:700 16px/48px "Archivo",sans-serif;cursor:pointer}
+.cta:hover{background:#000;text-decoration:underline}
+/* panels */
+.panel{position:absolute;background:var(--paper);border:1px solid var(--ink);padding:24px}
+.ph{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.ph h2{font-size:18px;line-height:24px;font-weight:800;font-stretch:108%}
+.sub{font-size:13px;line-height:20px;color:var(--mute);margin-top:4px}
+.waffle{left:832px;top:160px;width:576px;height:400px}
+.rows{margin-top:12px}
+.r{display:grid;grid-template-columns:128px 1fr 40px;align-items:center;height:32px;padding:0 12px;font-size:14px;font-weight:600}
+.r .v{text-align:right;font-weight:800;font-size:16px}
+.w{display:flex;gap:2px;align-items:flex-start;height:28px}
+.w i{display:block;height:28px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='8' height='8' fill='%23FF5A1F'/%3E%3C/svg%3E")}
+.r.in .w i{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect x='.5' y='.5' width='7' height='7' fill='none' stroke='%23111' stroke-opacity='.45'/%3E%3C/svg%3E")}
+.r.de{background:var(--ink);color:#fff;height:44px;padding:8px 12px;margin-bottom:4px}
+.r.de small{display:inline-block;margin-left:6px;font-size:12px;line-height:16px;padding:0 4px;background:var(--or);color:var(--ink);font-weight:800}
+.r.in{margin-top:8px;border-top:1px solid var(--ink);height:44px;padding-top:4px;color:var(--mute)}
+.r.in .v{color:var(--ink)}
+.legend{display:flex;gap:20px;margin-top:12px;font-size:13px;color:var(--mute)}
+.legend span{display:flex;align-items:center;gap:6px}.legend i{width:10px;height:10px;background:var(--or)}
+.legend i.h{background:none;border:1px solid #8A8580}.legend i.k{background:var(--or);outline:2px solid var(--ink)}
+.small{top:584px;width:368px;height:264px}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+td{height:32px;border-top:1px solid var(--rule);font-size:14px;padding:0}
+td:first-child{width:128px;font-weight:600;font-stretch:95%}td:last-child{text-align:right;width:40px;font-weight:800}
+.tl{height:12px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='12'%3E%3Crect width='3' height='12' fill='%23FF5A1F'/%3E%3C/svg%3E")}
+tr.rest td{color:var(--mute);font-weight:500}
+.deg{display:grid;grid-template-columns:1.4fr 1fr 1fr;margin-top:16px;border-top:1px solid var(--ink)}
+.deg div{padding:12px 12px 0;border-right:1px solid var(--rule)}.deg div:first-child{padding-left:0}.deg div:first-child{padding-left:0}.deg div:last-child{border-right:0}
+.deg b{display:block;font-size:48px;line-height:56px;font-weight:800;font-stretch:118%;letter-spacing:-.03em}
+.deg span{font-size:14px;font-weight:600}
+.note{margin-top:20px;font-size:14px;line-height:20px}
+.foot{left:256px;top:864px;width:1152px;display:flex;justify-content:space-between;font-size:13px;line-height:20px;font-weight:500}
+.foot a{font-weight:700}
+</style>
+</head>
+<body>
+<nav class="rail" aria-label="Main">
+ <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i></span>AfterDegree</div>
+ <ul style="margin-top:32px"><li><a href="#" aria-current="page">Home</a></li></ul>
+ <h3>Tools</h3>
+ <ul>
+  <li><a href="#">People Like Me</a></li>
+  <li><a href="#">Internship-to-Job Chances</a></li>
+  <li><a href="#">Conversion Map</a></li>
+  <li><a href="#">Reverse Career GPS</a></li>
+  <li><a href="#">Routes to Positions</a></li>
+  <li><a href="#">Job Posting Analysis</a></li>
+  <li><a href="#">Indian-Friendly Companies</a></li>
+  <li><a href="#">Market Saturation</a></li>
+ </ul>
+ <div class="me"><b>RM</b><span>Riya Menon<a href="#">Edit your profile</a></span></div>
+</nav>
+
+<div class="abs tagrow"><span class="ex">Example data</span><span>People like you · illustrative numbers, not live results</span></div>
+<h1 class="abs">Welcome back, Riya.</h1>
+<p class="abs who">BTech CSE, VIT Vellore ’22 · 2 yrs at Infosys · <b>aiming: MS + data role in Germany</b></p>
+<div class="abs cohort"><div class="key">Your cohort · 312 visible profiles</div><p>BTech CSE from private tier-1 colleges, graduated 2019–2023, 1–3 years of work in India.</p><a href="#">Adjust who counts as “like you” →</a></div>
+
+<p class="abs least">At least</p>
+<div class="abs stamp key">214 / 312 · 81% coverage</div>
+<svg class="abs digits" width="544" height="224" viewBox="0 0 544 224" role="img" aria-label="214"><path fill="#111" d="M2 2h29v29h-29zM34 2h29v29h-29zM66 2h29v29h-29zM98 2h29v29h-29zM130 2h29v29h-29zM130 34h29v29h-29zM130 66h29v29h-29zM2 98h29v29h-29zM34 98h29v29h-29zM66 98h29v29h-29zM98 98h29v29h-29zM130 98h29v29h-29zM2 130h29v29h-29zM2 162h29v29h-29zM2 194h29v29h-29zM34 194h29v29h-29zM66 194h29v29h-29zM98 194h29v29h-29zM130 194h29v29h-29zM194 2h29v29h-29zM226 2h29v29h-29zM258 2h29v29h-29zM258 34h29v29h-29zM258 66h29v29h-29zM258 98h29v29h-29zM258 130h29v29h-29zM258 162h29v29h-29zM194 194h29v29h-29zM226 194h29v29h-29zM258 194h29v29h-29zM290 194h29v29h-29zM322 194h29v29h-29zM386 2h29v29h-29zM514 2h29v29h-29zM386 34h29v29h-29zM514 34h29v29h-29zM386 66h29v29h-29zM514 66h29v29h-29zM386 98h29v29h-29zM418 98h29v29h-29zM450 98h29v29h-29zM482 98h29v29h-29zM514 98h29v29h-29zM514 130h29v29h-29zM514 162h29v29h-29zM514 194h29v29h-29z"/></svg>
+<p class="abs say">of 312 people like you now work outside India.</p>
+<button class="abs cta" type="button">See your Internship-to-Job chances in Germany →</button>
+
+<section class="panel waffle" aria-labelledby="w-h">
+ <div class="ph"><h2 id="w-h">Where the 312 are now</h2><span class="key">n = 312 · by current country</span></div>
+ <p class="sub">Each square is one person like you. Abroad first; your target is highlighted.</p>
+ <div class="rows">
+  <div class="r de"><span>Germany<small>Target</small></span><span class="w"><i style="width:228px"></i><i style="width:8px;height:18px"></i></span><span class="v">71</span></div>
+  <div class="r"><span>United States</span><span class="w"><i style="width:188px"></i><i style="width:8px;height:8px"></i></span><span class="v">58</span></div>
+  <div class="r"><span>United Kingdom</span><span class="w"><i style="width:108px"></i><i style="width:8px;height:8px"></i></span><span class="v">34</span></div>
+  <div class="r"><span>Canada</span><span class="w"><i style="width:88px"></i></span><span class="v">27</span></div>
+  <div class="r"><span>Netherlands</span><span class="w"><i style="width:48px"></i></span><span class="v">15</span></div>
+  <div class="r"><span>Other countries</span><span class="w"><i style="width:28px"></i></span><span class="v">9</span></div>
+  <div class="r in"><span>Still in India</span><span class="w"><i style="width:318px"></i><i style="width:8px;height:18px"></i></span><span class="v">98</span></div>
+ </div>
+ <div class="legend"><span><i></i>Abroad · 214</span><span><i class="h"></i>Still in India · 98</span><span><i class="k"></i>Selected: Germany</span></div>
+</section>
+
+<section class="panel small" style="left:256px" aria-labelledby="r-h">
+ <div class="ph"><h2 id="r-h">What they do now</h2><span class="key">n = 214 abroad</span></div>
+ <table><tbody>
+  <tr><td>Data Engineer</td><td><div class="tl" style="width:151px"></div></td><td>38</td></tr>
+  <tr><td>Data Scientist</td><td><div class="tl" style="width:123px"></div></td><td>31</td></tr>
+  <tr><td>Software Engineer</td><td><div class="tl" style="width:115px"></div></td><td>29</td></tr>
+  <tr><td>Data Analyst</td><td><div class="tl" style="width:87px"></div></td><td>22</td></tr>
+  <tr><td>ML Engineer</td><td><div class="tl" style="width:55px"></div></td><td>14</td></tr>
+ </tbody></table>
+</section>
+
+<section class="panel small" style="left:648px" aria-labelledby="e-h">
+ <div class="ph"><h2 id="e-h">Employers in Germany</h2><span class="key">n = 71</span></div>
+ <table><tbody>
+  <tr><td>SAP</td><td><div class="tl" style="width:35px"></div></td><td>9</td></tr>
+  <tr><td>Zalando</td><td><div class="tl" style="width:27px"></div></td><td>7</td></tr>
+  <tr><td>Siemens</td><td><div class="tl" style="width:23px"></div></td><td>6</td></tr>
+  <tr><td>Delivery Hero</td><td><div class="tl" style="width:19px"></div></td><td>5</td></tr>
+  <tr class="rest"><td colspan="2">At other employers</td><td>44</td></tr>
+ </tbody></table>
+</section>
+
+<section class="panel small" style="left:1040px" aria-labelledby="d-h">
+ <div class="ph"><h2 id="d-h">Further degrees</h2><span class="key">n = 312</span></div>
+ <div class="deg"><div><b>121</b><span>MS / MSc</span></div><div><b>8</b><span>MBA</span></div><div><b>6</b><span>PhD</span></div></div>
+ <p class="note">A master’s is by far the most common step. Most of the rest show no further degree on their profile.</p>
+</section>
+
+<p class="abs foot"><span>Coverage: 81% of profiles show a current country, so every count is “at least”. Data as of 6 Nov 2026.</span><a href="#">How we count →</a></p>
+</body>
+</html>

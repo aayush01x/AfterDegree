@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AfterDegree - People like you</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--baize:#1F4D3A;--baize2:#2A6049;--paper:#FBFAF6;--page:#E4EAE5;--ink:#1D1F24;--mute:#5A6068;--rule:#D9DCD3;--hl:#F2E94E;--stamp:#5B3FA6;--pin:#D7392B}
+*{box-sizing:border-box}
+html,body{width:1440px;height:900px;overflow:hidden;margin:0}
+body{font:15px/1.4 "Public Sans",system-ui,sans-serif;color:var(--ink);background:var(--page);display:grid;grid-template-columns:232px 1208px}
+.mono,.n{font-family:"Courier Prime",monospace;font-variant-numeric:tabular-nums}
+nav{background:var(--baize);color:#fff;height:900px;padding:24px 16px;display:flex;flex-direction:column}
+.brand{font-weight:700;font-size:20px;letter-spacing:-.01em;padding:0 8px 24px;border-bottom:1px solid #ffffff33;margin-bottom:16px}
+.brand small{display:block;font-weight:400;font-size:12px;opacity:.75;letter-spacing:0}
+nav a{display:flex;align-items:center;gap:8px;height:40px;padding:0 8px;border-radius:6px;color:#E6EFE9;text-decoration:none;font-size:14px}
+nav a b{font:400 12px "Courier Prime",monospace;width:16px;opacity:.7}
+nav a.on{background:#fff;color:var(--baize);font-weight:700}
+nav .sep{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65;padding:16px 8px 8px}
+nav .foot{margin-top:auto;font-size:12px;opacity:.8;padding:0 8px;line-height:1.5}
+.main{height:900px;display:flex;flex-direction:column}
+header{background:var(--baize);color:#fff;height:104px;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #17392B}
+h1{margin:0;font-size:26px;font-weight:600;letter-spacing:-.01em}
+.sub{margin-top:4px;font-size:14px;color:#D6E4DB}
+.sub b{color:#fff;font-weight:600}
+.state{border:1.5px solid var(--pin);color:#fff;background:#D7392B33;border-radius:4px;padding:4px 8px;font:700 12px "Courier Prime",monospace;text-transform:uppercase;letter-spacing:.04em}
+.edit{margin-top:8px;text-align:right;font-size:13px;color:#D6E4DB}
+.grid{flex:1;display:grid;grid-template-columns:1fr 344px;grid-template-rows:auto 1fr;gap:16px;padding:16px 24px 24px;min-height:0}
+.panel{background:var(--paper);border:1px solid var(--rule);border-radius:4px;position:relative;padding:24px 16px 0;display:flex;flex-direction:column}
+.tab{position:absolute;top:-1px;left:16px;transform:translateY(-50%);background:var(--baize);color:#fff;font:700 11px/20px "Courier Prime",monospace;letter-spacing:.08em;text-transform:uppercase;padding:0 8px;border-radius:3px}
+.dom{grid-row:1/3;padding:24px 24px 0}
+.furn{margin-top:auto;border-top:1px solid var(--rule);height:40px;display:flex;align-items:center;gap:16px;font:400 12px "Courier Prime",monospace;color:var(--mute);margin-left:-8px;margin-right:-8px;padding:0 8px}
+.furn span:last-child{margin-left:auto}
+.lead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-bottom:16px;border-bottom:1px solid var(--rule)}
+.big{font-size:32px;line-height:1.15;font-weight:700;letter-spacing:-.02em;margin:0}
+.big em{font-style:normal}
+.lead p{margin:8px 0 0;color:var(--mute);font-size:14px;max-width:520px}
+.stamp{flex:none;border:2px solid var(--stamp);outline:1px solid var(--stamp);outline-offset:2px;color:var(--stamp);border-radius:4px;padding:4px 8px;font:700 12px/1.3 "Courier Prime",monospace;text-transform:uppercase;letter-spacing:.04em;text-align:center;margin:3px}
+.stamp.sm{font-size:10px;padding:0 4px;outline:0;border-width:1.5px;margin:0;display:inline-block;white-space:nowrap}
+.cols{display:grid;grid-template-columns:1.25fr 1fr;gap:24px;margin-top:16px}
+.cols+.cols{margin-top:16px;grid-template-columns:1fr 1fr}
+h3{margin:0 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);font-weight:600;display:flex;justify-content:space-between}
+h3 .mono{text-transform:none;letter-spacing:0;font-weight:400}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px}
+th{font-size:11px;font-weight:600;color:var(--mute);text-align:left;height:24px;border-bottom:1px solid var(--ink)}
+td{height:32px;border-bottom:1px solid var(--rule);padding:0;white-space:nowrap;overflow:hidden}
+tr:last-child td{border-bottom:0}
+th.r,td.n{text-align:right}
+td.n{font-size:14px;font-weight:700;padding-right:8px}
+td.p{color:var(--mute);font-size:13px}
+th.r{padding-right:8px}
+.bar{display:block;height:8px;background:var(--baize);border-radius:1px;opacity:.85}
+.hl{background:linear-gradient(transparent 14%,var(--hl) 14%,var(--hl) 88%,transparent 88%);padding:2px 6px;margin:0 -6px;font-weight:600}
+.you{font-size:12px;color:var(--mute);margin-top:8px}
+.you .hl{font-weight:500;padding:1px 6px}
+.next{padding-bottom:0}
+.next p{margin:0 0 16px;font-size:15px}
+.btn{display:block;background:var(--baize);color:#fff;text-align:left;text-decoration:none;font-weight:600;font-size:15px;line-height:1.3;padding:12px 16px;border-radius:6px;border:0;width:100%;box-shadow:inset 0 -3px 0 #17392B}
+.btn:focus-visible,.btn:hover{background:var(--baize2);outline:3px solid var(--hl);outline-offset:2px}
+.next .alt{margin:16px 0;font-size:13px;color:var(--mute)}
+.next .alt a{color:var(--baize);font-weight:600}
+.sure dl{margin:0;display:grid;grid-template-columns:104px 1fr;font-size:13px}
+.sure dt{color:var(--mute);height:32px;line-height:32px;border-bottom:1px solid var(--rule)}
+.sure dd{margin:0;height:32px;line-height:32px;border-bottom:1px solid var(--rule);font-weight:600}
+.sure dd.mono{font-weight:400}
+.sure p{font-size:13px;color:var(--mute);margin:8px 0 16px}
+</style></head><body>
+<nav>
+ <div class="brand">AfterDegree<small>Where people like you ended up</small></div>
+ <a class="on" href="#"><b>~</b>Home</a>
+ <div class="sep">Eight tools</div>
+ <a href="#"><b>1</b>People Like Me</a><a href="#"><b>2</b>Internship-to-Job Chances</a><a href="#"><b>3</b>Conversion Map</a><a href="#"><b>4</b>Reverse Career GPS</a>
+ <a href="#"><b>5</b>Routes to Positions</a><a href="#"><b>6</b>Job Posting Analysis</a><a href="#"><b>7</b>Indian-Friendly Companies</a><a href="#"><b>8</b>Market Saturation</a>
+ <div class="foot">Counts come from public professional profiles. Aggregates only, no individual is shown.</div>
+</nav>
+<div class="main">
+<header>
+ <div><h1>Welcome back, Riya. Here is where people like you are now.</h1>
+  <div class="sub"><b>Riya Menon</b> · BTech CSE, VIT Vellore '22 · 2 yrs at Infosys · Aiming: MS + data role in Germany</div></div>
+ <div><span class="state">Example data</span><div class="edit">Not right? Edit my profile</div></div>
+</header>
+<div class="grid">
+ <section class="panel dom"><span class="tab">People like me · 01</span>
+  <div class="lead"><div>
+   <h2 class="big">At least <em class="hl">214 of 312</em> people with your background now live abroad.</h2>
+   <p>These are people who studied BTech CSE at a similar college and had 0 to 4 years of work by 2022. The other 98 are still in India, and many of them are doing well too.</p></div>
+   <div class="stamp">Attested<br>214/312<br>Nov 2026</div></div>
+  <div class="cols">
+   <div><h3>Where they live now <span class="mono">of 312</span></h3>
+    <table><colgroup><col style="width:34%"><col style="width:16%"><col><col style="width:44px"></colgroup>
+    <tr><th>Place</th><th class="r">People</th><th>Share</th><th class="r">%</th></tr>
+    <tr><td>Still in India</td><td class="n">98</td><td><i class="bar" style="width:100%"></i></td><td class="n p">31%</td></tr>
+    <tr><td><span class="hl">Germany</span></td><td class="n">71</td><td><i class="bar" style="width:72%"></i></td><td class="n p">23%</td></tr>
+    <tr><td>United States</td><td class="n">58</td><td><i class="bar" style="width:59%"></i></td><td class="n p">19%</td></tr>
+    <tr><td>United Kingdom</td><td class="n">34</td><td><i class="bar" style="width:35%"></i></td><td class="n p">11%</td></tr>
+    <tr><td>Canada</td><td class="n">27</td><td><i class="bar" style="width:28%"></i></td><td class="n p">9%</td></tr>
+    <tr><td>Netherlands</td><td class="n">15</td><td><i class="bar" style="width:15%"></i></td><td class="n p">5%</td></tr>
+    <tr><td>Other countries</td><td class="n">9</td><td><i class="bar" style="width:9%"></i></td><td class="n p">3%</td></tr></table></div>
+   <div><h3>Further degrees <span class="mono">of 312</span></h3>
+    <table><colgroup><col style="width:46%"><col style="width:20%"><col></colgroup>
+    <tr><th>Degree</th><th class="r">People</th><th>Share</th></tr>
+    <tr><td><span class="hl">MS / MSc</span></td><td class="n">121</td><td><i class="bar" style="width:100%"></i></td></tr>
+    <tr><td>MBA</td><td class="n">19</td><td><i class="bar" style="width:16%"></i></td></tr>
+    <tr><td>PhD</td><td class="n">6</td><td><i class="bar" style="width:5%"></i></td></tr>
+    <tr><td>None listed</td><td class="n">166</td><td><i class="bar" style="width:100%;background:#9AA39C"></i></td></tr></table>
+    <div class="you"><span class="hl">Yellow</span> marks the route you told us you are aiming for.</div>
+    <div class="you">Of the 121 with an MS, at least 64 are in Germany.</div></div>
+  </div>
+  <div class="cols">
+   <div><h3>Top roles now <span class="mono">of 214 abroad</span></h3>
+    <table><colgroup><col style="width:56%"><col style="width:20%"><col></colgroup>
+    <tr><th>Role</th><th class="r">People</th><th>Share</th></tr>
+    <tr><td><span class="hl">Data Scientist</span></td><td class="n">46</td><td><i class="bar" style="width:100%"></i></td></tr>
+    <tr><td>Software Engineer</td><td class="n">41</td><td><i class="bar" style="width:89%"></i></td></tr>
+    <tr><td>Data Engineer</td><td class="n">29</td><td><i class="bar" style="width:63%"></i></td></tr>
+    <tr><td>ML Engineer</td><td class="n">22</td><td><i class="bar" style="width:48%"></i></td></tr></table></div>
+   <div><h3>Top employers <span class="mono">of 214 abroad</span></h3>
+    <table><colgroup><col style="width:56%"><col style="width:20%"><col></colgroup>
+    <tr><th>Employer</th><th class="r">People</th><th>Share</th></tr>
+    <tr><td>SAP</td><td class="n">18</td><td><i class="bar" style="width:100%"></i></td></tr>
+    <tr><td>Siemens</td><td class="n">12</td><td><i class="bar" style="width:67%"></i></td></tr>
+    <tr><td>Amazon</td><td class="n">11</td><td><i class="bar" style="width:61%"></i></td></tr>
+    <tr><td>Bosch</td><td class="n">9</td><td><i class="bar" style="width:50%"></i></td></tr></table></div>
+  </div>
+  <div class="furn"><span>n = 312</span><span>Coverage 81%</span><span>Data to 1 Nov 2026</span><span>Example data</span></div>
+ </section>
+ <section class="panel next"><span class="tab">Your next step</span>
+  <p>Germany is where <b class="n">71</b> people like you are now. The next question is how often an internship there turned into a job.</p>
+  <a class="btn" href="#">See your Internship-to-Job chances in Germany &rarr;</a>
+  <div class="alt">Or <a href="#">see which companies in Germany hire Indian graduates</a>.</div>
+  <div class="furn"><span>n = 71</span><span>Coverage 76%</span><span>1 Nov 2026</span></div>
+ </section>
+ <section class="panel sure"><span class="tab">How sure are we</span>
+  <dl><dt>Counted</dt><dd class="mono">At least 214 of 312</dd>
+   <dt>Marked</dt><dd><span class="stamp sm">Attested · 214/312 · Nov 2026</span></dd>
+   <dt>Coverage</dt><dd class="mono">81% have a known location</dd>
+   <dt>Data date</dt><dd class="mono">1 Nov 2026</dd></dl>
+  <p>Some profiles are out of date, so real numbers are likely a little higher. Missing is not the same as bad news.</p>
+  <div class="furn"><span>n = 312</span><span>Coverage 81%</span><span>1 Nov 2026</span></div>
+ </section>
+</div></div>
+</body></html>
