@@ -133,8 +133,37 @@ export function drillMockActive(): boolean {
   }
 }
 
+/** Set once the engine answers 404 to POST /drill: it has no drill endpoint yet, so drill-downs
+ * fall back to the labelled example fixtures instead of failing. */
+const FALLBACK_KEY = "afterdegree.drill-fallback";
+let drillEndpointMissing = (() => {
+  try {
+    return typeof window !== "undefined" && window.sessionStorage.getItem(FALLBACK_KEY) === "1";
+  } catch {
+    return false;
+  }
+})();
+
+/** True when drill-downs are showing the built-in example data (mock mode or no engine endpoint). */
+export function drillUsesExamples(): boolean {
+  return drillMockActive() || drillEndpointMissing;
+}
+
 async function drillRequest<T>(method: Method, path: string, body?: unknown): Promise<T> {
-  if (drillMockActive()) {
+  if (!drillMockActive() && !drillEndpointMissing && method === "POST" && path === "/drill") {
+    try {
+      return await liveRequest<T>(method, path, body);
+    } catch (e) {
+      if (!(e instanceof ApiError && (e.status === 404 || e.status === 405))) throw e;
+      drillEndpointMissing = true;
+      try {
+        window.sessionStorage.setItem(FALLBACK_KEY, "1");
+      } catch {
+        /* storage blocked: fallback lasts for this page only */
+      }
+    }
+  }
+  if (drillMockActive() || drillEndpointMissing) {
     const { mockRequest } = await import("@/mocks/server");
     const { status, body: out } = await mockRequest(method, path, body);
     if (status >= 400) throw new ApiError(status, (out as { error: ApiErrorBody }).error);

@@ -31,7 +31,7 @@
   opacity: 1;
 }
 .control:hover {
-  background: #faf8f6;
+  background: var(--ad-paper-sunk);
 }
 .control:focus-visible {
   outline: 2px solid var(--ad-blue);

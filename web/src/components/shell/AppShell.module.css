@@ -28,7 +28,7 @@
   padding: 0 var(--ad-space-3);
   font-family: var(--ad-font-head);
   font-size: 20px;
-  color: var(--ad-paper);
+  color: var(--ad-rail-text);
   font-weight: 700;
   letter-spacing: 0;
   text-decoration: none;
@@ -79,7 +79,7 @@
   --ad-focus: var(--ad-paper);
 }
 .link[aria-current="page"]:focus-visible {
-  outline-color: var(--ad-paper);
+  outline-color: var(--ad-rail-text);
 }
 .me {
   display: flex;
@@ -149,8 +149,8 @@
     gap: var(--ad-space-1);
     min-height: 40px;
     padding: 0 12px;
-    border: 1px solid var(--ad-paper);
-    color: var(--ad-paper);
+    border: 1px solid var(--ad-rail-text);
+    color: var(--ad-rail-text);
     font-weight: 700;
   }
   .menuButton[aria-expanded="true"] {

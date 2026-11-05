@@ -13,7 +13,7 @@ import { PersonTile } from "@/components/tiles/PersonTile";
 import { ExampleBadge } from "@/components/ui/ExampleBadge";
 import { InlineError } from "@/components/ui/InlineError";
 import { Chevron } from "@/components/ui/Chevron";
-import { IS_MOCK, drillMockActive } from "@/lib/api";
+import { IS_MOCK, drillUsesExamples } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { DrillHeader } from "./DrillHeader";
 import { CareerTimeline } from "./CareerTimeline";
@@ -181,7 +181,7 @@ export function PersonView() {
   const prev = idx > 0 ? people[idx - 1] : null;
   const next = idx >= 0 && idx < people.length - 1 ? people[idx + 1] : null;
   const where = from?.path[from.path.length - 1]?.label;
-  const example = IS_MOCK || drillMockActive();
+  const example = IS_MOCK || drillUsesExamples();
 
   useEffect(() => {
     if (person) document.title = `${person.headline} · AfterDegree`;

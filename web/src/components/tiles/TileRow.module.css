@@ -30,7 +30,7 @@
   letter-spacing: -0.01em;
 }
 .band .title {
-  color: var(--ad-paper);
+  color: var(--ad-band-text);
 }
 .head > span[class*="badge"] {
   align-self: center;

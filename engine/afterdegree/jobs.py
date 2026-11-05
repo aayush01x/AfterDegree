@@ -9,6 +9,7 @@ import secrets
 from collections.abc import AsyncIterator
 from typing import Any
 
+from .drill_tokens import attach_drill_tokens
 from .config import Settings
 from .crustdata import CrustdataClient, CrustdataError
 from .db import Store
@@ -84,6 +85,7 @@ class JobRunner:
         try:
             result = await run_fn(ctx)
             payload = json.loads(result.model_dump_json(by_alias=True))
+            payload = attach_drill_tokens(tool, params, payload)
             total = ctx.total_steps
             self._set(job_id, status="done", progress={"step": "Done", "done": total, "total": total}, result=payload)
         except ToolInputError as exc:

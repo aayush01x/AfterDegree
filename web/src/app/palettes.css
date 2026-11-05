@@ -121,3 +121,216 @@
   --stage-gap: #e4dfda;
   --stage-edge: #111111;
 }
+
+/* ------------------------------------------------------------------
+   Blueprint Paper: pale grid paper, navy rail and band, one Crouwel
+   blue accent, soft pastel tiles (from mocks/blend/variants).
+   ------------------------------------------------------------------ */
+[data-palette="blueprint"] {
+  --ad-field: #eef1f5;
+  --ad-grid-line: rgb(195 208 230 / 0.8);
+  --ad-paper: #ffffff;
+  --ad-ink: #161b24;
+  --ad-rule: #b4c0d2;
+  --ad-rule-soft: #dce2eb;
+  --ad-muted: #4f5968;
+  --ad-hollow: #8e9bb0;
+  --ad-paper-sunk: #f5f7fa;
+  --ad-on-field: #161b24;
+  --ad-on-field-muted: #3a4558;
+
+  --ad-rail: #1c2433;
+  --ad-rail-text: #e4e9f2;
+  --ad-rail-muted: #a9b4c6;
+  --ad-rail-rule: #333e52;
+  --ad-rail-hover: #283246;
+  --ad-rail-active: #2d5bd3;
+  --ad-rail-active-ink: #ffffff;
+
+  --ad-band: #1c2433;
+  --ad-band-text: #e4e9f2;
+  --ad-band-muted: #a9b4c6;
+  --ad-band-rule: #8d9ab0;
+  --ad-band-control: #e4e9f2;
+
+  --ad-accent: #2d5bd3;
+  --ad-accent-ink: #ffffff;
+  --ad-accent-soft: #dce4f2;
+
+  --ad-key: #2d5bd3;
+  --ad-focus-paper: #2d5bd3;
+  --ad-dot: rgb(45 91 211 / 0.3);
+  --ad-scrim: rgb(22 27 36 / 0.45);
+
+  --ad-error: #b3261e;
+  --ad-error-paper: #fdf0ef;
+  --ad-ok: #2f6b4a;
+  --ad-warn: #8a5a00;
+
+  --art-ink: #1c2433;
+  --art-light: #f7f9fc;
+  --art-sun: #ede0c0;
+  --art-tint: #c9d6ea;
+  --art-glow: #e2875a;
+  --art-water: #7290c2;
+  --art-mix-ink: 45%;
+  --art-mix-light: 30%;
+  --art-mix-sun: 25%;
+  --art-mix-tint: 25%;
+  --art-deep-mix: 70%;
+  --art-gap: transparent;
+
+  --art-de: #f3d3be;
+  --art-de-on: #c9794f;
+  --art-us: #9db3d6;
+  --art-us-on: #5a78ae;
+  --art-uk: #d1a3a8;
+  --art-uk-on: #9a6670;
+  --art-ca: #a6bb9f;
+  --art-ca-on: #6b8564;
+  --art-nl: #d8c08a;
+  --art-nl-on: #9e8248;
+  --art-in: #93bdb8;
+  --art-in-on: #4f8a83;
+  --art-other: #ada6c9;
+  --art-other-on: #6e6698;
+
+  --art-1: #9db3d6;
+  --art-1-on: #4a6aa3;
+  --art-2: #ada6c9;
+  --art-2-on: #6e6698;
+  --art-3: #93bdb8;
+  --art-3-on: #4f8a83;
+  --art-4: #d1a3a8;
+  --art-4-on: #9a6670;
+  --art-5: #c3bdb0;
+  --art-5-on: #857e6f;
+  --art-6: #d8c08a;
+  --art-6-on: #9e8248;
+  --art-7: #c9d6ea;
+  --art-7-on: #4a6aa3;
+  --art-8: #ede0c0;
+  --art-8-on: #9e8248;
+
+  --route-1: #9db3d6;
+  --route-2: #a6bb9f;
+  --route-3: #d8c08a;
+  --route-4: #d1a3a8;
+  --route-path: #1c2433;
+  --route-node: #ffffff;
+
+  --stage-study: #9db3d6;
+  --stage-work-in: #93bdb8;
+  --stage-masters: #d8c08a;
+  --stage-intern: #d1a3a8;
+  --stage-fulltime: #2d5bd3;
+  --stage-gap: #dce2eb;
+  --stage-edge: #1c2433;
+}
+
+/* ------------------------------------------------------------------
+   Night Ink: dark blue-grey, soft amber accent, dusty tiles.
+   Paper and ink swap roles: panels are a raised dark surface and
+   "ink" is the warm off-white text.
+   ------------------------------------------------------------------ */
+[data-palette="night"] {
+  --ad-field: #1e2229;
+  --ad-grid-line: rgb(48 54 64 / 0.9);
+  --ad-paper: #2a2f37;
+  --ad-ink: #e8e4dc;
+  --ad-rule: #3a404a;
+  --ad-rule-soft: #353b44;
+  --ad-muted: #a9a49b;
+  --ad-hollow: #6a717c;
+  --ad-paper-sunk: #23272e;
+  --ad-on-field: #e8e4dc;
+  --ad-on-field-muted: #a9a49b;
+
+  --ad-rail: #16191e;
+  --ad-rail-text: #d9d4cb;
+  --ad-rail-muted: #a9a49b;
+  --ad-rail-rule: #2a2f37;
+  --ad-rail-hover: #20242b;
+  --ad-rail-active: #e0a458;
+  --ad-rail-active-ink: #16191e;
+
+  --ad-band: #262b33;
+  --ad-band-text: #e8e4dc;
+  --ad-band-muted: #a9a49b;
+  --ad-band-rule: #4a515c;
+  --ad-band-control: #e8e4dc;
+
+  --ad-accent: #e0a458;
+  --ad-accent-ink: #16191e;
+  --ad-accent-soft: #3a3326;
+
+  --ad-key: #8fa8e0;
+  --ad-focus-paper: #8fa8e0;
+  --ad-dot: rgb(120 128 140 / 0.55);
+  --ad-scrim: rgb(0 0 0 / 0.55);
+
+  --ad-error: #f08a80;
+  --ad-error-paper: #3a2626;
+  --ad-ok: #6cc28f;
+  --ad-warn: #e0b04f;
+
+  --art-ink: #15181d;
+  --art-light: #ede6d8;
+  --art-sun: #e0b967;
+  --art-tint: #8fa8e0;
+  --art-glow: #e0a458;
+  --art-water: #4f6b93;
+  --art-mix-ink: 35%;
+  --art-mix-light: 35%;
+  --art-mix-sun: 30%;
+  --art-mix-tint: 30%;
+  --art-deep-mix: 60%;
+  --art-gap: transparent;
+
+  --art-de: #b89a4e;
+  --art-de-on: #15181d;
+  --art-us: #4f6b93;
+  --art-us-on: #ede6d8;
+  --art-uk: #8a4f66;
+  --art-uk-on: #ede6d8;
+  --art-ca: #4f7a62;
+  --art-ca-on: #ede6d8;
+  --art-nl: #8a9150;
+  --art-nl-on: #15181d;
+  --art-in: #3f7b78;
+  --art-in-on: #ede6d8;
+  --art-other: #6e5f8f;
+  --art-other-on: #ede6d8;
+
+  --art-1: #4f6b93;
+  --art-1-on: #c9d3e6;
+  --art-2: #6e5f8f;
+  --art-2-on: #d8d1e6;
+  --art-3: #4f7a62;
+  --art-3-on: #cfe0d5;
+  --art-4: #8a4f66;
+  --art-4-on: #e8cfd9;
+  --art-5: #3f7b78;
+  --art-5-on: #cce3e1;
+  --art-6: #8a9150;
+  --art-6-on: #15181d;
+  --art-7: #8fa8e0;
+  --art-7-on: #15181d;
+  --art-8: #b89a4e;
+  --art-8-on: #15181d;
+
+  --route-1: #b89a4e;
+  --route-2: #4f7a62;
+  --route-3: #8a9150;
+  --route-4: #8a4f66;
+  --route-path: #15181d;
+  --route-node: #e8e4dc;
+
+  --stage-study: #6e5f8f;
+  --stage-work-in: #3f7b78;
+  --stage-masters: #b89a4e;
+  --stage-intern: #8a4f66;
+  --stage-fulltime: #e0a458;
+  --stage-gap: #3a404a;
+  --stage-edge: #e8e4dc;
+}

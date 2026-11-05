@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 import { TOOLS } from "@/lib/tools";
 import { firstName, initials } from "@/lib/format";
 import { Slash } from "@/components/ui/Slash";
@@ -18,15 +18,31 @@ const PERSONA_LABEL = {
 } as const;
 
 function NavLink({ href, children, onNavigate }: { href: string; children: ReactNode; onNavigate: () => void }) {
+  // The active state reads the URL, which on dynamic routes must sit inside <Suspense>.
+  const plain = (
+    <Link href={href} className={styles.link} onClick={onNavigate}>
+      <span>{children}</span>
+    </Link>
+  );
+  return (
+    <li>
+      <Suspense fallback={plain}>
+        <ActiveAwareLink href={href} onNavigate={onNavigate}>
+          {children}
+        </ActiveAwareLink>
+      </Suspense>
+    </li>
+  );
+}
+
+function ActiveAwareLink({ href, children, onNavigate }: { href: string; children: ReactNode; onNavigate: () => void }) {
   const pathname = usePathname();
   const active = pathname === href || (href !== "/home" && pathname.startsWith(href));
   return (
-    <li>
-      <Link href={href} className={styles.link} aria-current={active ? "page" : undefined} onClick={onNavigate}>
-        <span>{children}</span>
-        {active && <Slash />}
-      </Link>
-    </li>
+    <Link href={href} className={styles.link} aria-current={active ? "page" : undefined} onClick={onNavigate}>
+      <span>{children}</span>
+      {active && <Slash />}
+    </Link>
   );
 }
 

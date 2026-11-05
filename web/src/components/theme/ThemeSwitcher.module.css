@@ -1,0 +1,39 @@
+.switcher {
+  position: fixed;
+  top: var(--ad-space-2);
+  right: var(--ad-space-3);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: var(--ad-space-1);
+  padding: 4px 4px 4px var(--ad-space-2);
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-rule);
+  color: var(--ad-ink);
+  font-family: var(--font-ui), system-ui, sans-serif;
+  font-size: 13px;
+}
+.label {
+  font-weight: 600;
+}
+.select {
+  appearance: auto;
+  min-height: 32px;
+  padding: 0 var(--ad-space-1);
+  border: 1px solid var(--ad-rule);
+  border-radius: 0;
+  background: var(--ad-paper-sunk);
+  color: var(--ad-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.select:focus-visible {
+  outline: 2px solid var(--ad-focus-paper);
+  outline-offset: 2px;
+}
+@media (max-width: 900px) {
+  .switcher {
+    top: auto;
+    bottom: var(--ad-space-2);
+  }
+}

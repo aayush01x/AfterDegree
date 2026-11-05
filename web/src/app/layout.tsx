@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo, Chakra_Petch } from "next/font/google";
 import "./palettes.css";
 import "./globals.css";
+import { ThemeSwitcher, THEME_KEY } from "@/components/theme/ThemeSwitcher";
 
 /** The active colour palette (a token block in palettes.css). Swap palettes here. */
 const PALETTE = "signal";
@@ -33,8 +34,19 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-palette={PALETTE} className={`${display.variable} ${ui.variable}`}>
-      <body>{children}</body>
+    <html lang="en" data-palette={PALETTE} className={`${display.variable} ${ui.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Apply the saved theme before first paint so pages never flash the default palette. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem(${JSON.stringify(THEME_KEY)});if(t==="signal"||t==="blueprint"||t==="night")document.documentElement.dataset.palette=t}catch(e){}`,
+          }}
+        />
+      </head>
+      <body>
+        {children}
+        <ThemeSwitcher />
+      </body>
     </html>
   );
 }

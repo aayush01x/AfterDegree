@@ -174,11 +174,11 @@ async function checkHome(page, name) {
   console.log(`\n== home (${name})`);
   try {
     await page.waitForFunction(
-      () => document.querySelector('main svg[role="img"]') && document.querySelector('ul[role="list"][aria-label]') && !/Counting /.test(document.body.innerText),
+      () => document.querySelector('main svg[role="img"]') && document.querySelector("[data-tile]") && !/Counting /.test(document.body.innerText),
       { timeout: 90000 },
     );
   } catch {
-    fail(current, "home did not finish rendering (GridNumber/waffle) in 90s");
+    fail(current, "home did not finish rendering (hero number + tiles) in 90s");
   }
   await sleep(1500); // let the assemble animation settle
   await shot(page, `${name}-5-home`);
@@ -186,15 +186,16 @@ async function checkHome(page, name) {
   if (a.length) fail(current, `error state: ${a.join(" | ")}`);
   const info = await page.evaluate(() => ({
     gridNumber: [...document.querySelectorAll('svg[role="img"]')].map((s) => s.getAttribute("aria-label")),
-    waffleRows: document.querySelectorAll('ul[role="list"][aria-label] > li').length,
+    tiles: document.querySelectorAll("[data-tile]").length,
+    drills: document.querySelectorAll('[aria-label$="see who"], [aria-label$="see who this is"]').length,
     panels: document.querySelectorAll("section[aria-labelledby]").length,
     panelTitles: [...document.querySelectorAll("section[aria-labelledby]")].map((s) => document.getElementById(s.getAttribute("aria-labelledby"))?.innerText),
   }));
   console.log("  ", JSON.stringify(info));
   if (!info.gridNumber.length) fail(current, "no GridNumber");
-  if (info.waffleRows < 1) fail(current, "cohort waffle has no rows");
-  if (info.panels < 4) fail(current, `expected waffle panel + 3 panels, found ${info.panels}: ${info.panelTitles}`);
-  else ok(`GridNumber ${info.gridNumber[0]}, waffle rows ${info.waffleRows}, panels: ${info.panelTitles.join(" / ")}`);
+  if (info.tiles < 1) fail(current, "no tiles on home");
+  if (info.panels < 3) fail(current, `expected 3 tile rows, found ${info.panels}: ${info.panelTitles}`);
+  else ok(`GridNumber ${info.gridNumber[0]}, tiles ${info.tiles}, drill actions ${info.drills}, rows: ${info.panelTitles.join(" / ")}`);
   await checkText(page, current);
 }
 
