@@ -331,7 +331,7 @@ export function View({ result }: { result: ResultEnvelope }) {
       </Panel>
 
       <GoalEditor key={goalText(goal)} initial={goal} evidence={evNode} />
-      {goalSection && <p className={styles.read}>{(goalSection.data as TextData).text}</p>}
+      {goalSection && <p className={`${styles.read} visually-hidden`}>{(goalSection.data as TextData).text}</p>}
 
       {/* 2. Thin data */}
       {isThin && (

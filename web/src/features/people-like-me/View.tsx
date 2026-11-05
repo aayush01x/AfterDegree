@@ -24,6 +24,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Tabs } from "@/components/ui/Tabs";
 import { ExampleBadge } from "@/components/ui/ExampleBadge";
+import { useProfile } from "@/components/shell/ProfileContext";
 import { BANDS, MATCH_LEVELS } from "./config";
 import styles from "./View.module.css";
 
@@ -67,6 +68,8 @@ function shareText(count: number, n: number) {
 
 export function View({ result }: { result: ResultEnvelope }) {
   const router = useRouter();
+  const { university } = useProfile();
+  const who = university ? "your graduates" : "people like you";
   const { sections, cohort } = result;
 
   const countries = find(sections, "countries", "distribution")?.data as DistributionData | undefined;
@@ -165,9 +168,9 @@ export function View({ result }: { result: ResultEnvelope }) {
         )}
 
         {cohort && (
-          <Panel title="Who counts as like you" className={styles.cohort}>
+          <Panel title={university ? "Which graduates count" : "Who counts as like you"} className={styles.cohort}>
             <p className={styles.def}>{cohort.definition}</p>
-            <div className={styles.chipGroup} role="group" aria-label="How closely people match you">
+            <div className={styles.chipGroup} role="group" aria-label={university ? "How closely graduates match your programs" : "How closely people match you"}>
               {MATCH_LEVELS.map((m) => (
                 <Chip
                   key={m.value}
@@ -208,7 +211,7 @@ export function View({ result }: { result: ResultEnvelope }) {
           {thin && wider && (
             <p className={styles.actions}>
               <ButtonLink variant="secondary" size="sm" href={toolHref("people_like_me", { match: wider.match, exp_band: wider.band })}>
-                Widen who counts as like you
+                {university ? "Widen which graduates count" : "Widen who counts as like you"}
               </ButtonLink>
             </p>
           )}
@@ -234,7 +237,7 @@ export function View({ result }: { result: ResultEnvelope }) {
             </div>
           )}
           <Panel
-            title={countries.n ? `Where the ${fmtInt(countries.n)} are now` : "Where they are now"}
+            title={countries.n ? (university ? `Where your ${fmtInt(countries.n)} graduates are now` : `Where the ${fmtInt(countries.n)} are now`) : "Where they are now"}
             caption={countries.caption}
             evidence={evidence}
             className={styles.waffle}
@@ -245,11 +248,11 @@ export function View({ result }: { result: ResultEnvelope }) {
               unit={countries.unit}
               selected={selected}
               onSelect={setSelected}
-              label="People like you by current country"
+              label={`${university ? "Your graduates" : "People like you"} by current country`}
             />
             <p className={styles.readout} aria-live="polite">
               {picked
-                ? `${picked.label}: ${shareText(picked.count, countries.n)} people like you.`
+                ? `${picked.label}: ${shareText(picked.count, countries.n)} ${who}.`
                 : "Choose a country to see how many people are there."}
             </p>
           </Panel>
@@ -258,7 +261,7 @@ export function View({ result }: { result: ResultEnvelope }) {
 
       {tabs.length > 0 && (
         <Panel title="In more detail" evidence={evidence}>
-          <Tabs label="Details about people like you" tabs={tabs} />
+          <Tabs label={`Details about ${who}`} tabs={tabs} />
         </Panel>
       )}
 

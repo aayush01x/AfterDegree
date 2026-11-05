@@ -32,6 +32,16 @@ export interface FeatureModule {
   config?: FeatureConfig;
   /** Contract-valid Result for mock mode: a fixed envelope or a function of the run. */
   mockResult?: ResultEnvelope | ((ctx: MockContext) => ResultEnvelope);
+  /** Narrow-request variant in mock mode (thin cohort). Served when the request is narrow (exp_band max < 1) or the page URL has `?thin=1`. */
+  mockResultThin?: ResultEnvelope | ((ctx: MockContext) => ResultEnvelope);
   /** Tool-specific result view; falls back to <ResultView result={…} />. */
   View?: ComponentType<FeatureViewProps>;
+  /**
+   * Convert the flat string form values (dotted names stay flat, e.g. "scope.school") to the
+   * contract request body, e.g. people-like-me turns exp_band "1,3" into [1, 3].
+   * ToolScreen uses it before sending the request.
+   */
+  toParams?(values: Record<string, string>): object;
+  /** Alias of toParams for features that name it toBody. */
+  toBody?(values: Record<string, string>): object;
 }

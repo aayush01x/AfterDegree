@@ -1,5 +1,6 @@
 import { makeCount as count } from "@/lib/count";
-import type { Cohort, Evidence, ResultEnvelope, Section } from "@/lib/types";
+import type { Cohort, Evidence, MatchLevel, ResultEnvelope, Section } from "@/lib/types";
+import type { MockContext } from "../types";
 
 const DATA_DATE = "2026-11-06";
 const FETCHED = "2026-11-06T09:52:00Z";
@@ -163,7 +164,7 @@ const sections: Section[] = [
 ];
 
 /** Riya Menon, exact school, 1 to 3 years: a full, high-confidence cohort. */
-export const mockResult: ResultEnvelope = {
+const baseResult: ResultEnvelope = {
   tool: "people_like_me",
   title: "Where people like you are now",
   summary:
@@ -184,6 +185,123 @@ export const mockResult: ResultEnvelope = {
   warnings: [EXAMPLE],
   evidence,
 };
+
+/* ------------------------------------------------------------------ */
+/* Variants: match level, experience band and the university lens       */
+/* ------------------------------------------------------------------ */
+
+const SCALE: Record<MatchLevel, number> = { exact_school: 1, school_tier: 486 / 312, field_only: 1920 / 312 };
+const TIER_DEFINITION: Record<MatchLevel, string> = {
+  exact_school: "BTech CSE graduates of VIT Vellore (2020–2024)",
+  school_tier: "BTech CSE graduates of private tier-1 colleges (2020–2024)",
+  field_only: "BTech CSE graduates of any Indian college (2020–2024)",
+};
+
+function bandFrom(v: unknown): [number, number] {
+  const parts = Array.isArray(v) ? v.map(Number) : typeof v === "string" ? v.split(",").map(Number) : [];
+  return parts.length === 2 && parts.every((x) => Number.isFinite(x)) ? [parts[0], parts[1]] : [1, 3];
+}
+
+const bandWords = (b: [number, number]) => (b[1] <= 1 ? "under 1 year of work" : `${b[0]}–${b[1]} years of work`);
+
+/** Scale a section's counts by k, keeping each section's own total consistent. */
+function scaleSection(sec: Section, k: number): Section {
+  const sc = (x: number) => Math.max(1, Math.round(x * k));
+  if (sec.kind === "distribution") {
+    const items = sec.data.items.map((i) => ({ ...i, count: sc(i.count) }));
+    const n = items.reduce((a, i) => a + i.count, 0);
+    const title = sec.title.replace(/\b\d[\d,]*\b/, String(n));
+    return { ...sec, title, data: { ...sec.data, n, items: items.map((i) => ({ ...i, share: i.count / n })) } };
+  }
+  if (sec.kind === "ranked_table") {
+    const total = sc(sec.data.n ?? 0);
+    const rows = sec.data.rows.map((r) => {
+      const cells = { ...r.cells };
+      if (!r.rest) cells.people = sc(Number(cells.people));
+      return { ...r, cells };
+    });
+    const named = rows.filter((r) => !r.rest).reduce((a, r) => a + Number(r.cells.people), 0);
+    for (const r of rows) if (r.rest) r.cells.people = Math.max(1, total - named);
+    return { ...sec, data: { ...sec.data, n: named + rows.filter((r) => r.rest).reduce((a, r) => a + Number(r.cells.people), 0), rows } };
+  }
+  if (sec.kind === "stat") {
+    if (sec.data.count) return { ...sec, data: { ...sec.data, count: count(sc(sec.data.count.k), sc(sec.data.count.n), sec.data.count.evidence_ids) } };
+    if (typeof sec.data.value === "number") return { ...sec, data: { ...sec.data, value: sc(sec.data.value) } };
+  }
+  return sec;
+}
+
+const untarget = <T extends { target?: boolean }>(i: T): T => ({ ...i, target: false });
+
+/** Reword the student result for the university lens: "your graduates", no personal target, program-level next step. */
+function universityLens(r: ResultEnvelope): ResultEnvelope {
+  const countries = r.sections.find((x) => x.id === "countries");
+  const n = countries?.kind === "distribution" ? countries.data.n : r.cohort?.n_visible ?? 0;
+  const abroad = countries?.kind === "distribution" ? countries.data.items.filter((i) => !i.remainder).reduce((a, i) => a + i.count, 0) : 0;
+  const sections = r.sections.map((sec): Section => {
+    if (sec.id === "cohort_size" && sec.kind === "stat") return { ...sec, title: "Your graduates" };
+    if (sec.id === "moved_abroad" && sec.kind === "stat") return { ...sec, data: { ...sec.data, label: "of your graduates now work outside India" } };
+    if (sec.id === "countries" && sec.kind === "distribution") {
+      return {
+        ...sec,
+        title: `Where your ${n} graduates are now`,
+        data: { ...sec.data, caption: "Each square is one graduate. Abroad first.", items: sec.data.items.map(untarget) },
+      };
+    }
+    if (sec.id === "roles" && sec.kind === "ranked_table") {
+      return { ...sec, data: { ...sec.data, rows: sec.data.rows.map((row) => ({ ...row, you: false })) } };
+    }
+    if (sec.id === "employers_target" && sec.kind === "ranked_table") return { ...sec, title: "Employers in Germany" };
+    if (sec.id === "degree_countries" && sec.kind === "distribution") {
+      return { ...sec, data: { ...sec.data, items: sec.data.items.map(untarget) } };
+    }
+    return sec;
+  });
+  return {
+    ...r,
+    title: "Where your graduates are now",
+    summary: `Of the ${n} graduates of your programs we can see, at least ${abroad} now work outside India. Germany and the United States are the most common destinations, and most of those who left took a master's first. A data role is the most common thing they do now.`,
+    cohort: r.cohort && { ...r.cohort, definition: r.cohort.definition.replace(/^BTech CSE graduates of VIT Vellore/, "Your BTech CSE graduates (VIT Vellore)").replace(/ with .*$/, "") },
+    sections,
+    next_steps: [
+      {
+        label: "See which programs feed Data Engineer roles in Germany",
+        tool: "routes_to_position",
+        params: { role: "Data Engineer", country: "Germany" },
+      },
+    ],
+  };
+}
+
+/** Honours `match` and `exp_band` from the run, and the university lens. */
+export function mockResult(ctx: MockContext): ResultEnvelope {
+  const match = (typeof ctx.params.match === "string" && ctx.params.match in SCALE ? ctx.params.match : "exact_school") as MatchLevel;
+  const band = bandFrom(ctx.params.exp_band);
+  const k = SCALE[match];
+  let r = baseResult;
+  if (match !== "exact_school" || band[0] !== 1 || band[1] !== 3) {
+    const sections = r.sections.map((sec) => scaleSection(sec, k));
+    const countries = sections.find((x) => x.id === "countries");
+    const dist = countries?.kind === "distribution" ? countries.data : null;
+    const n = dist?.n ?? r.cohort!.n_visible;
+    const abroad = dist ? dist.items.filter((i) => !i.remainder).reduce((a, i) => a + i.count, 0) : 0;
+    const f = { ...filters, exp_band: band, ...(match === "exact_school" ? {} : { school: match }) };
+    r = {
+      ...r,
+      sections,
+      cohort: { ...r.cohort!, definition: `${TIER_DEFINITION[match]} with ${bandWords(band)}`, filters: f, n_visible: n, match_level: match },
+      evidence: r.evidence.map((e) => ({
+        ...e,
+        filters: { ...e.filters, ...f },
+        total_count: Math.round(e.total_count * k),
+        results_used: Math.min(200, Math.round(e.total_count * k)),
+      })),
+      summary: r.summary ? r.summary.replace(/\b312\b/, String(n)).replace(/at least \d+/, `at least ${abroad}`) : null,
+      coverage_note: r.coverage_note?.replace(/\b312\b/, String(n)),
+    };
+  }
+  return ctx.university ? universityLens(r) : r;
+}
 
 /** A band this narrow leaves too few people: widened to similar colleges, still thin. */
 const thinFilters = { ...filters, school: "VIT Vellore (widened to private tier-1)", exp_band: [0, 1] };

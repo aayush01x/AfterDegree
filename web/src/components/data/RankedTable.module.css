@@ -142,3 +142,11 @@
   text-underline-offset: 3px;
   padding: 4px 0;
 }
+
+/* The inverted row is a filled band: keep its text off the band edges. */
+.you td:first-child {
+  padding-left: 8px;
+}
+.you td:last-child {
+  padding-right: 8px;
+}

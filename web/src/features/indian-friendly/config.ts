@@ -1,4 +1,4 @@
-import type { Derived, Goals } from "@/lib/types";
+import type { Goals } from "@/lib/types";
 import type { ToolField } from "@/lib/tools";
 
 /** Parameter form for Indian-Friendly Companies (CONTRACT: country required, role and city optional). */
@@ -17,7 +17,7 @@ export const fields: ToolField[] = [
     label: "Which kind of role?",
     kind: "text",
     placeholder: "Any role, e.g. Data Engineer",
-    help: "Optional. Narrowing it shows employers that hired Indian-educated people into this kind of work.",
+    help: "Narrowing it shows employers that hired Indian-educated people into this kind of work.",
     fromGoals: (g) => g.target_roles[0],
   },
   {
@@ -25,7 +25,7 @@ export const fields: ToolField[] = [
     label: "Which city?",
     kind: "text",
     placeholder: "Any city, e.g. Berlin",
-    help: "Optional. Leave blank to see the whole country.",
+    help: "Leave blank to see the whole country.",
     fromGoals: (g) => g.target_cities[0],
   },
 ];
@@ -39,7 +39,7 @@ export interface IndianFriendlyParams {
 }
 
 /** Defaults come from the stored goals; the profile does not change this form. */
-export function defaultsFrom(goals?: Goals | null, _derived?: Derived | null): IndianFriendlyValues {
+export function defaultsFrom(goals?: Goals | null): IndianFriendlyValues {
   return {
     country: goals?.target_countries[0] ?? "",
     role: goals?.target_roles[0] ?? "",

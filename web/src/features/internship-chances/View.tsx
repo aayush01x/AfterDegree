@@ -239,12 +239,11 @@ function CellGrid({ chance, groups, picked }: { chance: Count; groups: Group[]; 
       </div>
     );
   }
-  let idx = 0;
+  const starts = groups.map((_, i) => groups.slice(0, i).reduce((sum, x) => sum + x.seen, 0));
   return (
     <ul className={styles.groups} role="list">
-      {groups.map((g) => {
-        const start = idx;
-        idx += g.seen;
+      {groups.map((g, gi) => {
+        const start = starts[gi];
         const on = picked === g.key;
         return (
           <li

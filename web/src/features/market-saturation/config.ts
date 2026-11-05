@@ -1,4 +1,4 @@
-import type { Derived, Goals } from "@/lib/types";
+import type { Goals } from "@/lib/types";
 import type { ToolField } from "@/lib/tools";
 
 /** Parameter form for Market Saturation (CONTRACT: role and country required, city optional). */
@@ -25,7 +25,7 @@ export const fields: ToolField[] = [
     label: "Which city?",
     kind: "text",
     placeholder: "Any city, e.g. Berlin",
-    help: "Optional. A single city gives a sharper picture, and we compare it with nearby cities.",
+    help: "A single city gives a sharper picture, and we compare it with nearby cities.",
     fromGoals: (g) => g.target_cities[0],
   },
 ];
@@ -39,7 +39,7 @@ export interface MarketSaturationParams {
 }
 
 /** Defaults come from the stored goals. */
-export function defaultsFrom(goals?: Goals | null, _derived?: Derived | null): MarketSaturationValues {
+export function defaultsFrom(goals?: Goals | null): MarketSaturationValues {
   return {
     role: goals?.target_roles[0] ?? "",
     country: goals?.target_countries[0] ?? "",

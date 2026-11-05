@@ -61,7 +61,7 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
             const y1 = a.y + NODE_H / 2;
             const x2 = b.x;
             const y2 = b.y + NODE_H / 2;
-            const mx = x1 + (x2 - x1) / 2;
+            const mx = x2 - (colW - nodeW) / 2; // vertical run sits in the gutter just before the target column
             return <path key={`${e.from}-${e.to}`} className={styles.edge} d={`M${x1} ${y1}H${mx}V${y2}H${x2}`} strokeWidth={1 + (e.count / maxCount) * 7} />;
           })}
         </svg>
@@ -79,7 +79,7 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
           const a = pos[e.from];
           const b = pos[e.to];
           if (!a || !b) return null;
-          const mx = a.x + nodeW + (b.x - a.x - nodeW) / 2;
+          const mx = b.x - (colW - nodeW) / 2;
           const my = (a.y + b.y) / 2 + NODE_H / 2;
           return (
             <span key={`c-${e.from}-${e.to}`} className={styles.count} style={{ left: mx, top: my }}>

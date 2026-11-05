@@ -20,7 +20,7 @@ const fields: ToolField[] = [
   },
   {
     name: "company",
-    label: "At a particular company? (optional)",
+    label: "Which company?",
     kind: "text",
     placeholder: "Any company",
     help: "Leave this empty to see the whole market. A single company often has too few people to show.",
@@ -28,7 +28,7 @@ const fields: ToolField[] = [
   },
   {
     name: "city",
-    label: "In which city? (optional)",
+    label: "In which city?",
     kind: "text",
     placeholder: "Any city",
     fromGoals: (g) => g.target_cities[0],

@@ -12,7 +12,9 @@ Types come from `@/lib/types` (contract mirror). Section `data` shapes are typed
 |---|---|---|
 | `config` | `FeatureConfig { fields?, defaults?, runLabel?, autoRun? }` | form fields (dotted names nest: `scope.school`), defaults |
 | `mockResult` | `ResultEnvelope \| (ctx: MockContext) => ResultEnvelope` | mock mode result for this tool (preferred over `src/mocks/results.ts`) |
+| `mockResultThin` | same as `mockResult` | thin-cohort variant. Mock mode serves it when the run is narrow (`exp_band` upper bound <= 1 year) or the page URL has `?thin=1` |
 | `View` | `ComponentType<{ result: ResultEnvelope }>` | tool-specific result view; falls back to `<ResultView />` |
+| `toParams(values)` / `toBody(values)` | `(Record<string,string>) => object` | convert the flat string form values (dotted names stay flat) to the contract body, e.g. people-like-me turns `exp_band` "1,3" into `[1, 3]`. `ToolScreen` calls it before the request (falls back to `config.toParams`, then to nested strings) |
 
 The route `src/app/(app)/tools/<slug>/` renders `<ToolScreen slug feature />`, which renders `<ToolLayout>` with the feature's config, View and form. Do not edit route files; export from your feature folder instead.
 
@@ -28,12 +30,15 @@ The route `src/app/(app)/tools/<slug>/` renders `<ToolScreen slug feature />`, w
   fields?: ToolField[];         // used when `form` is absent: generic <ToolFields />
   defaults?: Record<string,string>;
   buildParams?: (fd: FormData) => Record<string, unknown>; // default: dotted names → nested body
+  toParams?: (values: Record<string,string>) => object;    // feature's toParams/toBody; used when buildParams is absent
   resultView?: (result: ResultEnvelope) => ReactNode;      // default: <ResultView result />
   runLabel?: string;            // default "Run"
   autoRun?: boolean;            // default true: runs on arrival when required fields are filled
 }
 ```
-ToolLayout owns the job: it starts `POST /api/tools/<slug>` with `profile_id` (+ `institution`/`programs` for university users), polls the job, shows `<JobProgress>`, errors (`<InlineError>` with retry) and the result. URL query params (`?country=Germany`, `?scope.school=VIT`) prefill fields, then stored goals, then `defaults`.
+ToolLayout owns the job: it starts `POST /api/tools/<slug>` with `profile_id` (+ `institution`/`programs` for university users), polls the job, shows `<JobProgress>`, errors (`<InlineError>` with retry) and the result. URL query params (`?country=Germany`, `?scope.school=VIT`) prefill fields, then stored goals, then `defaults`. ToolLayout watches the query string: when it changes (a View navigates with `toolHref(...)`), the form is re-prefilled and the job re-runs automatically if the required fields are filled.
+
+Mock mode only: `?demo=riya` or `?demo=anjali` on any route seeds that mock profile (student / university) so a screen can be opened directly.
 
 ### `ToolFields` from `@/components/tool/ToolFields`
 `{ fields: ToolField[]; values: Record<string,string>; errors?: Record<string,string> }`: renders `<Input>`/`<Select>` per field in a responsive row.

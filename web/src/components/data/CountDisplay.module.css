@@ -48,12 +48,10 @@
   font-weight: 500;
   line-height: 18px;
   pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity var(--ad-fast) var(--ad-ease);
+  /* display:none (not visibility) so a hidden tip never widens the page's scroll area */
+  display: none;
 }
 .wrap:hover .tip,
 .trigger:focus-visible + .tip {
-  opacity: 1;
-  visibility: visible;
+  display: block;
 }

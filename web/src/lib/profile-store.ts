@@ -2,10 +2,26 @@
 
 import { useSyncExternalStore } from "react";
 
+import { IS_MOCK } from "./api";
+
 const KEY = "afterdegree.profile_id";
 const listeners = new Set<() => void>();
+let demoChecked = false;
+
+/** Mock mode only: `?demo=riya` or `?demo=anjali` on any route seeds that mock profile, so screens can be opened directly. */
+function seedDemo() {
+  if (demoChecked || !IS_MOCK) return;
+  demoChecked = true;
+  try {
+    const who = new URLSearchParams(window.location.search).get("demo");
+    if (who === "riya" || who === "anjali") window.localStorage.setItem(KEY, `p_demo_${who}`);
+  } catch {
+    /* storage blocked */
+  }
+}
 
 function read(): string | null {
+  seedDemo();
   try {
     return window.localStorage.getItem(KEY);
   } catch {

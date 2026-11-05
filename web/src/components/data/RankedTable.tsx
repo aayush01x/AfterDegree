@@ -107,7 +107,14 @@ export function RankedTable({ data, caption, sortable = true, maxRows }: RankedT
   const toggle = (key: string, isNum: boolean) =>
     setSort((s) => (s?.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: isNum ? "desc" : "asc" }));
 
-  const colWidth = (c: RankedColumn, i: number) => (i === 0 ? undefined : c.bar ? "40%" : c.type === "badges" ? "26%" : c.type === "text" ? "22%" : "15%");
+  /* First column keeps at least 22%; the others share the rest in proportion to their kind. */
+  const widths = useMemo(() => {
+    const base: number[] = cols.map((c, i) => (i === 0 ? 0 : c.bar ? 40 : c.type === "badges" ? 26 : c.type === "text" ? 22 : 15));
+    const sum = base.reduce((a, b) => a + b, 0);
+    const k = sum > 78 ? 78 / sum : 1;
+    return base.map((w, i) => (i === 0 ? undefined : `${(w * k).toFixed(1)}%`));
+  }, [cols]);
+  const colWidth = (_c: RankedColumn, i: number) => widths[i];
 
   return (
     <div className={styles.wrap}>

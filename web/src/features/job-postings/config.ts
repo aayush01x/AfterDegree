@@ -20,7 +20,7 @@ const fields: ToolField[] = [
   },
   {
     name: "city",
-    label: "In which city? (optional)",
+    label: "In which city?",
     kind: "text",
     placeholder: "Any city",
     fromGoals: (g) => g.target_cities[0],

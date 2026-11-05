@@ -4,7 +4,6 @@ import styles from "./StackedCells.module.css";
 
 /** Postings by month as stacked cell columns. Series stack from the bottom; one cell is `unit` postings. */
 
-const PER_ROW = 3;
 const MAX_CELLS = 36;
 const TONES = ["hollow", "orange", "ink"] as const;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

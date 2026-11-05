@@ -70,6 +70,18 @@ function fallbackProfile(id: string): StoredProfile {
   return { ...base, profile_id: id, goals: id.includes("anjali") ? ANJALI_GOALS : RIYA_GOALS };
 }
 
+/** Demo switch for thin states: a narrow experience band (upper bound of 1 year or less), or `?thin=1` on the page URL. */
+function isNarrow(params: Record<string, unknown>): boolean {
+  const band = params.exp_band;
+  const nums = Array.isArray(band) ? band.map(Number) : typeof band === "string" ? band.split(",").map(Number) : [];
+  if (nums.length === 2 && nums.every((x) => Number.isFinite(x)) && Math.max(...nums) <= 1) return true;
+  try {
+    return new URLSearchParams(window.location.search).get("thin") === "1";
+  } catch {
+    return false;
+  }
+}
+
 export async function mockRequest(method: string, path: string, body?: unknown): Promise<Out> {
   const b = (body ?? {}) as Record<string, unknown>;
 
@@ -156,7 +168,8 @@ export async function mockRequest(method: string, path: string, body?: unknown):
       const goals = p.goals ?? initialGoals(p);
       const ctx = { goals, params: mj.params, university: goals.persona === "university" };
       const slug = TOOLS.find((t) => t.id === mj.job.tool)!.slug;
-      const own = FEATURES[slug]?.mockResult;
+      const feature = FEATURES[slug];
+      const own = isNarrow(mj.params) && feature?.mockResultThin ? feature.mockResultThin : feature?.mockResult;
       const result = own ? (typeof own === "function" ? own(ctx) : own) : buildResult(mj.job.tool, ctx);
       return { status: 200, body: { ...mj.job, status: "done", progress: { step: "Done", done: steps.length, total: steps.length }, result } };
     }

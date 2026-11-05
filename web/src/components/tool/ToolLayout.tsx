@@ -28,6 +28,8 @@ export interface ToolLayoutProps {
   defaults?: Record<string, string>;
   /** Turn the submitted FormData into the request body (besides profile_id). */
   buildParams?: (fd: FormData) => Record<string, unknown>;
+  /** Convert the flat string form values to the contract body (a feature's `toParams`/`toBody`). Ignored when buildParams is set. */
+  toParams?: (values: Record<string, string>) => object;
   /** Render the finished result. Defaults to <ResultView />. */
   resultView?: (result: ResultEnvelope) => ReactNode;
   runLabel?: string;
@@ -36,13 +38,14 @@ export interface ToolLayoutProps {
 }
 
 /** Shared frame for every tool: title, purpose, parameter form, run, progress, result. */
-export function ToolLayout({ tool, title, purpose, form, fields, defaults, buildParams, resultView, runLabel = "Run", autoRun = true }: ToolLayoutProps) {
+export function ToolLayout({ tool, title, purpose, form, fields, defaults, buildParams, toParams, resultView, runLabel = "Run", autoRun = true }: ToolLayoutProps) {
   const def = toolBySlug(tool);
   const { profileId, goals, university, loading: profileLoading } = useProfile();
   const search = useSearchParams();
   const job = useJob();
   const formRef = useRef<HTMLFormElement>(null);
-  const autoRan = useRef(false);
+  /** Search string of the last automatic run, so a URL change re-runs but a re-render does not. */
+  const lastAutoKey = useRef<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const list = useMemo(() => fields ?? def?.fields ?? [], [fields, def]);
 
@@ -63,9 +66,19 @@ export function ToolLayout({ tool, title, purpose, form, fields, defaults, build
       setErrors(errs);
       if (Object.keys(errs).length) return;
     }
-    const params = buildParams
-      ? buildParams(fd)
-      : nestBody(Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)])));
+    const flat: Record<string, string> = {};
+    for (const f of list) flat[f.name] = "";
+    for (const [k, v] of fd.entries()) flat[k] = String(v);
+    let params: Record<string, unknown> | null = null;
+    if (buildParams) params = buildParams(fd);
+    else if (toParams) {
+      try {
+        params = { ...(toParams(flat) as Record<string, unknown>) };
+      } catch {
+        params = null;
+      }
+    }
+    params ??= nestBody(flat);
     if (university && goals) Object.assign(params, { institution: goals.institution, programs: goals.programs });
     void job.run(def.id, profileId, params);
   };
@@ -76,15 +89,23 @@ export function ToolLayout({ tool, title, purpose, form, fields, defaults, build
   };
 
   const ready = !profileLoading && !!profileId && !!goals;
+  const searchKey = search.toString();
+  // Run on arrival, and again whenever the URL's query changes (feature views re-run by navigating with new params).
   useEffect(() => {
-    if (!ready || !autoRun || autoRan.current || !formRef.current) return;
+    if (!ready || !formRef.current) return;
+    if (lastAutoKey.current === searchKey) return;
+    const first = lastAutoKey.current === null;
+    if (first && !autoRun && !searchKey) return;
     const allFilled = list.filter((f) => f.required).every((f) => values[f.name]?.trim());
-    if (!allFilled) return;
-    autoRan.current = true;
+    if (!allFilled) {
+      lastAutoKey.current = searchKey;
+      return;
+    }
+    lastAutoKey.current = searchKey;
     submit(formRef.current);
-    // submit is stable enough for a one-shot auto run
+    // submit is stable enough for a keyed auto run
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, autoRun, list, values]);
+  }, [ready, autoRun, list, values, searchKey]);
 
   if (!def) return <InlineError message="This tool doesn't exist." />;
   const busy = job.phase === "starting" || job.phase === "queued" || job.phase === "running";
