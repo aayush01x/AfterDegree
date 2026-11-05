@@ -30,6 +30,14 @@ export const fields: ToolField[] = [
   },
 ];
 
+/** Countries offered by the in-screen country switch (the current one is always added). */
+export const COUNTRIES = ["Germany", "Netherlands", "United Kingdom", "Ireland", "Canada", "United States", "France", "Sweden", "Switzerland", "Singapore", "United Arab Emirates", "Australia"];
+
+export function countryOptions(current: string | null): { value: string; label: string }[] {
+  const list = current && !COUNTRIES.includes(current) ? [current, ...COUNTRIES] : COUNTRIES;
+  return list.map((c) => ({ value: c, label: c }));
+}
+
 export type IndianFriendlyValues = { country: string; role: string; city: string };
 
 export interface IndianFriendlyParams {

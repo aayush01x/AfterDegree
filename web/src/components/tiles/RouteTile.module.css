@@ -1,0 +1,76 @@
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: clamp(352px, round((100cqw + 32px) / 3.5 - 32px, 32px), 640px);
+  height: 192px;
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  border: 1px solid var(--ad-rule);
+  overflow: hidden;
+  font-family: var(--ad-font-read);
+  --ad-focus: var(--ad-focus-paper);
+}
+.art {
+  flex: none;
+  height: 97px;
+  margin: -1px -1px 0;
+  border-bottom: 1px solid var(--ad-rule);
+}
+.body {
+  position: relative;
+  flex: 1;
+  padding: 10px var(--ad-space-2);
+}
+.title {
+  font-family: var(--ad-font-head);
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hit {
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+.hit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.hit:focus-visible {
+  outline: none;
+}
+.tile:has(.hit:focus-visible) {
+  outline: 2px solid var(--ad-on-field);
+  outline-offset: 2px;
+}
+.tile:has(.hit):hover .body,
+.tile:has(.hit:focus-visible) .body {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.meta {
+  position: absolute;
+  left: var(--ad-space-2);
+  right: var(--ad-space-2);
+  bottom: 11px;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ad-space-1);
+  font-size: var(--ad-text-sm);
+  line-height: 16px;
+  font-weight: 600;
+}
+.badge {
+  margin-left: auto;
+}
+.tile:has(.hit):hover .badge {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+}

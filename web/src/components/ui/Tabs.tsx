@@ -2,7 +2,6 @@
 
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import styles from "./Tabs.module.css";
-import { Slash } from "./Slash";
 
 export interface TabItem {
   id: string;
@@ -46,7 +45,6 @@ export function Tabs({ label, tabs, defaultTab }: { label: string; tabs: TabItem
               onKeyDown={(e) => onKey(e, i)}
             >
               {t.label}
-              {selected && <Slash />}
             </button>
           );
         })}

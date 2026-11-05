@@ -1,0 +1,31 @@
+.strip {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+.edge {
+  fill: none;
+  stroke: var(--stage-edge);
+  stroke-width: 1;
+}
+.gap {
+  fill: var(--stage-gap);
+  stroke: var(--ad-hollow);
+  stroke-width: 1;
+}
+.yr {
+  font-family: var(--ad-font-read);
+  font-size: 12px;
+  font-weight: 500;
+  fill: var(--ad-muted);
+}
+.band .yr {
+  fill: var(--ad-band-muted);
+}
+.band .edge {
+  stroke: var(--ad-band);
+}
+.band .gap {
+  fill: none;
+  stroke: var(--ad-band-muted);
+}

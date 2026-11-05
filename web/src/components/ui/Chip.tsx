@@ -15,15 +15,17 @@ export function Chip({
   removeLabel,
   selected = false,
   onClick,
+  tone = "outline",
 }: {
   children: ReactNode;
   onRemove?: () => void;
   removeLabel?: string;
   selected?: boolean;
   onClick?: () => void;
+  tone?: "outline" | "soft";
 }) {
   return (
-    <span className={[styles.chip, selected && styles.selected].filter(Boolean).join(" ")}>
+    <span className={[styles.chip, tone === "soft" && styles.soft, selected && styles.selected].filter(Boolean).join(" ")}>
       {onClick ? (
         <button type="button" className={styles.label} onClick={onClick} aria-pressed={selected}>
           {children}

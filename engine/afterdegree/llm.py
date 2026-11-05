@@ -109,7 +109,7 @@ class LLM:
     def available(self) -> bool:
         return bool(self.settings.openrouter_api_key) and not self.settings.mock
 
-    async def _complete(self, messages: list[dict], json_mode: bool, max_tokens: int = 600, temperature: float = 0.2) -> str | None:
+    async def _complete(self, messages: list[dict], json_mode: bool, max_tokens: int = 1500, temperature: float = 0.2) -> str | None:
         if not self.available:
             return None
         body: dict[str, Any] = {
@@ -134,15 +134,21 @@ class LLM:
                 log.warning("openrouter returned %s", resp.status_code)
                 return None
             data = resp.json()
-            content = data["choices"][0]["message"]["content"]
+            # Reasoning models put their thinking in a separate `reasoning` field, which is never read;
+            # empty or missing content (e.g. all tokens spent on reasoning) counts as a failure -> fallback.
+            content = data["choices"][0]["message"].get("content")
+            if not isinstance(content, str) or not content.strip():
+                self.last_error = True
+                log.warning("openrouter returned no content (finish_reason=%s)", data["choices"][0].get("finish_reason"))
+                return None
             self.last_error = False
-            return content if isinstance(content, str) else None
+            return content
         except (httpx.HTTPError, KeyError, IndexError, ValueError, TypeError) as exc:
             self.last_error = True
             log.warning("openrouter call failed: %s", type(exc).__name__)
             return None
 
-    async def chat_json(self, system: str, user: str | list[dict], max_tokens: int = 600) -> dict | None:
+    async def chat_json(self, system: str, user: str | list[dict], max_tokens: int = 1500) -> dict | None:
         messages = [{"role": "system", "content": system}]
         if isinstance(user, str):
             messages.append({"role": "user", "content": user})
@@ -164,7 +170,7 @@ class LLM:
             "role is a job title in English (e.g. 'Data Engineer'). country is a full English country name. "
             "Do not invent values that are not in the text. Reply with JSON only."
         )
-        data = await self.chat_json(system, text, max_tokens=200)
+        data = await self.chat_json(system, text, max_tokens=1500)
         if data:
             try:
                 goal = validate_goal(ParsedGoal.model_validate(data))
@@ -184,7 +190,7 @@ class LLM:
             'Reply as JSON: {"summary": "..."}'
         )
         user = f"Topic: {title}\nFacts:\n" + "\n".join(f"- {f}" for f in facts)
-        data = await self.chat_json(system, user, max_tokens=300)
+        data = await self.chat_json(system, user, max_tokens=1500)
         summary = (data or {}).get("summary")
         if not isinstance(summary, str) or not summary.strip():
             return None

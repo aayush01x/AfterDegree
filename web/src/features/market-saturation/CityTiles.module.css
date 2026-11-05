@@ -1,0 +1,5 @@
+.read {
+  font-family: var(--font-ui), system-ui, sans-serif;
+  font-size: var(--ad-text-sm);
+  line-height: 18px;
+}

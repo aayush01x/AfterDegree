@@ -5,9 +5,20 @@
 }
 
 .bar {
-  display: grid;
-  grid-template-columns: repeat(40, minmax(0, 1fr));
+  display: flex;
   gap: 2px;
+}
+
+/* a part's cells; width follows its share of the 40 cells */
+.group {
+  display: grid;
+  flex: var(--w) 1 0;
+  grid-template-columns: repeat(var(--w), minmax(0, 1fr));
+  gap: 2px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
 }
 
 .cell {
@@ -15,8 +26,23 @@
   height: 32px;
 }
 
+.press:hover,
+.press:focus-visible,
+.press.hot {
+  outline: 2px solid var(--ad-ink);
+  outline-offset: 2px;
+}
+.press:hover .a,
+.press.hot .a {
+  background: var(--ad-ink);
+}
+.press:hover .b,
+.press.hot .b {
+  background: var(--ad-accent);
+}
+
 .a {
-  background: var(--ad-orange);
+  background: var(--ad-accent);
 }
 
 .b {
@@ -35,6 +61,9 @@
 }
 
 .item {
+  width: 100%;
+  padding: 0 var(--ad-space-1);
+  text-align: left;
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr) auto;
   align-items: center;
@@ -43,6 +72,22 @@
   border-top: 1px solid var(--ad-rule-soft);
   font-size: var(--ad-text-md);
   line-height: 20px;
+}
+
+.itemPress:hover,
+.itemPress:focus-visible,
+.itemPress.hot {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.itemPress:hover .share,
+.itemPress:focus-visible .share,
+.itemPress.hot .share {
+  color: var(--ad-paper);
+}
+.itemPress:focus-visible {
+  outline: 2px solid var(--ad-focus-paper);
+  outline-offset: 2px;
 }
 
 .swatch {

@@ -107,15 +107,44 @@ class Progress(_Model):
 
 class Job(_Model):
     job_id: str
-    tool: ToolName
+    tool: ToolName | Literal["drill"]
     status: JobStatus
     progress: Progress | None = None
-    result: Result | None = None
+    result: Result | DrillResult | None = None
     error: ErrorBody | None = None
 
 
 class JobCreated(_Model):
     job_id: str
+
+
+# ---------- drill tokens (CONTRACT Appendix C) ----------
+
+DrillDimension = Literal[
+    "country", "city", "company", "role", "school", "degree", "degree_country", "seniority", "years_band",
+    "route", "route_step", "posting_employer", "skill", "language", "quarter",
+]
+
+
+class DrillStep(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    dimension: DrillDimension
+    value: str = Field(max_length=400)
+    label: str = Field(default="", max_length=200)
+
+    @field_validator("label", mode="before")
+    @classmethod
+    def _label(cls, v: Any) -> Any:
+        return "" if v is None else v
+
+
+class DrillToken(BaseModel):
+    """Opaque to the UI: sent back unchanged (plus an optional extra path step)."""
+
+    model_config = ConfigDict(extra="ignore")
+    tool: ToolName
+    params: dict[str, Any] = Field(default_factory=dict)
+    path: list[DrillStep] = Field(default_factory=list, max_length=8)
 
 
 # ---------- section data payloads (match web/src/lib/types.ts; documented in CONTRACT.md) ----------
@@ -127,6 +156,7 @@ class DistributionItem(_Model):
     share: float | None = None
     target: bool = False
     remainder: bool = False
+    drill: DrillToken | None = None
 
 
 class DistributionData(_Model):
@@ -134,6 +164,7 @@ class DistributionData(_Model):
     items: list[DistributionItem]
     unit: str | None = None
     caption: str | None = None
+    sample_n: int | None = None
 
 
 ColumnType = Literal["text", "int", "count", "share", "years", "badges"]
@@ -153,6 +184,8 @@ class TableRow(_Model):
     badges: list[str] = Field(default_factory=list)
     you: bool = False
     rest: bool = False
+    drill: DrillToken | None = None
+    posting_url: str | None = None
 
 
 class SortSpec(_Model):
@@ -166,12 +199,15 @@ class RankedTableData(_Model):
     rows: list[TableRow]
     default_sort: SortSpec | None = None
     caption: str | None = None
+    sample_n: int | None = None
+    note: str | None = None
 
 
 class RouteNode(_Model):
     id: str
     label: str
     kind: str
+    drill: DrillToken | None = None
 
 
 class RouteEdge(_Model):
@@ -201,6 +237,7 @@ class RouteItem(_Model):
     typical_years: float | None = None
     fit: Literal["fits_you", "stretch", "far"] | None = None
     gaps: list[str] = Field(default_factory=list)
+    drill: DrillToken | None = None
 
 
 class RouteListData(_Model):
@@ -211,6 +248,7 @@ class RouteListData(_Model):
 class TimePoint(_Model):
     period: str
     value: float
+    drill: DrillToken | None = None
 
 
 class TimeSeries(_Model):
@@ -234,6 +272,8 @@ class StatData(_Model):
     display: str | None = None
     level: Literal["low", "medium", "high"] | None = None
     note: str | None = None
+    sample_n: int | None = None
+    drill: DrillToken | None = None
 
 
 class TextData(_Model):
@@ -245,6 +285,7 @@ class KeywordItem(_Model):
     count: int
     share: float | None = None
     you_have: bool | None = None
+    drill: DrillToken | None = None
 
 
 class KeywordsData(_Model):
@@ -490,3 +531,93 @@ class MarketSaturationBody(_ToolBody):
     role: str
     city: str | None = None
     country: str
+
+
+# ---------- drill-down results (CONTRACT Appendix C + D) ----------
+
+
+class PersonStep(_Model):
+    kind: Literal["education", "work", "internship"]
+    org: str
+    title: str | None = None
+    city: str | None = None
+    country: str | None = None
+    start_year: int | None = None
+    end_year: int | None = None
+    years: float | None = None
+
+
+class PersonCurrent(_Model):
+    title: str | None = None
+    company: str | None = None
+    city: str | None = None
+    country: str | None = None
+    since_year: int | None = None
+
+
+class PersonCard(_Model):
+    id: str
+    headline: str
+    current: PersonCurrent | None = None
+    match_reasons: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    steps: list[PersonStep] = Field(default_factory=list)
+
+
+class RouteStat(_Model):
+    label: str
+    count: Count
+
+
+class PersonDetail(PersonCard):
+    skills: list[str] = Field(default_factory=list)
+    route_stats: list[RouteStat] = Field(default_factory=list)
+    position: dict[str, int] | None = None
+    why: list[dict[str, str]] = Field(default_factory=list)
+    data_date: str | None = None
+
+
+class DrillContextFilter(_Model):
+    label: str
+    value: str
+    key: str | None = None
+    drill: DrillToken | None = None
+
+
+class DrillContext(_Model):
+    origin_tool: str
+    origin_label: str
+    filters: list[DrillContextFilter] = Field(default_factory=list)
+
+
+class DrillRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    profile_id: str
+    drill: DrillToken
+
+
+class DrillResult(_Model):
+    tool: Literal["drill"] = "drill"
+    title: str
+    path: list[DrillStep] = Field(default_factory=list)
+    context: DrillContext | None = None
+    count: Count | None = None
+    count_label: str | None = None
+    cohort: Cohort | None = None
+    confidence: Confidence = "low"
+    sections: list[Section] = Field(default_factory=list)
+    people: list[PersonCard] = Field(default_factory=list)
+    people_total: int | None = None
+    people_note: str | None = None
+    listing_blocked_reason: str | None = None
+    company: dict[str, Any] | None = None
+    summary: str | None = None
+    coverage: float | None = None
+    coverage_note: str | None = None
+    data_date: str | None = None
+    next_steps: list[NextStep] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    evidence: list[Evidence] = Field(default_factory=list)
+
+
+Job.model_rebuild()

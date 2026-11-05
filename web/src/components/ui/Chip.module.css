@@ -5,6 +5,7 @@
   border: 1px solid var(--ad-ink);
   background: var(--ad-paper);
   color: var(--ad-ink);
+  font-family: var(--ad-font-read);
   font-size: var(--ad-text-md);
   font-weight: 600;
   line-height: 20px;
@@ -36,4 +37,8 @@ button.label:hover {
 .selected .remove:hover {
   background: var(--ad-paper);
   color: var(--ad-ink);
+}
+.soft {
+  background: var(--ad-accent-soft);
+  border-color: var(--ad-accent-soft);
 }

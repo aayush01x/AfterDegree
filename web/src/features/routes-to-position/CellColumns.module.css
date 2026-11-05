@@ -8,15 +8,44 @@
   list-style: none;
   display: grid;
   grid-template-columns: repeat(var(--cols), minmax(76px, 152px));
-  gap: var(--ad-space-3);
+  gap: var(--ad-space-2);
   align-items: end;
+}
+
+.item {
+  display: flex;
+  min-width: 0;
 }
 
 .col {
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 4px;
   min-width: 0;
+  padding: var(--ad-space-1);
+  text-align: left;
+  font: inherit;
+  color: var(--ad-ink);
+}
+
+/* a drillable column inverts to black on hover and focus */
+.drill:hover,
+.drill:focus-visible {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.drill:hover .num,
+.drill:focus-visible .num {
+  border-top-color: var(--ad-paper);
+}
+.drill:focus-visible {
+  outline: 2px solid var(--ad-focus-paper);
+  outline-offset: 2px;
+}
+.drill:hover .target,
+.drill:focus-visible .target {
+  background: var(--ad-paper);
 }
 
 .stack {
@@ -32,7 +61,7 @@
   display: block;
   width: 10px;
   height: 10px;
-  background: var(--ad-orange);
+  background: var(--ad-accent);
 }
 
 .target {
@@ -64,6 +93,7 @@
 
 .key {
   max-width: 72ch;
+  font-family: var(--font-ui), system-ui, sans-serif;
   font-size: var(--ad-text-md);
   line-height: 20px;
   color: var(--ad-muted);

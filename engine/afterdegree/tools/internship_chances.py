@@ -12,7 +12,7 @@ from ..profile import Role
 from ..schemas import Result
 from ..stats import make_count
 from ..toolkit import ToolContext, section, stat_section, text_section
-from .common import pct, resolve_place, step, title_or, user_target_role
+from .common import company_value_from_key, pct, resolve_place, step, title_or, user_target_role
 
 TOOL = "internship_chances"
 MIN_INTERN_PROFILES = 25  # widen below this: not every intern profile has a finished, in-scope internship
@@ -81,13 +81,18 @@ IC_COLUMNS = [
 ]
 
 
-def ic_rows(kept: list[CompanyTally], rest: CompanyTally | None, ev: list[str], you_company: str | None = None) -> list[dict]:
+def ic_rows(kept: list[CompanyTally], rest: CompanyTally | None, ev: list[str], you_company: str | None = None,
+            ctx: ToolContext | None = None) -> list[dict]:
     rows = []
     for t in kept:
         c = make_count(t.converted, t.seen, ev).model_dump()
-        rows.append({"id": t.key, "cells": {"company": t.name, "interns": t.seen, "converted": c}, "count": c,
-                     "badges": ["Small group"] if t.seen < 10 else [],
-                     "you": bool(you_company and t.name.lower() == you_company.lower())})
+        row = {"id": t.key, "cells": {"company": t.name, "interns": t.seen, "converted": c}, "count": c,
+               "badges": ["Small group"] if t.seen < 10 else [],
+               "you": bool(you_company and t.name.lower() == you_company.lower())}
+        tok = ctx.drill("company", company_value_from_key(t.key, t.name), t.name) if ctx else None
+        if tok:
+            row["drill"] = tok
+        rows.append(row)
     if rest:
         c = make_count(rest.converted, rest.seen, ev).model_dump()
         rows.append({"id": "other", "cells": {"company": rest.name, "interns": rest.seen, "converted": c}, "count": c, "rest": True})
@@ -96,6 +101,7 @@ def ic_rows(kept: list[CompanyTally], rest: CompanyTally | None, ev: list[str], 
 
 async def run(ctx: ToolContext) -> Result:
     p = ctx.params
+    ctx.tool = TOOL
     ctx.total_steps = 5
     _, country = resolve_place(None, p.get("country"))
     company = (p.get("company") or "").strip() or None
@@ -139,7 +145,7 @@ async def run(ctx: ToolContext) -> Result:
         section("companies", "ranked_table", "Companies by conversion for people like you", {
             "n": len(finished),
             "columns": IC_COLUMNS,
-            "rows": ic_rows(kept, rest, ev, company_name),
+            "rows": ic_rows(kept, rest, ev, company_name, ctx),
             "default_sort": {"key": "converted", "dir": "desc"},
             "caption": ("Companies with fewer than 5 finished internships are grouped as Other companies." if rest else None),
         }, ev),

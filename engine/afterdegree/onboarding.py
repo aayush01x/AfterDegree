@@ -104,7 +104,7 @@ class Onboarding:
         convo = [{"role": m["role"], "content": m["content"]} for m in messages if m.get("role") in ("user", "assistant")]
         if not convo:
             convo = [{"role": "user", "content": "Hi, I've just shared my profile."}]
-        data = await self.llm.chat_json(system, convo, max_tokens=700)  # type: ignore[union-attr]
+        data = await self.llm.chat_json(system, convo, max_tokens=2000)  # type: ignore[union-attr]
         if not data or not isinstance(data.get("reply"), str):
             return None
         try:

@@ -61,7 +61,10 @@ def person_country(country: str) -> dict:
 
 
 def person_city(city: str) -> dict:
-    return cond("basic_profile.location.city", "in", tx.city_variants(city))
+    """Real profiles often leave `city` empty and keep the place only in full_location ("Delhi, India",
+    "Berlin Metropolitan Area"), so match either."""
+    variants = tx.city_variants(city)
+    return or_(cond("basic_profile.location.city", "in", variants), phrase_any("basic_profile.location.full_location", variants))  # type: ignore[return-value]
 
 
 def person_not_country(country: str) -> dict:
@@ -92,7 +95,7 @@ def education_group(
     if school_phrases:
         parts.append(phrase_any(f"{EDU}.school", school_phrases))
     if field_phrase:
-        parts.append(cond(f"{EDU}.field_of_study", "[.]", field_phrase))
+        parts.append(phrase_any(f"{EDU}.field_of_study", tx.field_search_phrases(field_phrase)))
     if end_year_range:
         lo, hi = end_year_range
         parts.append(cond(f"{EDU}.end_year", "=>", int(lo)))
@@ -129,7 +132,9 @@ def job_country(country: str) -> dict:
 
 
 def job_city(city: str) -> dict:
-    return cond("location.city", "in", tx.city_variants(city))
+    """Postings carry a geocoded `location.city` that is sometimes empty; `location.raw` keeps the text."""
+    variants = tx.city_variants(city)
+    return or_(cond("location.city", "in", variants), phrase_any("location.raw", variants))  # type: ignore[return-value]
 
 
 def job_date_range(start_iso: str | None = None, end_iso: str | None = None) -> list[dict]:

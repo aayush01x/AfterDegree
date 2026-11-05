@@ -8,6 +8,7 @@ import { mockChat } from "./chat";
 import { ANJALI, ANJALI_GOALS, RIYA, RIYA_GOALS } from "./profiles";
 import { buildResult, JOB_STEPS } from "./results";
 import { FEATURES } from "@/features/registry";
+import { mockDrillRequest } from "./drill";
 
 type Out = { status: number; body: unknown };
 const DB_KEY = "afterdegree.mock.db";
@@ -84,6 +85,10 @@ function isNarrow(params: Record<string, unknown>): boolean {
 
 export async function mockRequest(method: string, path: string, body?: unknown): Promise<Out> {
   const b = (body ?? {}) as Record<string, unknown>;
+
+  // Drill-down routes (POST /drill, its jobs, GET /people/{id}): see mocks/drill.ts.
+  const drill = await mockDrillRequest(method, path, body);
+  if (drill) return drill;
 
   if (method === "POST" && path === "/onboarding/profile") {
     await wait(2600);

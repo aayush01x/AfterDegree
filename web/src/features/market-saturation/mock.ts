@@ -1,4 +1,5 @@
 import { makeCount } from "@/lib/count";
+import { mkDrill, withDrill } from "@/components/tool/drill";
 import type { Cohort, Evidence, NextStep, RankedRow, ResultEnvelope, Section } from "@/lib/types";
 import { levelFor } from "./config";
 
@@ -21,11 +22,15 @@ function totals(entrantsQ: number[], openingsQ: number[]) {
 
 function cityRow(city: string, entrants: number, openings: number, you = false): RankedRow {
   const ratio = entrants / openings;
-  return {
-    id: city.toLowerCase(),
-    cells: { city, ratio: ratioText(ratio), level: entrants >= 10 ? levelFor(ratio) : null, entrants, openings },
-    you: you || undefined,
-  };
+  return withDrill<RankedRow>(
+    {
+      id: city.toLowerCase(),
+      cells: { city, ratio: ratioText(ratio), level: entrants >= 10 ? levelFor(ratio) : null, entrants, openings },
+      you: you || undefined,
+    },
+    // every city opens the people like you who started the role there (CONTRACT Appendix C)
+    mkDrill("market_saturation", { role: "Data Engineer", country: "Germany" }, "city", city),
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -97,7 +102,9 @@ const sections: Section[] = [
     title: "New entrants like you",
     evidence_ids: ["ev_ms_entrants"],
     data: { label: "people like you who started as a Data Engineer in Berlin, last 12 months", value: T.entrants, unit: "people" },
-  },
+    // the cell stack opens the people behind the count (CONTRACT Appendix C)
+    drill: mkDrill("market_saturation", { role: "Data Engineer", country: "Germany", city: "Berlin" }, "role", "Data Engineer", "People like you who started as a Data Engineer"),
+  } as Section,
   {
     id: "openings",
     kind: "stat",

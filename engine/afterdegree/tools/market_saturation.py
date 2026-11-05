@@ -54,6 +54,7 @@ async def run(ctx: ToolContext) -> Result:
     city, country = resolve_place(p.get("city"), p.get("country"), required_country=True)
     role_label = tx.display_role(role)
     place = place_text(city, country)
+    ctx.tool = TOOL
     ctx.total_steps = 5
     today = ctx.today
 
@@ -93,8 +94,9 @@ async def run(ctx: ToolContext) -> Result:
         ev_ids += [ev_e, ev_o]
         total_e += e
         total_o += o
-        entrants_pts.append({"period": q_label(start), "value": e})
-        openings_pts.append({"period": q_label(start), "value": o})
+        tok = ctx.drill("quarter", q_label(start))
+        entrants_pts.append({"period": q_label(start), "value": e, "drill": tok})
+        openings_pts.append({"period": q_label(start), "value": o, "drill": tok})
 
     ratio = round(total_e / total_o, 4) if total_o else None
     level = level_for(ratio)
@@ -107,7 +109,7 @@ async def run(ctx: ToolContext) -> Result:
     if city:
         comp_rows.append({"id": city, "cells": {"city": city, "ratio": f"{ratio:.2f}" if ratio is not None else "No openings indexed",
                                                 "openings": total_o, "entrants": total_e},
-                          "badges": [f"{(level or 'unknown').capitalize()} saturation"], "you": True})
+                          "badges": [f"{(level or 'unknown').capitalize()} saturation"], "you": True, "drill": ctx.drill("city", city)})
     for other in [c for c in tx.COMPARABLE_CITIES.get(country or "", []) if c != city][:4]:
         try:
             e, ev_e = await ctx.count_people(entrants_filter(other, year_start, year_end), f"New {role_label}s like you in {other}, last 12 months")
@@ -119,7 +121,8 @@ async def run(ctx: ToolContext) -> Result:
         r = round(e / o, 4) if o else None
         comp_rows.append({"id": other, "cells": {"city": other, "ratio": f"{r:.2f}" if r is not None else "No openings indexed",
                                                  "openings": o, "entrants": e},
-                          "badges": [f"{(level_for(r) or 'unknown').capitalize()} saturation"], "you": False, "_r": r})
+                          "badges": [f"{(level_for(r) or 'unknown').capitalize()} saturation"], "you": False, "_r": r,
+                          "drill": ctx.drill("city", other)})
     others = sorted([r for r in comp_rows if not r["you"]], key=lambda r: (r["_r"] is None, r["_r"] or 0))
     comp_rows = [r for r in comp_rows if r["you"]] + others
     for r in comp_rows:

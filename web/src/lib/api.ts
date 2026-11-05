@@ -12,6 +12,7 @@ import type {
   ToolId,
 } from "./types";
 import { toolById } from "./tools";
+import type { DrillResultFull, DrillToken, PersonDetailFull } from "./drill-types";
 
 /** "mock" serves fixtures in the browser; "live" calls /api/* (proxied to the engine). */
 export const API_MODE: "mock" | "live" =
@@ -92,4 +93,52 @@ export const api = {
   getJob: (job_id: string) => request<Job>("GET", `/jobs/${job_id}`),
   getEvidence: (id: string) => request<Evidence>("GET", `/evidence/${id}`),
   health: () => request<Health>("GET", "/health"),
+  /** Start a drill job (CONTRACT Appendix C). Poll it with `getDrillJob`. */
+  drill: (profile_id: string, drill: DrillToken) =>
+    drillRequest<{ job_id: string }>("POST", "/drill", { profile_id, drill }),
+  getDrillJob: (job_id: string) => drillRequest<DrillJob>("GET", `/jobs/${job_id}`),
+  /** One anonymous career path (PersonDetail). */
+  person: (person_id: string, profile_id: string) =>
+    drillRequest<PersonDetailFull>(
+      "GET",
+      `/people/${encodeURIComponent(person_id)}?profile_id=${encodeURIComponent(profile_id)}`,
+    ),
 };
+
+/* ---------- Drill-down (additive) ---------- */
+
+export interface DrillJob {
+  job_id: string;
+  tool: "drill";
+  status: Job["status"];
+  progress: Job["progress"];
+  result?: DrillResultFull;
+  error?: ApiErrorBody;
+}
+
+/**
+ * Development only: `?drillmock=1` on any page serves drill and person requests from the
+ * in-browser fixtures while the engine has no /api/drill yet (`?drillmock=0` turns it off).
+ */
+export function drillMockActive(): boolean {
+  if (IS_MOCK) return true;
+  if (process.env.NODE_ENV !== "development" || typeof window === "undefined") return false;
+  try {
+    const q = new URLSearchParams(window.location.search).get("drillmock");
+    if (q === "1") window.sessionStorage.setItem("afterdegree.drillmock", "1");
+    if (q === "0") window.sessionStorage.removeItem("afterdegree.drillmock");
+    return window.sessionStorage.getItem("afterdegree.drillmock") === "1";
+  } catch {
+    return false;
+  }
+}
+
+async function drillRequest<T>(method: Method, path: string, body?: unknown): Promise<T> {
+  if (drillMockActive()) {
+    const { mockRequest } = await import("@/mocks/server");
+    const { status, body: out } = await mockRequest(method, path, body);
+    if (status >= 400) throw new ApiError(status, (out as { error: ApiErrorBody }).error);
+    return out as T;
+  }
+  return liveRequest<T>(method, path, body);
+}

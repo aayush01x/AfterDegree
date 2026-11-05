@@ -1,0 +1,155 @@
+/* A row bleeds out of a padded container by --ad-row-bleed (the container sets it
+   to its horizontal padding, usually 32px), then pads its own content by 32px. */
+.row {
+  min-width: 0;
+  margin-inline: calc(var(--ad-row-bleed, 0px) * -1);
+  padding-top: var(--ad-cell);
+}
+.plain {
+  color: var(--ad-on-field);
+}
+.band {
+  background: var(--ad-band);
+  color: var(--ad-band-text);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ad-space-2);
+  min-height: var(--ad-cell);
+  padding-inline: var(--ad-cell);
+  min-width: 0;
+}
+.title {
+  flex: none;
+  max-width: 100%;
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.band .title {
+  color: var(--ad-paper);
+}
+.head > span[class*="badge"] {
+  align-self: center;
+}
+.note {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--ad-font-read);
+  font-size: var(--ad-text-sm);
+  line-height: 20px;
+  font-weight: 500;
+}
+.band .note {
+  color: var(--ad-band-muted);
+}
+.end {
+  display: flex;
+  align-items: center;
+  gap: var(--ad-space-2);
+  margin-left: auto;
+  align-self: center;
+  flex: none;
+}
+.count {
+  font-family: var(--ad-font-read);
+  font-size: var(--ad-text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ctls {
+  display: flex;
+}
+.ctl {
+  display: grid;
+  place-items: center;
+  width: var(--ad-cell);
+  height: var(--ad-cell);
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  border: 1px solid var(--ad-rule);
+}
+.ctl + .ctl {
+  border-left: 0;
+}
+.ctl:hover:not(:disabled) {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.ctl:disabled {
+  color: var(--ad-hollow);
+}
+.band .ctl {
+  background: var(--ad-band);
+  color: var(--ad-band-control);
+  border-color: var(--ad-band-control);
+}
+.band .ctl:hover:not(:disabled) {
+  background: var(--ad-band-control);
+  color: var(--ad-band);
+}
+.band .ctl:disabled {
+  color: var(--ad-band-rule);
+}
+
+.scroller {
+  container-type: inline-size;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ad-cell);
+  margin-top: var(--ad-cell);
+  padding: 0 var(--ad-cell) var(--ad-cell);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--ad-cell);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ad-ink) transparent;
+}
+.plain .scroller {
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+.band .scroller {
+  scrollbar-color: var(--ad-band-rule) transparent;
+}
+.scroller:focus-visible {
+  outline-offset: -2px;
+}
+.scroller > * {
+  flex: none;
+  scroll-snap-align: start;
+  position: relative;
+}
+
+/* dim every tile's art except the expanded one */
+.dim [data-tile]:not([data-expanded]) [data-art] {
+  opacity: 0.62;
+  transition: opacity var(--ad-fast) var(--ad-ease);
+}
+.dim [data-tile]:not([data-expanded]):hover [data-art],
+.dim [data-tile]:not([data-expanded]):focus-within [data-art] {
+  opacity: 1;
+}
+
+@media (max-width: 720px) {
+  .head {
+    flex-wrap: wrap;
+    padding-inline: var(--ad-space-2);
+  }
+  .note {
+    order: 3;
+    flex-basis: 100%;
+    white-space: normal;
+  }
+  .scroller {
+    padding-inline: var(--ad-space-2);
+    scroll-padding-inline: var(--ad-space-2);
+  }
+}

@@ -1,0 +1,37 @@
+/* Detail slots resolve against the tile's field (--a-f). The --art-mix-* tokens
+   pull details toward the field so calmer palettes stay calm. */
+.frame {
+  --a-sil: var(--a-on);
+  --a-ink: color-mix(in srgb, var(--a-f) var(--art-mix-ink), var(--art-ink));
+  --a-light: color-mix(in srgb, var(--a-f) var(--art-mix-light), var(--art-light));
+  --a-sun: color-mix(in srgb, var(--a-f) var(--art-mix-sun), var(--art-sun));
+  --a-tint: color-mix(in srgb, var(--a-f) var(--art-mix-tint), var(--art-tint));
+  --a-deep: color-mix(in srgb, var(--a-f) var(--art-deep-mix), var(--art-ink));
+  --a-shade: color-mix(in srgb, var(--a-f) 78%, var(--art-ink));
+  --a-glow: color-mix(in srgb, var(--a-f) var(--art-mix-sun), var(--art-glow));
+  --a-water: color-mix(in srgb, var(--a-f) var(--art-mix-tint), var(--art-water));
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--a-f);
+}
+.frame svg {
+  display: block;
+  flex: none;
+}
+.fill {
+  width: 100%;
+  height: 100%;
+}
+.inline {
+  width: max-content;
+}
+.center {
+  align-items: center;
+}
+.bottom {
+  align-items: flex-end;
+}
+.top {
+  align-items: flex-start;
+}

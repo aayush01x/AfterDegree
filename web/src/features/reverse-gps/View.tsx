@@ -2,16 +2,22 @@
 
 import Form from "next/form";
 import { useMemo, useState, type ReactNode } from "react";
-import { CountDisplay } from "@/components/data/CountDisplay";
+import type { Count } from "@/lib/types";
+import { drillOf, pressable } from "@/components/tool/drill";
+import { HeroNumber, Notes, ResultFoot, SectionHead, ToolHero } from "@/components/tool/ToolHero";
+import { useDrill } from "@/components/drill/useDrill";
 import { EvidenceKey } from "@/components/data/EvidenceKey";
 import { KeywordList } from "@/components/data/KeywordList";
 import { Panel } from "@/components/data/Panel";
 import { SectionView } from "@/components/data/ResultView";
+import { RouteTile } from "@/components/tiles/RouteTile";
+import { TileRow } from "@/components/tiles/TileRow";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { ExampleBadge } from "@/components/ui/ExampleBadge";
+import { Tag } from "@/components/ui/Tag";
+import { Chevron } from "@/components/ui/Chevron";
 import { Input } from "@/components/ui/Input";
-import { formatDate } from "@/lib/format";
+import { formatDate, fmtInt, fmtPct } from "@/lib/format";
 import { toolHref } from "@/lib/tools";
 import type {
   KeywordsData,
@@ -102,6 +108,7 @@ function GoalEditor({ initial, evidence }: { initial: GoalParts; evidence: React
       evidence={evidence}
       caption="Tap a chip to correct it. We trace the routes again when you press the button."
       as="section"
+      className={styles.goalCard}
     >
       <Form action="/tools/reverse-gps" className={styles.goalForm}>
         <input type="hidden" name="goal_text" value={goalText(parts)} />
@@ -162,21 +169,13 @@ function GoalEditor({ initial, evidence }: { initial: GoalParts; evidence: React
 
 /* ---------- a route as a stepped cell path ---------- */
 
-function RouteBlock({
-  route,
-  rank,
-  selected,
-  best,
-  onSelect,
-  total,
-}: {
-  route: RouteListItem;
-  rank: number;
-  selected: boolean;
-  best: boolean;
-  onSelect: () => void;
-  total: number;
-}) {
+const countText = (people: Count | number) => (typeof people === "number" ? `${fmtInt(people)} people` : people.display);
+const shareText = (people: Count | number) => (typeof people === "number" || people.share === null ? null : fmtPct(people.share));
+
+/** One route in detail: the header and path open the people on it; the gaps are a checklist. */
+function RouteBlock({ route, rank, best, total }: { route: RouteListItem; rank: number; best: boolean; total: number }) {
+  const drill = useDrill();
+  const token = drillOf(route) ?? null;
   const [closed, setClosed] = useState<Set<number>>(new Set());
   const toggle = (i: number) =>
     setClosed((s) => {
@@ -187,45 +186,39 @@ function RouteBlock({
     });
   const last = route.steps.length - 1;
   const people = route.people;
+  const share = shareText(people);
+  const title = route.title ?? `Route ${rank}`;
 
-  return (
-    <li className={[styles.route, selected ? styles.on : ""].join(" ")}>
+  const top = (
+    <>
       <header className={styles.routeHead}>
         <div className={styles.routeTitle}>
           <span className={styles.routeNo}>{rank}</span>
           <div>
-            <h3>{route.title ?? `Route ${rank}`}</h3>
+            <h3>{title}</h3>
             <p className={styles.meta}>
-              {best && <b className={styles.tag}>Best fit</b>}
-              {route.fit && <span>{FIT_LABEL[route.fit]}</span>}
+              {best && <Tag tone="ink">Fits you best</Tag>}
+              {route.fit && !best && <span>{FIT_LABEL[route.fit]}</span>}
               {route.typical_years != null && <span>Typically {yearsText(route.typical_years)}</span>}
             </p>
           </div>
         </div>
-        <div className={styles.routeSide}>
-          <span className={styles.people}>
-            {typeof people === "number" ? `${people} people` : <CountDisplay count={people} size="sm" showShare />}
-          </span>
-          <button
-            type="button"
-            className={styles.pickRoute}
-            aria-pressed={selected}
-            onClick={onSelect}
-            aria-label={`${selected ? "Selected" : "Highlight"} route ${rank}: ${route.title ?? ""}`}
-          >
-            {selected ? "Highlighted" : "Highlight"}
-          </button>
-        </div>
+        <p className={styles.people}>
+          {countText(people)}
+          {share && <span> · {share}</span>}
+          {token && (
+            <span className={styles.open}>
+              See the people <Chevron size={14} />
+            </span>
+          )}
+        </p>
       </header>
 
       <ol className={styles.path} aria-label="Steps from you to the goal">
         {route.steps.map((s, i) => (
           <li
             key={`${s.label}-${i}`}
-            className={[
-              styles.stepWrap,
-              "ad-assemble",
-            ].join(" ")}
+            className={[styles.stepWrap, "ad-assemble"].join(" ")}
             style={{ ["--i" as string]: rank * 4 + i, ["--n" as string]: total * 4 }}
           >
             {i > 0 && (
@@ -235,19 +228,29 @@ function RouteBlock({
                 <i />
               </span>
             )}
-            <div
-              className={[
-                styles.step,
-                i === 0 ? styles.you : "",
-                i === last ? styles.goal : "",
-              ].join(" ")}
-            >
+            <div className={[styles.step, i === 0 ? styles.you : "", i === last ? styles.goal : ""].join(" ")}>
               <span className={styles.stepLabel}>{s.label}</span>
               {s.years != null && i > 0 && <span className={styles.stepYears}>about {yearsText(s.years)}</span>}
             </div>
           </li>
         ))}
       </ol>
+    </>
+  );
+
+  return (
+    <li className={styles.route}>
+      {token ? (
+        <div
+          className={[styles.hit, styles.top].join(" ")}
+          aria-label={`${title}. Open the ${countText(people)} on this route`}
+          {...pressable(() => drill.open(token, title))}
+        >
+          {top}
+        </div>
+      ) : (
+        <div className={styles.top}>{top}</div>
+      )}
 
       <div className={styles.gaps}>
         <h4>
@@ -282,6 +285,7 @@ function RouteBlock({
 /* ---------- the view ---------- */
 
 export function View({ result }: { result: ResultEnvelope }) {
+  const drill = useDrill();
   const routeSection = result.sections.find((s): s is Extract<Section, { kind: "route_list" }> => s.kind === "route_list");
   const kwSection = result.sections.find((s): s is Extract<Section, { kind: "keywords" }> => s.kind === "keywords");
   const goalSection = result.sections.find((s): s is Extract<Section, { kind: "text" }> => s.kind === "text" && s.id === "goal");
@@ -291,12 +295,10 @@ export function View({ result }: { result: ResultEnvelope }) {
   const allRoutes = (routeSection?.data as RouteListData | undefined)?.routes ?? [];
   const routes = allRoutes.slice(0, MAX_ROUTES);
   const best = bestRoute(routes);
-  const [picked, setPicked] = useState<string | null>(null);
-  const selected = picked ?? best;
+  const bestItem = routes.find((r) => r.id === best);
 
   const goal = useMemo(() => readGoal(result), [result]);
   const cohort = result.cohort;
-  const mock = result.warnings.some((w) => /mock mode/i.test(w));
   const realWarnings = result.warnings.filter((w) => !/mock mode/i.test(w));
 
   const allThin = routes.length > 0 && routes.every((r) => typeof r.people !== "number" && r.people.n < 10);
@@ -310,90 +312,119 @@ export function View({ result }: { result: ResultEnvelope }) {
 
   const evNode = <EvidenceKey n={cohort?.n_visible} date={formatDate(result.data_date)} evidence={result.evidence} />;
 
+  const bestToken = (bestItem ? drillOf(bestItem) : null) ?? null;
+  const bestK = bestItem ? peopleK(bestItem) : 0;
+  const bestTitle = bestItem?.title ?? "the best-fit route";
+  const notes = [
+    ...(isThin
+      ? [
+          `${cohort?.widened_reason ?? "Only a few people match this goal, so the routes below can swing a lot."} That is not a bad sign for you. It means the data is thin, so read the routes as hints for where to look, not as a ranking.`,
+        ]
+      : []),
+    ...realWarnings,
+  ];
+  const [firstStep, ...otherSteps] = result.next_steps;
+  const place = [goal.role, goal.city ?? goal.country].filter(Boolean).join(" in ");
+
   return (
     <div className={styles.root}>
-      {/* 1. Summary and goal */}
-      <Panel title="What this shows" as="section">
-        {mock && <ExampleBadge force>Example data (mock mode)</ExampleBadge>}
-        {result.summary && <p className={styles.summary}>{result.summary}</p>}
-        {cohort && (
-          <p className={styles.cohort}>
-            <b>Who we followed:</b> {cohort.definition}.
-          </p>
+      {/* 1. The answer and the goal */}
+      {bestItem && (
+        <ToolHero
+          lead="At least"
+          numeral={<HeroNumber value={bestK} label={`${bestK} people`} />}
+          say={
+            cohort
+              ? `of the ${fmtInt(cohort.n_visible)} people in ${place || "this role"} took the route that fits you best.`
+              : "people took the route that fits you best."
+          }
+          note={result.summary}
+          actions={
+            <>
+              {bestToken ? (
+                <Button variant="primary" onClick={() => drill.open(bestToken, bestTitle)}>
+                  {`See the ${fmtInt(bestK)} people on this route`}
+                </Button>
+              ) : (
+                firstStep && (
+                  <ButtonLink href={toolHref(firstStep.tool, firstStep.params)} variant="primary">
+                    {firstStep.label}
+                  </ButtonLink>
+                )
+              )}
+            </>
+          }
+        />
+      )}
+      <div className={styles.context}>
+        <GoalEditor key={goalText(goal)} initial={goal} evidence={evNode} />
+        {notes.length > 0 && (
+          <div className={styles.notice}>
+            <Notes lines={notes} />
+            {widenPart && isThin && (
+              <ButtonLink href={toolHref("reverse_gps", { goal_text: widenedText })} variant="secondary" size="sm">
+                Try it without the {PART_LABEL[widenPart].toLowerCase()}
+              </ButtonLink>
+            )}
+          </div>
         )}
-        {realWarnings.length > 0 && (
-          <ul className={styles.warns} role="list">
-            {realWarnings.map((w) => (
-              <li key={w}>{w}</li>
-            ))}
-          </ul>
-        )}
-      </Panel>
-
-      <GoalEditor key={goalText(goal)} initial={goal} evidence={evNode} />
+      </div>
       {goalSection && <p className={`${styles.read} visually-hidden`}>{(goalSection.data as TextData).text}</p>}
 
-      {/* 2. Thin data */}
-      {isThin && (
-        <Panel title="Not many people here yet" as="section" className={styles.thin}>
-          <p>
-            {cohort?.widened_reason ?? "Only a few people match this goal, so the routes below can swing a lot."} That
-            is not a bad sign for you. It means the data is thin, so read the routes as hints for where to look, not as a
-            ranking.
-          </p>
-          {widenPart && (
-            <ButtonLink href={toolHref("reverse_gps", { goal_text: widenedText })} variant="secondary" size="sm">
-              Try it without the {PART_LABEL[widenPart].toLowerCase()}
-            </ButtonLink>
-          )}
-        </Panel>
-      )}
-
-      {/* 3. Signature: routes as stepped cell paths */}
-      {routeSection && (
-        <Panel
-          title={routeSection.title}
-          evidence={evNode}
-          caption={
-            (routeSection.data as RouteListData).caption ??
-            "Each block is one step. The route that fits you best is shown in black."
-          }
-          as="section"
-        >
-          {routes.length === 0 ? (
-            <p className={styles.empty}>
-              We could not find a route that fits your starting point yet. Try a broader goal, such as the role without
-              the city.
-            </p>
-          ) : (
-            <ol className={styles.routes} aria-label="Routes to your goal">
-              {routes.map((r, i) => (
-                <RouteBlock
+      {/* 2. Routes as a wall of tiles, best fit first */}
+      {routes.length > 0 ? (
+        <>
+          <TileRow
+            band
+            title={routeSection?.title ?? "Routes that fit you"}
+            note={`${routes.length} ${routes.length === 1 ? "route" : "routes"} · people who took each, of ${cohort ? fmtInt(cohort.n_visible) : "those we saw"}`}
+            label="Routes to your goal"
+          >
+            {routes.map((r, i) => {
+              const steps = r.steps.slice(1).map((st) => st.label);
+              return (
+                <RouteTile
                   key={r.id}
-                  route={r}
-                  rank={i + 1}
-                  selected={r.id === selected}
-                  best={r.id === best}
-                  onSelect={() => setPicked(r.id === selected && r.id !== best ? null : r.id)}
-                  total={routes.length}
+                  title={steps.length > 0 && steps.length <= 3 ? steps.join(" → ") : (r.title ?? (steps.join(" → ") || `Route ${i + 1}`))}
+                  steps={steps}
+                  people={peopleK(r)}
+                  years={r.typical_years}
+                  hue={((i % 4) + 1) as 1 | 2 | 3 | 4}
+                  badge={r.id === best ? "Fits you best" : undefined}
+                  drill={drillOf(r) ?? null}
                 />
+              );
+            })}
+          </TileRow>
+
+          <section className={styles.detail} aria-label="Each route in detail">
+            <SectionHead
+              title="Route by route"
+              meta="Each block is one step. Open a route to see the people on it."
+            />
+            <ol className={styles.routes} aria-label="Routes to your goal, in detail">
+              {routes.map((r, i) => (
+                <RouteBlock key={r.id} route={r} rank={i + 1} best={r.id === best} total={routes.length} />
               ))}
             </ol>
-          )}
-          {allRoutes.length > MAX_ROUTES && (
-            <p className={styles.more}>Showing the top {MAX_ROUTES} of {allRoutes.length} routes.</p>
-          )}
-        </Panel>
+            {allRoutes.length > MAX_ROUTES && (
+              <p className={styles.more}>Showing the top {MAX_ROUTES} of {allRoutes.length} routes.</p>
+            )}
+          </section>
+        </>
+      ) : (
+        routeSection && (
+          <Panel title={routeSection.title} evidence={evNode} as="section">
+            <p className={styles.empty}>
+              We could not find a route that fits your starting point yet. Try a broader goal, such as the role without the city.
+            </p>
+          </Panel>
+        )
       )}
 
-      {/* 4. Supporting panels */}
+      {/* 3. Supporting panels */}
       {lacking && (
-        <Panel
-          title={kwSection?.title ?? "Skills to add"}
-          evidence={evNode}
-          caption={kw?.caption}
-          as="section"
-        >
+        <Panel title={kwSection?.title ?? "Skills to add"} evidence={evNode} caption={kw?.caption} as="section">
           {lacking.items.length > 0 ? (
             <KeywordList data={lacking} />
           ) : (
@@ -410,19 +441,7 @@ export function View({ result }: { result: ResultEnvelope }) {
         <SectionView key={s.id} section={s} evidence={result.evidence} result={result} />
       ))}
 
-      {/* 5. Next step and coverage */}
-      {result.next_steps.length > 0 && (
-        <div className={styles.next}>
-          {result.next_steps.map((n, i) => (
-            <ButtonLink key={n.label} href={toolHref(n.tool, n.params)} variant={i === 0 ? "primary" : "secondary"}>
-              {n.label}
-            </ButtonLink>
-          ))}
-        </div>
-      )}
-      <p className={styles.coverage}>
-        {result.coverage_note} Data as of {formatDate(result.data_date)}.
-      </p>
+      <ResultFoot result={{ ...result, next_steps: bestToken ? result.next_steps : otherSteps }} />
     </div>
   );
 }

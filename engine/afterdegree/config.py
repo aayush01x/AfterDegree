@@ -69,7 +69,13 @@ class Settings:
     max_retries: int = 3
     backoff_base_s: float = 1.0
     aggregate_rpm: int = 200
-    llm_timeout_s: float = 30.0
+    llm_timeout_s: float = 60.0
+
+    # Drill-down runs (POST /api/drill): their own, smaller budget.
+    drill_max_credits: float = 15.0
+    drill_sample_cap: int = 30
+    # Person data (raw Crustdata responses and anonymised drill people) never lives longer than this.
+    person_data_ttl_days: float = 7.0
 
     # Optional web checks for sponsor registers (1 credit each, UK/NL only).
     web_sponsor_checks: int = 2
@@ -126,6 +132,8 @@ def load_settings(env_file: Path | None = None, **overrides) -> Settings:
         "AFTERDEGREE_WEB_SPONSOR_CHECKS": ("web_sponsor_checks", int),
         "AFTERDEGREE_COMPANY_ENRICH_TOP_N": ("company_enrich_top_n", int),
         "AFTERDEGREE_MAX_RETRIES": ("max_retries", int),
+        "AFTERDEGREE_DRILL_MAX_CREDITS": ("drill_max_credits", float),
+        "AFTERDEGREE_DRILL_SAMPLE_CAP": ("drill_sample_cap", int),
     }
     for env_name, (attr, cast) in numeric.items():
         raw = get(env_name)

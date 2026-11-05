@@ -1,0 +1,28 @@
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--ad-space-2);
+  padding: 6px 12px;
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-rule);
+  font-family: var(--ad-font-read);
+  font-size: var(--ad-text-xs);
+  line-height: 18px;
+  font-weight: 500;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend i {
+  width: 12px;
+  height: 12px;
+  outline: 1px solid var(--stage-edge);
+  outline-offset: -1px;
+}
+.band {
+  background: var(--ad-band);
+  color: var(--ad-band-text);
+  border-color: var(--ad-band-rule);
+}

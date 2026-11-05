@@ -1,4 +1,5 @@
 import { makeCount } from "@/lib/count";
+import type { DrillToken } from "@/lib/drill-types";
 import type {
   Evidence,
   ResultEnvelope,
@@ -21,10 +22,19 @@ const evidence = (id: string, endpoint: string, total: number, used: number, fil
   note: `Example data: sampled ${used} of ${total} matching profiles`,
 });
 
+/** Drill token the engine attaches to a route: the goal as run, plus the route step. */
+const routeDrill = (goal: string, r: { id: string; title?: string }): DrillToken => ({
+  tool: "reverse_gps",
+  params: { goal_text: goal },
+  path: [{ dimension: "route", value: r.id, label: r.title ?? r.id }],
+});
+const withDrills = (list: RouteListItem[], goal: string): RouteListItem[] =>
+  list.map((r) => ({ ...r, drill: routeDrill(goal, r) }));
+
 const YOU = "You (VIT CSE + 2 yrs)";
 const N = 168; // people in the goal position today
 
-const routes: RouteListItem[] = [
+const rawRoutes: RouteListItem[] = [
   {
     id: "r1",
     title: "Master's in Germany, then a working-student role",
@@ -114,6 +124,8 @@ const routes: RouteListItem[] = [
     ],
   },
 ];
+
+const routes = withDrills(rawRoutes, "Data Engineer in Berlin");
 
 const KEYWORDS = [
   { term: "Airflow", count: 118, you_have: false },
@@ -268,7 +280,7 @@ export const mockResultThin: ResultEnvelope = {
       kind: "route_list",
       title: "Routes that fit you",
       data: {
-        routes: [
+        routes: withDrills([
           {
             id: "t1",
             title: "Master's in Germany, then research assistant",
@@ -296,7 +308,7 @@ export const mockResultThin: ResultEnvelope = {
             fit: "stretch",
             gaps: ["A data science title (yours is systems engineering)", "Model deployment experience, for example with MLflow"],
           },
-        ],
+        ], "ML Engineer in Leipzig"),
         caption: "Only two routes had enough people to show.",
       },
       evidence_ids: ["ev_gpst_1"],

@@ -27,7 +27,7 @@
 }
 .tab:focus-visible {
   outline-offset: -4px;
-  outline-color: var(--ad-blue);
+  outline-color: var(--ad-focus-paper);
 }
 .tab[aria-selected="true"]:focus-visible {
   outline-color: var(--ad-paper);
@@ -36,5 +36,5 @@
   padding-top: var(--ad-space-3);
 }
 .panel:focus-visible {
-  outline-color: var(--ad-blue);
+  outline-color: var(--ad-focus-paper);
 }

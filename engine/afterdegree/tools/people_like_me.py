@@ -11,7 +11,7 @@ from ..profile import further_degrees
 from ..schemas import Result
 from ..stats import make_count
 from ..toolkit import ToolContext, stat_section
-from .common import counts_table_section, distribution_section, pct, step, user_target_role
+from .common import company_value, counts_table_section, distribution_section, pct, step, user_target_role
 
 TOOL = "people_like_me"
 HOME = "India"
@@ -20,6 +20,7 @@ DEGREE_LABEL = {"Master's": "MS / MSc / MEng", "MBA": "MBA", "PhD": "PhD"}
 
 async def run(ctx: ToolContext) -> Result:
     p = ctx.params
+    ctx.tool = TOOL
     ctx.total_steps = 5
     await ctx.step("Finding people with your background")
     cohort = await build_cohort(ctx, p.get("match") or "exact_school", p.get("exp_band"))
@@ -49,6 +50,7 @@ async def run(ctx: ToolContext) -> Result:
 
     roles: Counter = Counter()
     employers: Counter = Counter()
+    employer_ids: dict[str, object] = {}
     for pp in abroad_people:
         cur = pp.primary_current()
         fam = tx.title_family((cur.title if cur else None) or pp.current_title)
@@ -56,6 +58,8 @@ async def run(ctx: ToolContext) -> Result:
             roles[fam] += 1
         if cur and cur.company and pp.country == employer_country:
             employers[cur.company] += 1
+            if cur.company_id:
+                employer_ids.setdefault(cur.company, cur.company_id)
     n_in_target = sum(1 for pp in people if pp.country == employer_country)
 
     degree_types: Counter = Counter()
@@ -76,28 +80,55 @@ async def run(ctx: ToolContext) -> Result:
     if n_loc is not None and k_abroad is not None and n_loc > 0:
         abroad_count = make_count(k_abroad, n_loc, [e for e in (ev_abroad, ev_loc) if e])
     target_role = user_target_role(ctx) if not university else None
-    sections = [
-        stat_section("cohort_size", "Your graduates" if university else "People like you", "visible profiles",
-                     display=f"{cohort.n:,}", value=cohort.n, unit="profiles", note=cohort.widened_reason,
-                     evidence_ids=[cohort.evidence_id] if cohort.evidence_id else []),
-    ]
+    n_read = len(people)
+    read_note = (f"The breakdowns below are read from {n_read:,} of these {cohort.n:,} profiles (sample_n)."
+                 if n_read < cohort.n else None)
+    hero = stat_section("cohort_size", "Your graduates" if university else "People like you", "visible profiles",
+                        display=f"{cohort.n:,}", value=cohort.n, unit="profiles",
+                        note=" ".join(x for x in (cohort.widened_reason, read_note) if x) or None,
+                        evidence_ids=[cohort.evidence_id] if cohort.evidence_id else [])
+    hero.data["sample_n"] = n_read
+    hero.data["drill"] = {"tool": TOOL, "params": ctx.params, "path": []}
+    sections = [hero]
+
+    def country_drill(label: str):
+        if label == "Still in India":
+            return ctx.drill("country", HOME, "India")
+        return None if label.startswith("Other") else ctx.drill("country", label)
+
+    def employer_drill(label: str):
+        if not employer_country:
+            return None
+        path = [{"dimension": "country", "value": employer_country, "label": employer_country}]
+        return ctx.drill("company", company_value(label, employer_ids.get(label)), label, path=path)
+
     if abroad_count is not None:
         sections.append(stat_section("moved_abroad", "Moved abroad", f"{who} now live outside India", count=abroad_count,
                                      note="Counted over every visible profile in the group that shows a location."))
     sections += [
         distribution_section("countries", f"Where the {n_c} are now", abroad_counts, n_c, ev_s, unit="people",
-                             caption=("Each square is one person. Abroad first" + ("; your target is highlighted." if target else ".")),
-                             other_label="Other countries", target=target, remainders={"Still in India": home_count}),
+                             caption=("Each square is one person. Abroad first" + ("; your target is highlighted." if target else "."))
+                             + (f" Read from {n_read:,} of {cohort.n:,} profiles." if read_note else ""),
+                             other_label="Other countries", target=target, remainders={"Still in India": home_count},
+                             drill=country_drill, sample_n=n_read),
         counts_table_section("roles", "What they do now", "role", "Role", roles, len(abroad_people), ev_s,
-                             you_label=tx.display_role(target_role) if target_role else None, other_label="Other roles", caption="abroad"),
+                             you_label=tx.display_role(target_role) if target_role else None, other_label="Other roles", caption="abroad",
+                             drill=lambda label: ctx.drill("role", label), sample_n=n_read,
+                             empty_note=f"No single role is shared by 5 or more of the {len(abroad_people)} people abroad in the profiles read."),
         counts_table_section("employers_target", f"Employers in {employer_country or 'their new country'}", "employer", "Employer",
-                             employers, n_in_target, ev_s, you_label=ctx.derived.get("current_company"), other_label="At other employers"),
+                             employers, n_in_target, ev_s, you_label=ctx.derived.get("current_company"), other_label="At other employers",
+                             drill=employer_drill, sample_n=n_read,
+                             empty_note=(f"No employer in {employer_country or 'that country'} has 5 or more of the {n_in_target} people like you "
+                                         "found there in the profiles read, so none is listed. Open the country to see the people instead.")),
         distribution_section("further_degrees", "Further degrees", degree_types, len(people), ev_s, unit="degrees",
                              caption="Latest degree after the bachelor's, as listed on profiles.",
-                             remainders={"No further degree shown": len(people) - with_degree}),
+                             remainders={"No further degree shown": len(people) - with_degree},
+                             drill=lambda label: None if label in ("No further degree shown", "Other degree") else ctx.drill("degree", label),
+                             sample_n=n_read),
         distribution_section("degree_countries", "Where they studied", degree_countries, sum(degree_countries.values()), ev_s,
                              unit="people", caption="Country of the master's, for those who took one.",
-                             other_label="Other countries", target=target),
+                             other_label="Other countries", target=target,
+                             drill=lambda label: ctx.drill("degree_country", label), sample_n=n_read),
     ]
 
     next_country = target or top_abroad

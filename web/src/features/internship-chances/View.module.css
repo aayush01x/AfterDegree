@@ -3,44 +3,7 @@
   gap: var(--ad-space-4);
   min-width: 0;
 }
-.say {
-  font-family: var(--font-display), var(--font-ui), sans-serif;
-  font-size: var(--ad-text-xl);
-  line-height: 30px;
-  font-weight: 600;
-  max-width: 62ch;
-}
-.sure {
-  margin-top: var(--ad-space-2);
-  font-size: var(--ad-text-md);
-  color: var(--ad-muted);
-}
-.badgeRow {
-  margin-top: var(--ad-space-2);
-}
-.actions {
-  margin-top: var(--ad-space-2);
-}
 
-/* the chance: grid numeral beside one cell per person */
-.hero {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  gap: var(--ad-space-4);
-  align-items: start;
-}
-.chance {
-  display: grid;
-  gap: var(--ad-space-2);
-  align-content: start;
-  min-width: 0;
-}
-.least {
-  font-family: var(--font-display), var(--font-ui), sans-serif;
-  font-size: var(--ad-text-lg);
-  line-height: 24px;
-  font-weight: 700;
-}
 .numeral {
   display: flex;
   align-items: flex-end;
@@ -52,74 +15,137 @@
   line-height: 40px;
   font-weight: 700;
 }
-.chanceSay {
-  font-family: var(--font-display), var(--font-ui), sans-serif;
-  font-size: var(--ad-text-xl);
-  line-height: 28px;
-  font-weight: 700;
-  max-width: 26ch;
+
+/* cohort card, top right of the hero */
+.context {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ad-space-4);
+  align-items: start;
 }
-.count {
-  font-size: var(--ad-text-body);
-  font-weight: 700;
+.context > :only-child {
+  grid-column: 1 / -1;
+  max-width: 640px;
 }
-.range {
+.cohort {
+  --ad-focus: var(--ad-focus-paper);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ad-space-1);
+  padding: var(--ad-space-3);
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-rule);
+  font-family: var(--font-ui), system-ui, sans-serif;
   font-size: var(--ad-text-md);
-  max-width: 40ch;
+  line-height: 20px;
+}
+.cohortHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px var(--ad-space-1);
+}
+.cohortHead h2 {
+  font-size: var(--ad-text-lg);
+  line-height: 24px;
+  font-weight: 700;
+}
+.muted {
+  color: var(--ad-muted);
+}
+.notice {
+  display: grid;
+  gap: var(--ad-space-2);
+  justify-items: start;
+}
+.tileSay {
+  font-size: var(--ad-text-sm);
+  line-height: 18px;
+  font-weight: 600;
 }
 
-.cellsPanel {
-  min-width: 0;
-}
+/* one cell per intern, grouped by company; each group opens the company */
 .groups {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ad-space-3) var(--ad-space-4);
+  gap: var(--ad-space-1) var(--ad-space-2);
 }
 .group {
+  --ad-focus: var(--ad-focus-paper);
   display: grid;
   gap: var(--ad-space-1);
   align-content: start;
+  min-width: 128px;
+  padding: var(--ad-space-1);
+  background: var(--ad-paper);
+  color: var(--ad-ink);
 }
 .groupName {
+  font-family: var(--font-ui), system-ui, sans-serif;
   font-size: var(--ad-text-sm);
   line-height: 16px;
   font-weight: 700;
 }
+.groupCount {
+  font-size: var(--ad-text-xs);
+  line-height: 16px;
+  color: var(--ad-muted);
+}
 .cells {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 20px);
+  grid-template-columns: repeat(6, 16px);
   gap: 3px;
 }
-.group .cells {
-  grid-template-columns: repeat(6, 20px);
+.solo {
+  padding: var(--ad-space-1);
+}
+.solo .cells {
+  grid-template-columns: repeat(auto-fill, 16px);
 }
 .cell {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   display: block;
 }
 .full {
-  background: var(--ad-orange);
+  background: var(--stage-fulltime);
 }
 .hollow {
   background: transparent;
   border: 1px solid var(--ad-hollow);
 }
-.pick.full {
+
+/* hover, focus and the chosen company invert to ink */
+.hit {
+  cursor: pointer;
+  outline-offset: 0;
+}
+.hit:hover,
+.hit:focus-visible,
+.on {
   background: var(--ad-ink);
+  color: var(--ad-paper);
+  --ad-focus: var(--ad-paper);
 }
-.pick.hollow {
-  border-color: var(--ad-ink);
-  border-width: 2px;
+.hit:hover .groupCount,
+.hit:focus-visible .groupCount,
+.on .groupCount {
+  color: var(--ad-rail-muted);
 }
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ad-space-1);
-  margin-top: var(--ad-space-3);
+.hit:hover .full,
+.hit:focus-visible .full,
+.on .full {
+  background: var(--ad-accent);
 }
+.hit:hover .hollow,
+.hit:focus-visible .hollow,
+.on .hollow {
+  border-color: var(--ad-rail-muted);
+}
+
 .legend {
   list-style: none;
   display: flex;
@@ -140,43 +166,19 @@
   display: block;
 }
 .keyFull {
-  background: var(--ad-orange);
+  background: var(--stage-fulltime);
 }
 .keyHollow {
   border: 1px solid var(--ad-hollow);
 }
-.keyPick {
-  background: var(--ad-orange);
-  outline: 2px solid var(--ad-ink);
-}
 
-.next {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ad-space-2);
-  align-items: center;
-}
-.foot {
-  font-size: var(--ad-text-sm);
-  line-height: 20px;
-  font-weight: 500;
-  max-width: 90ch;
-}
-
-@media (max-width: 900px) {
-  .hero {
+@media (max-width: 960px) {
+  .context {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .say {
-    font-size: var(--ad-text-lg);
-    line-height: 26px;
   }
 }
 @media (max-width: 480px) {
   .view {
     gap: var(--ad-space-3);
-  }
-  .next > a {
-    width: 100%;
   }
 }

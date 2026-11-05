@@ -12,12 +12,44 @@
   align-items: end;
 }
 
+.colWrap {
+  display: flex;
+  min-width: 0;
+}
+
 .col {
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   min-width: 0;
+  padding: 4px 0 0;
+  font: inherit;
+  color: var(--ad-ink);
+}
+
+/* a month with a drill token inverts on hover and focus */
+.press:hover,
+.press:focus-visible {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.press:hover .orange,
+.press:focus-visible .orange {
+  background: var(--ad-accent);
+}
+.press:hover .month,
+.press:focus-visible .month {
+  border-top-color: var(--ad-paper);
+}
+.press:hover .year,
+.press:focus-visible .year {
+  color: var(--ad-paper);
+}
+.press:focus-visible {
+  outline: 2px solid var(--ad-focus-paper);
+  outline-offset: 2px;
 }
 
 .total {
@@ -42,7 +74,7 @@
 }
 
 .orange {
-  background: var(--ad-orange);
+  background: var(--ad-accent);
 }
 
 .ink {
@@ -99,7 +131,12 @@
 }
 
 .unit {
+  font-family: var(--font-ui), system-ui, sans-serif;
   font-size: var(--ad-text-md);
   line-height: 20px;
   color: var(--ad-muted);
+}
+.press:hover .ink,
+.press:focus-visible .ink {
+  background: var(--ad-paper);
 }

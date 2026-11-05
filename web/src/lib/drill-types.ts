@@ -42,7 +42,14 @@ export interface PersonDetail extends PersonCard {
 export interface DrillContext {
   origin_tool: string;
   origin_label: string;
-  filters: { label: string; value: string }[];
+  filters: {
+    label: string;
+    value: string;
+    /** Additive: dotted key of the origin param this filter came from, e.g. "scope.school". */
+    param?: string;
+    /** Additive: the same drill with this filter dropped (engine-built; preferred over `param`). */
+    drill?: DrillToken;
+  }[];
 }
 
 export interface CompanyProfile {
@@ -90,3 +97,50 @@ export interface DrillResult {
   warnings?: string[];
   evidence?: Evidence[];
 }
+
+/* ---------- Additive (web drill pages) ---------- */
+
+/** Anything in a section that can be drilled (distribution item, ranked row, route, node). */
+export interface Drillable {
+  drill?: DrillToken | null;
+}
+
+/** A row of the company `open_roles` table may carry the company's own public posting link. */
+export interface PostingRow {
+  posting_url?: string | null;
+}
+
+/** Optional extras a Drill result may carry; the UI renders them when present. */
+/** Optional peek into a breakdown row, shown when its tile is focused (e.g. a city's top companies and roles). */
+export interface RowPreview {
+  preview?: { label: string; items: { label: string; count: number }[] }[];
+}
+
+export interface DrillResultExtras {
+  /** What `count.n` counts, e.g. "SAP interns like you" (the page reads "of the 61 SAP interns like you"). */
+  count_label?: string;
+  /** Mentor-voice sentence written from the facts (LLM; null when unavailable). */
+  summary?: string | null;
+  coverage?: number | null;
+  data_date?: string;
+  coverage_note?: string;
+  next_steps?: { label: string; tool: string; params: Record<string, unknown> }[];
+}
+
+/** PersonDetail extras: how the user's own path compares (computed by the engine when present). */
+export interface PersonDetailExtras {
+  /** Which person in the originating drill this is (1-based) and how many there are. */
+  position?: { index: number; total: number } | null;
+  /** Labelled facts explaining why this path is shown, e.g. College: VIT Vellore (same). */
+  why?: { label: string; value: string; note?: string }[];
+  /** People in the same slice who took the same route, as anonymous cards. */
+  same_route?: PersonCard[];
+  /** Skills common on this route, with how many of the route's people list each. */
+  route_skills?: { term: string; count: number; n: number }[];
+  /** Typical years from the route's first step abroad to a full-time job. */
+  route_typical_years?: number | null;
+  data_date?: string;
+}
+
+export type DrillResultFull = DrillResult & DrillResultExtras;
+export type PersonDetailFull = PersonDetail & PersonDetailExtras;

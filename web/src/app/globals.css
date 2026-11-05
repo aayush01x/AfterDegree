@@ -2,25 +2,16 @@
    AfterDegree tokens. Every component reads these; nothing hard-codes
    a colour, a font or a spacing step.
    ------------------------------------------------------------------ */
-:root {
-  /* colour */
-  --ad-orange: #ff5a1f; /* the field behind the work */
-  --ad-ink: #111111; /* rail, type, rules, primary buttons */
-  --ad-paper: #ffffff; /* work panels */
-  --ad-rule: #111111; /* 1px structural rules */
-  --ad-rule-soft: #e4dfda; /* hairlines inside a white panel */
-  --ad-blue: #0057ff; /* evidence keys and focus, only ever on white */
-  --ad-grid: rgba(150, 182, 255, 0.55); /* faint construction grid on the field */
-  --ad-muted: #5a5550; /* secondary text on white (7:1) */
-  --ad-hollow: #8a8580; /* outline of "remainder" cells */
-  --ad-ink-hover: #2a2826; /* hover on the black rail */
-  --ad-rail-text: #ede9e5; /* nav text on black (16:1) */
-  --ad-rail-muted: #b8b2ac; /* rail labels on black (9:1) */
-  /* state colours: only where a state is being reported */
-  --ad-error: #b3261e; /* on white (6.4:1) */
-  --ad-error-paper: #fdf0ef;
-  --ad-ok: #0b6b3a; /* on white (6.9:1) */
+:root,
+[data-palette] {
+  /* Colour lives in palettes.css. Legacy names stay as aliases. */
+  --ad-orange: var(--ad-field);
+  --ad-blue: var(--ad-key);
+  --ad-grid: var(--ad-grid-line);
+  --ad-ink-hover: var(--ad-rail-hover);
+}
 
+:root {
   /* geometry */
   --ad-cell: 32px; /* the construction-grid unit */
   --ad-space-1: 8px;
@@ -49,10 +40,10 @@
   --ad-fast: 160ms;
   --ad-assemble: 220ms; /* results assemble cell by cell */
 
-  /* surface-scoped focus colour: ink on the field, blue on white, white on black */
+  /* surface-scoped focus colour: ink on the field, key colour on paper, paper on ink */
   --ad-focus: var(--ad-ink);
-
-  --ad-grid-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cpath d='M0 .5H32M.5 0V32' fill='none' stroke='%2396B6FF' stroke-opacity='.55'/%3E%3C/svg%3E");
+  --ad-font-read: var(--font-ui), system-ui, sans-serif;
+  --ad-font-head: var(--font-display), var(--font-ui), sans-serif;
 
   color-scheme: light;
 }
@@ -71,7 +62,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scrollbar-color: var(--ad-ink) var(--ad-orange);
+  scrollbar-color: var(--ad-ink) var(--ad-field);
+  background-color: var(--ad-field);
 }
 
 body {
@@ -80,8 +72,11 @@ body {
   font-size: var(--ad-text-md);
   line-height: 20px;
   color: var(--ad-ink);
-  background-color: var(--ad-orange);
-  background-image: var(--ad-grid-image);
+  background-color: var(--ad-field);
+  background-image:
+    linear-gradient(to right, var(--ad-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ad-grid-line) 1px, transparent 1px);
+  background-size: var(--ad-cell) var(--ad-cell);
   background-position: 0 0;
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
@@ -151,7 +146,7 @@ ol[role="list"] {
 
 /* Surfaces set their own focus colour. */
 .ad-surface-paper {
-  --ad-focus: var(--ad-blue);
+  --ad-focus: var(--ad-focus-paper);
   background: var(--ad-paper);
   color: var(--ad-ink);
 }
@@ -159,6 +154,29 @@ ol[role="list"] {
   --ad-focus: var(--ad-paper);
   background: var(--ad-ink);
   color: var(--ad-paper);
+}
+
+.ad-surface-band {
+  --ad-focus: var(--ad-band-text);
+  background: var(--ad-band);
+  color: var(--ad-band-text);
+}
+
+/* Offset-dot texture: loading, empty and "too few people" states.
+   The dot shape is a mask; its colour is the --ad-dot token. */
+.ad-dots {
+  position: relative;
+  isolation: isolate;
+}
+.ad-dots::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--ad-dot);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect x='3' y='3' width='2' height='2'/%3E%3Crect x='11' y='11' width='2' height='2'/%3E%3C/svg%3E") repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect x='3' y='3' width='2' height='2'/%3E%3Crect x='11' y='11' width='2' height='2'/%3E%3C/svg%3E") repeat;
 }
 
 .visually-hidden {

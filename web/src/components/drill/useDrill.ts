@@ -1,5 +1,5 @@
 "use client";
-// Public drill-down API used by every view. The DrillProvider (DrillPanel.tsx) implements it.
+// Public drill-down API used by every view. The DrillProvider (DrillProvider.tsx) implements it.
 import { createContext, useContext } from "react";
 import type { DrillToken } from "@/lib/drill-types";
 

@@ -1,5 +1,6 @@
 import { makeCount as count } from "@/lib/count";
-import type { Cohort, Evidence, ResultEnvelope } from "@/lib/types";
+import type { DrillToken } from "@/lib/drill-types";
+import type { Cohort, Evidence, RankedRow, ResultEnvelope } from "@/lib/types";
 
 const DATA_DATE = "2026-11-06";
 const FETCHED = "2026-11-06T09:52:00Z";
@@ -11,6 +12,17 @@ const filters = {
   title_contains: ["intern", "working student"],
   cohort: "BTech CSE, private tier-1 colleges, 2020-2024",
 };
+
+/** Drill token the engine attaches to a company row: this run's params plus the company step. */
+const companyDrill = (company: string, params: Record<string, unknown>): DrillToken => ({
+  tool: "internship_chances",
+  params,
+  path: [{ dimension: "company", value: company, label: company }],
+});
+const withDrill = <T extends object>(row: T, drill: DrillToken): T => ({ ...row, drill });
+const runParams = { country: "Germany", role: "Data Engineer" };
+const drillRow = (row: RankedRow, params: Record<string, unknown>): RankedRow =>
+  row.rest ? row : withDrill(row, companyDrill(String(row.cells.company), params));
 
 const evidence: Evidence[] = [
   {
@@ -80,7 +92,7 @@ export const mockResult: ResultEnvelope = {
           { cells: { company: "Bosch", interns: 14, converted: 9, chance: count(9, 14, ["ev_ic_interns"]) }, count: count(9, 14, ["ev_ic_interns"]) },
           { cells: { company: "Siemens", interns: 6, converted: 4, chance: count(4, 6, ["ev_ic_interns"]) }, count: count(4, 6, ["ev_ic_interns"]) },
           { cells: { company: "Other companies", interns: 6, converted: 3, chance: count(3, 6, ["ev_ic_interns"]) }, count: count(3, 6, ["ev_ic_interns"]), rest: true },
-        ],
+        ].map((r) => drillRow(r, runParams)),
         default_sort: { key: "chance", dir: "desc" },
       },
       evidence_ids: ["ev_ic_interns"],

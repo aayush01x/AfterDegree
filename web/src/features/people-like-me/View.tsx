@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type {
   Cohort,
   DistributionData,
+  DistributionItem,
   RankedTableData,
   ResultEnvelope,
   Section,
@@ -12,20 +13,22 @@ import type {
   StatData,
 } from "@/lib/types";
 import { toolHref } from "@/lib/tools";
-import { formatDate, fmtInt } from "@/lib/format";
+import { fmtInt } from "@/lib/format";
+import { drillOf } from "@/components/tool/drill";
+import { HeroNumber, Notes, ResultFoot, ToolHero } from "@/components/tool/ToolHero";
 import { Panel } from "@/components/data/Panel";
 import { SectionView, coverageOf } from "@/components/data/ResultView";
 import { EvidenceKey } from "@/components/data/EvidenceKey";
-import { CohortWaffle } from "@/components/data/CohortWaffle";
-import { GridNumber } from "@/components/data/GridNumber";
+import { PersonStrip } from "@/components/data/PersonStrip";
 import { RankedTable } from "@/components/data/RankedTable";
 import { Distribution } from "@/components/data/Distribution";
+import { PlaceArt } from "@/components/art/PlaceArt";
+import { PosterTile } from "@/components/tiles/PosterTile";
+import { TileRow } from "@/components/tiles/TileRow";
 import { ButtonLink } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Tabs } from "@/components/ui/Tabs";
-import { ExampleBadge } from "@/components/ui/ExampleBadge";
 import { useProfile } from "@/components/shell/ProfileContext";
-import { BANDS, MATCH_LEVELS } from "./config";
+import { BANDS_SHORT, lensCopy } from "./config";
 import styles from "./View.module.css";
 
 const CONF = {
@@ -62,14 +65,18 @@ function bandValue(b: [number, number] | null) {
   return b ? `${b[0]},${b[1]}` : "";
 }
 
-function shareText(count: number, n: number) {
-  return n < 10 ? `${count} of ${n} (too few to compare)` : `at least ${fmtInt(count)} of ${fmtInt(n)}`;
+/** The place whose art stands for a destination item. */
+function placeFor(label: string): string {
+  if (/^still in india$/i.test(label)) return "India";
+  if (/^(other|abroad)/i.test(label)) return "Other";
+  return label;
 }
 
 export function View({ result }: { result: ResultEnvelope }) {
   const router = useRouter();
   const { university } = useProfile();
-  const who = university ? "your graduates" : "people like you";
+  const lens = lensCopy(university);
+  const who = lens.who;
   const { sections, cohort } = result;
 
   const countries = find(sections, "countries", "distribution")?.data as DistributionData | undefined;
@@ -82,14 +89,23 @@ export function View({ result }: { result: ResultEnvelope }) {
   const rest = sections.filter((s) => !HANDLED.has(s.id));
 
   const n = countries?.n ?? cohort?.n_visible ?? size?.value ?? 0;
-  const targetLabel = countries?.items.find((i) => i.target)?.label;
-  const [selected, setSelected] = useState<string | undefined>(targetLabel);
-  const picked = countries?.items.find((i) => i.label === selected);
+  const items = useMemo(() => countries?.items ?? [], [countries]);
+  const targetLabel = items.find((i) => i.target)?.label ?? items[0]?.label;
+  const [focus, setFocus] = useState<string | undefined>(targetLabel);
+  const focused = items.find((i) => i.label === focus) ?? items.find((i) => i.label === targetLabel);
 
   const thin = result.confidence === "low" || (cohort ? cohort.n_visible < 10 : n < 10);
   const band = bandOf(cohort);
-  const examples = result.warnings.filter((w) => /^example data/i.test(w));
   const cautions = result.warnings.filter((w) => !/^example data/i.test(w));
+  const notes = [
+    ...(cohort?.widened && cohort.widened_reason ? [cohort.widened_reason] : []),
+    ...(thin
+      ? [
+          `Only ${fmtInt(cohort?.n_visible ?? n)} people match, so these numbers are a few stories, not odds. Nothing here says your path is unlikely. It says we cannot see enough yet.`,
+        ]
+      : []),
+    ...cautions,
+  ];
 
   const go = (match: string, b: string) => {
     const [lo, hi] = (b || "1,3").split(",").map(Number);
@@ -108,185 +124,185 @@ export function View({ result }: { result: ResultEnvelope }) {
     <EvidenceKey n={n || undefined} coverage={coverageOf(result)} date={result.data_date} evidence={result.evidence} note={result.coverage_note} />
   );
 
-  const degreeNumbers = (degrees?.data.items ?? []).filter((i) => !i.remainder);
-  const degreeRest = (degrees?.data.items ?? []).find((i) => i.remainder);
+  /* hero: how many are abroad, in grid-built cells */
+  const abroadThin = moved?.count ? moved.count.n < 10 : false;
+  const heroValue = moved?.count ? (abroadThin ? moved.count.n : moved.count.k) : (size?.value ?? n);
+  const heroSay = moved?.count
+    ? abroadThin
+      ? `${moved.count.k} of ${moved.count.n} ${moved.label.replace(/^of /, "")}. That is too few to turn into a percentage.`
+      : `of ${fmtInt(moved.count.n)} ${moved.label.replace(/^of /, "")}.`
+    : `${who} we can see.`;
+  const [firstStep, ...otherSteps] = result.next_steps;
 
-  const tabs = [
-    roles && {
-      id: "roles",
-      label: roles.title,
-      content: <RankedTable data={roles.data as RankedTableData} />,
-    },
-    employers && {
-      id: "employers",
-      label: employers.title,
-      content: <RankedTable data={employers.data as RankedTableData} />,
-    },
-    degrees && {
-      id: "degrees",
-      label: degrees.title,
-      content: (
-        <div className={styles.degrees}>
-          <ul className={styles.degreeRow} role="list">
-            {degreeNumbers.map((d) => (
-              <li key={d.label} className={styles.degree}>
-                <GridNumber value={d.count} cell={9} gap={2} label={`${d.count} ${d.label}`} />
-                <span>{d.label}</span>
-              </li>
-            ))}
-          </ul>
-          {degrees.data.caption && <p className={styles.note}>{degrees.data.caption}</p>}
-          {degreeRest && (
-            <p className={styles.note}>
-              {fmtInt(degreeRest.count)} of {fmtInt(degrees.data.n)} show no further degree on their profile, which does not mean they have none.
-            </p>
-          )}
-          {studied && (
-            <div className={styles.studied}>
-              <h4 className={styles.subhead}>{studied.title}</h4>
-              <Distribution data={studied.data as DistributionData} />
+  /* destinations: one poster tile per country group, the target focused */
+  const topEmployers = (employers?.data.rows ?? []).filter((r) => !r.rest).slice(0, 3);
+  const employerCol = employers?.data.columns.find((c) => c.type === "text")?.key ?? "employer";
+  const peopleLabel = university ? "graduates" : "people";
+  const tile = (it: DistributionItem) => {
+    const on = it.label === focused?.label;
+    const token = drillOf(it) ?? null;
+    return (
+      <PosterTile
+        key={it.label}
+        variant="poster"
+        tone="band"
+        title={it.label}
+        art={<PlaceArt place={placeFor(it.label)} shape="portrait" />}
+        count={it.count}
+        unit={peopleLabel}
+        expanded={on}
+        badge={it.target && !university ? "Your target" : undefined}
+        countLine={`at least ${fmtInt(it.count)} of ${fmtInt(n)} ${who}`}
+        details={
+          on && it.target && topEmployers.length > 0 ? (
+            <div className={styles.tileList}>
+              <h4>Top employers</h4>
+              <ul role="list">
+                {topEmployers.map((r) => (
+                  <li key={String(r.cells[employerCol])}>
+                    <span>{String(r.cells[employerCol])}</span>
+                    <b>{String(r.cells.people ?? "")}</b>
+                  </li>
+                ))}
+              </ul>
             </div>
-          )}
-        </div>
-      ),
-    },
-  ].filter(Boolean) as { id: string; label: string; content: React.ReactNode }[];
+          ) : undefined
+        }
+        drill={on ? token : null}
+        drillLabel={`See the ${fmtInt(it.count)} ${peopleLabel}`}
+        onSelect={on ? undefined : () => setFocus(it.label)}
+      />
+    );
+  };
+
+  const degreeSplit = degrees && studied;
 
   return (
     <div className={styles.view}>
-      <div className={styles.top}>
-        {result.summary && (
-          <Panel title="What this tells you" evidence={evidence} className={styles.summary}>
-            <p className={styles.say}>{result.summary}</p>
-            <p className={styles.sure}>How sure: {result.confidence}. {CONF[result.confidence]}</p>
-            {examples.length > 0 && (
-              <p className={styles.badgeRow}>
-                <ExampleBadge />
-              </p>
-            )}
-          </Panel>
-        )}
-
-        {cohort && (
-          <Panel title={university ? "Which graduates count" : "Who counts as like you"} className={styles.cohort}>
-            <p className={styles.def}>{cohort.definition}</p>
-            <div className={styles.chipGroup} role="group" aria-label={university ? "How closely graduates match your programs" : "How closely people match you"}>
-              {MATCH_LEVELS.map((m) => (
-                <Chip
-                  key={m.value}
-                  selected={cohort.match_level === m.value}
-                  onClick={() => go(m.value, bandValue(band) || "1,3")}
-                >
-                  {m.label}
-                </Chip>
-              ))}
-            </div>
-            <div className={styles.chipGroup} role="group" aria-label="Years of work experience">
-              {BANDS.map((b) => (
-                <Chip
-                  key={b.value}
-                  selected={bandValue(band) === b.value}
-                  onClick={() => go(cohort.match_level, b.value)}
-                >
-                  {b.label}
-                </Chip>
-              ))}
-            </div>
-          </Panel>
-        )}
-      </div>
-
-      {(thin || cohort?.widened || cautions.length > 0) && (
-        <Panel title={thin ? "This is a small group" : "Worth knowing"} className={styles.notice}>
-          {cohort?.widened && cohort.widened_reason && <p>{cohort.widened_reason}</p>}
-          {thin && (
-            <p>
-              Only {fmtInt(cohort?.n_visible ?? n)} people match, so these numbers are a few stories, not odds. Nothing here says
-              your path is unlikely. It says we cannot see enough people yet.
-            </p>
-          )}
-          {cautions.map((w) => (
-            <p key={w}>{w}</p>
-          ))}
-          {thin && wider && (
-            <p className={styles.actions}>
-              <ButtonLink variant="secondary" size="sm" href={toolHref("people_like_me", { match: wider.match, exp_band: wider.band })}>
-                {university ? "Widen which graduates count" : "Widen who counts as like you"}
+      <ToolHero
+        lead={abroadThin ? "Out of" : "At least"}
+        numeral={<HeroNumber value={heroValue} label={moved?.count?.display ?? `${heroValue}`} />}
+        say={heroSay}
+        note={result.summary}
+        actions={
+          <>
+            {firstStep && (
+              <ButtonLink href={toolHref(firstStep.tool, firstStep.params)} variant="primary">
+                {firstStep.label}
               </ButtonLink>
-            </p>
-          )}
-        </Panel>
-      )}
+            )}
+          </>
+        }
+      />
 
-      {countries && (
-        <div className={styles.hero}>
-          {moved?.count && (
-            <div className={styles.movedBlock}>
-              <p className={styles.least}>{moved.count.n < 10 ? "Out of" : "At least"}</p>
-              <GridNumber
-                value={moved.count.n < 10 ? moved.count.n : moved.count.k}
-                cell={moved.count.k >= 100 ? 24 : 32}
-                gap={3}
-                label={moved.count.display}
-              />
-              <p className={styles.movedSay}>
-                {moved.count.n < 10
-                  ? `${moved.count.k} of ${moved.count.n} ${moved.label.replace(/^of /, "")}. That is too few to turn into a percentage.`
-                  : `of ${fmtInt(moved.count.n)} ${moved.label.replace(/^of /, "")}.`}
-              </p>
-            </div>
+      {notes.length > 0 && (
+        <div className={styles.notice}>
+          <Notes lines={notes} />
+          {thin && wider && (
+            <ButtonLink variant="secondary" size="sm" href={toolHref("people_like_me", { match: wider.match, exp_band: wider.band })}>
+              {university ? "Widen which graduates count" : "Widen who counts as like you"}
+            </ButtonLink>
           )}
-          <Panel
-            title={countries.n ? (university ? `Where your ${fmtInt(countries.n)} graduates are now` : `Where the ${fmtInt(countries.n)} are now`) : "Where they are now"}
-            caption={countries.caption}
-            evidence={evidence}
-            className={styles.waffle}
-          >
-            <CohortWaffle
-              items={countries.items}
-              n={countries.n}
-              unit={countries.unit}
-              selected={selected}
-              onSelect={setSelected}
-              label={`${university ? "Your graduates" : "People like you"} by current country`}
-            />
-            <p className={styles.readout} aria-live="polite">
-              {picked
-                ? `${picked.label}: ${shareText(picked.count, countries.n)} ${who}.`
-                : "Choose a country to see how many people are there."}
-            </p>
-          </Panel>
         </div>
       )}
 
-      {tabs.length > 0 && (
-        <Panel title="In more detail" evidence={evidence}>
-          <Tabs label={`Details about ${who}`} tabs={tabs} />
-        </Panel>
+      {cohort && (
+        <section className={styles.cohort} aria-label={lens.cohortTitle}>
+          <div className={styles.cohortText}>
+            <div className={styles.cohortHead}>
+              <h2>{lens.cohortTitle}</h2>
+              {evidence}
+            </div>
+            <p>{cohort.definition}.</p>
+            <p className={styles.muted}>{CONF[result.confidence]}</p>
+          </div>
+          <div className={styles.adjust}>
+            <div className={styles.group} role="group" aria-label={lens.matchLabel}>
+              <p className={styles.groupLabel}>{lens.matchLabel}</p>
+              <div className={styles.chips}>
+                {lens.matches.map((m) => (
+                  <Chip key={m.value} selected={cohort.match_level === m.value} onClick={() => go(m.value, bandValue(band) || "1,3")}>
+                    {m.label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+            <div className={styles.group} role="group" aria-label={lens.bandLabel}>
+              <p className={styles.groupLabel}>{lens.bandLabel}</p>
+              <div className={styles.chips}>
+                {BANDS_SHORT.map((b) => (
+                  <Chip key={b.value} selected={bandValue(band) === b.value} onClick={() => go(cohort.match_level, b.value)}>
+                    {b.label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {countries && (
+        <PersonStrip
+          items={items}
+          n={countries.n}
+          label={`${university ? "Your graduates" : "People like you"} by current country`}
+          intro={`Each square is one ${university ? "graduate" : "person like you"}.`}
+          keyLabel={`N = ${fmtInt(countries.n)} · by country`}
+        />
+      )}
+
+      {items.length > 0 && (
+        <TileRow
+          band
+          dim
+          title={university ? "Where your graduates went" : "Where people like you went"}
+          note={`${items.length} ${items.length === 1 ? "group" : "destinations"} · every count is “at least”, of ${fmtInt(n)}`}
+          label="Destinations"
+        >
+          {items.map(tile)}
+        </TileRow>
+      )}
+
+      {(roles || employers) && (
+        <div className={styles.pair}>
+          {roles && (
+            <Panel title={roles.title} caption={roles.data.caption} evidence={evidence}>
+              <RankedTable data={roles.data as RankedTableData} />
+            </Panel>
+          )}
+          {employers && (
+            <Panel title={employers.title} caption={employers.data.caption} evidence={evidence}>
+              <RankedTable data={employers.data as RankedTableData} />
+            </Panel>
+          )}
+        </div>
+      )}
+
+      {(degrees || studied) && (
+        <div className={degreeSplit ? styles.pair : styles.single}>
+          {degrees && (
+            <Panel title={degrees.title} caption={degrees.data.caption} evidence={evidence}>
+              <Distribution data={degrees.data as DistributionData} />
+              {degrees.data.items.some((i) => i.remainder) && (
+                <p className={styles.note}>
+                  No further degree on a profile does not mean there is none.
+                </p>
+              )}
+            </Panel>
+          )}
+          {studied && (
+            <Panel title={studied.title} caption={studied.data.caption} evidence={evidence}>
+              <Distribution data={studied.data as DistributionData} />
+            </Panel>
+          )}
+        </div>
       )}
 
       {rest.map((s) => (
         <SectionView key={s.id} section={s} evidence={result.evidence} result={result} />
       ))}
 
-      {result.next_steps.length > 0 && (
-        <div className={styles.next}>
-          {result.next_steps.map((s, i) => (
-            <ButtonLink
-              key={s.label}
-              href={toolHref(s.tool, s.params)}
-              variant={i === 0 ? "primary" : "secondary"}
-              size={i === 0 ? "md" : "sm"}
-            >
-              {s.label}
-            </ButtonLink>
-          ))}
-        </div>
-      )}
-
-      <p className={styles.foot}>
-        {result.coverage_note} Data as of {formatDate(result.data_date)}.
-      </p>
+      <ResultFoot result={{ ...result, next_steps: otherSteps }} />
     </div>
   );
 }

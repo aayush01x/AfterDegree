@@ -12,7 +12,7 @@ from ..profile import ParsedPerson, Role, years_between
 from ..schemas import Cohort, Result
 from ..stats import make_count, median
 from ..toolkit import ToolContext, iso, months_ago, section, text_section
-from .common import place_text, resolve_place, step, title_or
+from .common import company_value, place_text, resolve_place, step, title_or
 
 TOOL = "indian_friendly"
 TOP_EMPLOYERS = 8
@@ -47,6 +47,7 @@ async def run(ctx: ToolContext) -> Result:
     role = (p.get("role") or "").strip() or None
     role_label = tx.display_role(role) if role else None
     place = place_text(city, country)
+    ctx.tool = TOOL
     ctx.total_steps = 5
     today = ctx.today
 
@@ -163,6 +164,7 @@ async def run(ctx: ToolContext) -> Result:
             },
             "badges": row["badges"],
             "you": bool(ctx.derived.get("current_company") and row["name"].lower() == ctx.derived["current_company"].lower()),
+            "drill": ctx.drill("company", company_value(row["name"], row["id"]), row["name"]),
         })
     if rows and n > shown_total:
         rows.append({"id": "other", "cells": {"employer": "Other employers", "hires": n - shown_total, "recent": None,

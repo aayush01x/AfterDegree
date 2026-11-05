@@ -20,6 +20,40 @@ export const MATCH_LEVELS: { value: MatchLevel; label: string }[] = [
   { value: "field_only", label: "Same field, any college" },
 ];
 
+/** University lens: the same three match levels, worded for programs. */
+export const MATCH_LEVELS_UNIVERSITY: { value: MatchLevel; label: string }[] = [
+  { value: "exact_school", label: "This program only" },
+  { value: "school_tier", label: "Similar programs" },
+  { value: "field_only", label: "Same field, any program" },
+];
+
+/** Short band labels for the chips; the university lens counts years since graduation. */
+export const BANDS_SHORT = [
+  { value: "0,1", label: "Under 1 year" },
+  { value: "1,3", label: "1 to 3 years" },
+  { value: "3,5", label: "3 to 5 years" },
+  { value: "5,8", label: "5 to 8 years" },
+];
+
+/** Wording that changes with the profile's persona. */
+export function lensCopy(university: boolean) {
+  return university
+    ? {
+        who: "your graduates",
+        cohortTitle: "Which graduates count",
+        matchLabel: "Which graduates to include",
+        bandLabel: "Years since graduation",
+        matches: MATCH_LEVELS_UNIVERSITY,
+      }
+    : {
+        who: "people like you",
+        cohortTitle: "Who counts as like you",
+        matchLabel: "How closely people match you",
+        bandLabel: "Years of work experience",
+        matches: MATCH_LEVELS,
+      };
+}
+
 export const fields: ToolField[] = [
   {
     name: "match",

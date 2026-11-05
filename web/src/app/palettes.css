@@ -1,0 +1,123 @@
+/* ------------------------------------------------------------------
+   AfterDegree palettes. Every colour in the app is a token defined
+   here; components, CSS modules and cell art only use var(--…).
+
+   A palette is one pure token block. To add one, copy the "signal"
+   block, rename the selector to [data-palette="<name>"] and change the
+   values. Swap palettes with the PALETTE constant in src/app/layout.tsx.
+   ------------------------------------------------------------------ */
+
+:root,
+[data-palette="signal"] {
+  /* surfaces */
+  --ad-field: #ff5a1f; /* the field behind the work */
+  --ad-grid-line: rgb(157 183 255 / 0.6); /* 32px construction grid on the field */
+  --ad-paper: #ffffff; /* panels and tiles */
+  --ad-ink: #111111; /* type, rules, primary buttons */
+  --ad-rule: #111111; /* 1px structural rules */
+  --ad-rule-soft: #e4dfda; /* hairlines inside paper */
+  --ad-muted: #57524d; /* secondary text on paper (7:1) */
+  --ad-hollow: #8a8580; /* outline of remainder cells */
+  --ad-paper-sunk: #faf8f6; /* inputs, quiet wells on paper */
+  --ad-on-field: #111111; /* text set directly on the field */
+  --ad-on-field-muted: #2a2826;
+
+  /* rail */
+  --ad-rail: #111111;
+  --ad-rail-text: #ede9e5; /* 16:1 */
+  --ad-rail-muted: #b8b2ac; /* 9:1 */
+  --ad-rail-rule: #3a3734;
+  --ad-rail-hover: #262421;
+  --ad-rail-active: #ff5a1f;
+  --ad-rail-active-ink: #111111;
+
+  /* full-bleed dark band (active tile row) */
+  --ad-band: #111111;
+  --ad-band-text: #e9e5e0;
+  --ad-band-muted: #c9c3bd;
+  --ad-band-rule: #57524d;
+  --ad-band-control: #ffffff;
+
+  /* accent: drill buttons on dark, map markers, soft tags */
+  --ad-accent: #ff5a1f;
+  --ad-accent-ink: #111111;
+  --ad-accent-soft: #ffe3d6;
+
+  /* evidence key + focus (only on paper) */
+  --ad-key: #0057ff;
+  --ad-focus-paper: #0057ff;
+  --ad-dot: rgb(17 17 17 / 0.45); /* offset-dot texture */
+  --ad-scrim: rgb(17 17 17 / 0.45);
+
+  /* states: only where a state is being reported */
+  --ad-error: #b3261e;
+  --ad-error-paper: #fdf0ef;
+  --ad-ok: #0b6b3a;
+  --ad-warn: #8a5a00;
+
+  /* cell art: detail slots. The --art-mix-* shares pull a detail colour
+     toward its tile's field (0% = the pure token; calmer palettes raise them). */
+  --art-ink: #111111;
+  --art-light: #f4f0e8;
+  --art-sun: #ffc83d;
+  --art-tint: #8fa2ff;
+  --art-glow: #ff5a1f;
+  --art-water: #1f33b5;
+  --art-mix-ink: 0%;
+  --art-mix-light: 0%;
+  --art-mix-sun: 0%;
+  --art-mix-tint: 0%;
+  --art-deep-mix: 55%; /* share of the field in the "deep" detail tone (rest is --art-ink) */
+  --art-gap: transparent; /* the 1px gap between art cells */
+
+  /* cell art: places (field + silhouette colour on it) */
+  --art-de: #f2b705;
+  --art-de-on: #111111;
+  --art-us: #1f33b5;
+  --art-us-on: #f4f0e8;
+  --art-uk: #c8174f;
+  --art-uk-on: #111111;
+  --art-ca: #11884a;
+  --art-ca-on: #f4f7f2;
+  --art-nl: #b9d534;
+  --art-nl-on: #111111;
+  --art-in: #0e8a7e;
+  --art-in-on: #f4efe4;
+  --art-other: #6a44d4;
+  --art-other-on: #e6deff;
+
+  /* cell art: hues for company marks and other cities */
+  --art-1: #183a8c;
+  --art-1-on: #c9d6ff;
+  --art-2: #5e1d4f;
+  --art-2-on: #f3b8d8;
+  --art-3: #0f6e5e;
+  --art-3-on: #bff0df;
+  --art-4: #e2589a;
+  --art-4-on: #111111;
+  --art-5: #0c6f86;
+  --art-5-on: #e8f6fa;
+  --art-6: #c62e2e;
+  --art-6-on: #fff1e8;
+  --art-7: #9db7ff;
+  --art-7-on: #111111;
+  --art-8: #ffc93c;
+  --art-8-on: #111111;
+
+  /* routes */
+  --route-1: #f2b705;
+  --route-2: #11884a;
+  --route-3: #b9d534;
+  --route-4: #c8174f;
+  --route-path: #111111;
+  --route-node: #ffffff;
+
+  /* career stages (person strips, timelines) */
+  --stage-study: #7a5cff;
+  --stage-work-in: #00a396;
+  --stage-masters: #ffb800;
+  --stage-intern: #e83f6f;
+  --stage-fulltime: #ff5a1f;
+  --stage-gap: #e4dfda;
+  --stage-edge: #111111;
+}

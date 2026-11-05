@@ -1,0 +1,19 @@
+.digits {
+  display: block;
+  flex: none;
+}
+.ink {
+  fill: var(--ad-ink);
+}
+.paper {
+  fill: var(--ad-paper);
+}
+.accent {
+  fill: var(--ad-accent);
+}
+.muted {
+  fill: var(--ad-muted);
+}
+.current {
+  fill: currentColor;
+}

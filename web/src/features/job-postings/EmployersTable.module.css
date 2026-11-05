@@ -3,7 +3,7 @@
 }
 
 .scroll:focus-visible {
-  outline: 2px solid var(--ad-blue);
+  outline: 2px solid var(--ad-focus-paper);
   outline-offset: 2px;
 }
 
@@ -16,11 +16,63 @@
 
 .table th,
 .table td {
-  padding: 8px 12px 8px 0;
+  padding: 12px var(--ad-space-1);
   border-top: 1px solid var(--ad-rule-soft);
   text-align: left;
   vertical-align: middle;
   line-height: 20px;
+}
+
+.table tbody tr {
+  position: relative;
+}
+.pick {
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  color: inherit;
+}
+/* the whole row is the click target of the employer button */
+.pick::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.pick:focus-visible {
+  outline: 2px solid var(--ad-paper);
+  outline-offset: 2px;
+}
+.link:hover,
+.link:focus-within {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.link:hover .note,
+.link:focus-within .note {
+  color: var(--ad-paper);
+}
+.link:hover .bar i,
+.link:focus-within .bar i {
+  background: var(--ad-accent);
+}
+.link:hover .badge,
+.link:focus-within .badge {
+  border-color: var(--ad-paper);
+}
+.link:hover .high,
+.link:focus-within .high {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+}
+.link:hover .some,
+.link:focus-within .some {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.link:hover .unclear,
+.link:focus-within .unclear {
+  color: var(--ad-paper);
 }
 
 .table thead th {
@@ -56,7 +108,7 @@
   display: block;
   width: 8px;
   height: 14px;
-  background: var(--ad-orange);
+  background: var(--ad-accent);
 }
 
 .signal {

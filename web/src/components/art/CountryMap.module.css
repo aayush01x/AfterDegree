@@ -1,0 +1,52 @@
+.map {
+  position: relative;
+  flex: none;
+  background: var(--ad-paper);
+}
+.map > svg {
+  display: block;
+}
+.land {
+  fill: var(--ad-accent);
+}
+.marker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  border: 1px solid var(--ad-rule);
+  font: inherit;
+}
+button.marker {
+  cursor: pointer;
+}
+button.marker:hover,
+.on {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+button.marker:focus-visible {
+  outline: 2px solid var(--ad-focus-paper);
+  outline-offset: 2px;
+}
+.tag {
+  position: absolute;
+  left: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 6px;
+  background: inherit;
+  color: inherit;
+  border: 1px solid var(--ad-rule);
+  font-family: var(--ad-font-read);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tagLeft .tag {
+  left: auto;
+  right: calc(100% + 4px);
+}

@@ -19,6 +19,16 @@ export function shortSchool(school: string | null | undefined): string {
   return school.replace(/^Vellore Institute of Technology,?\s*/i, "VIT ").replace(/\s+/g, " ").trim();
 }
 
+/** "Bachelor of Technology - BTech" → "BTech". */
+export function shortDegree(degree: string | null | undefined): string {
+  if (!degree) return "";
+  const abbr = /\b(B\.?\s?Tech|B\.?E\.?|B\.?Sc|BCA|BCom|M\.?Tech|M\.?Sc|MCA|MBA|MS)\b/i.exec(degree);
+  if (abbr) return abbr[1].replace(/\./g, "").replace(/\s/g, "").replace(/^btech$/i, "BTech").replace(/^be$/i, "BE");
+  if (/bachelor of technology/i.test(degree)) return "BTech";
+  if (/bachelor of engineering/i.test(degree)) return "BE";
+  return degree;
+}
+
 export function aimText(g: Goals | null): string | null {
   if (!g) return null;
   const role = g.target_roles[0];
@@ -44,7 +54,7 @@ export function backgroundLine(p: StoredProfile): string {
   const parts: string[] = [];
   if (ug) {
     const yr = ug.end_year ? ` ’${String(ug.end_year).slice(2)}` : "";
-    parts.push(`${ug.degree} ${shortField(ug.field)}, ${shortSchool(ug.school)}${yr}`.trim());
+    parts.push(`${shortDegree(ug.degree)} ${shortField(ug.field)}, ${shortSchool(ug.school)}${yr}`.trim());
   }
   const d = p.derived;
   if (d.current_company) {

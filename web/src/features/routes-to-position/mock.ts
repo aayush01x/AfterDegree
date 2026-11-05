@@ -1,4 +1,5 @@
-import type { Count, Evidence, ResultEnvelope } from "@/lib/types";
+import type { Count, Evidence, ResultEnvelope, Section } from "@/lib/types";
+import { mkDrill, withDrill } from "@/components/tool/drill";
 
 /**
  * Example results for Riya Menon (BTech CSE, VIT Vellore 2022, 2 years at Infosys,
@@ -55,7 +56,7 @@ const titles: [string, number][] = [
 
 const row = (cells: Record<string, string | number>, extra: Partial<{ you: boolean; rest: boolean; count: Count }> = {}) => ({ cells, ...extra });
 
-export const mockResult: ResultEnvelope = {
+const fullResult: ResultEnvelope = {
   tool: "routes_to_position",
   title: "How people became a Data Engineer in Berlin",
   summary:
@@ -221,7 +222,7 @@ export const mockResult: ResultEnvelope = {
 
 /* ---- thin result: one company, 7 people ---- */
 
-export const mockResultThin: ResultEnvelope = {
+const thinResult: ResultEnvelope = {
   tool: "routes_to_position",
   title: "How people became a Data Engineer at Zalando in Berlin",
   summary:
@@ -333,3 +334,60 @@ export const mockResultThin: ResultEnvelope = {
     },
   ],
 };
+
+/* ---- drill tokens: every node, row and band opens the people behind it (CONTRACT Appendix C) ---- */
+
+const PARAMS = { role: "Data Engineer", city: "Berlin", country: "Germany" };
+const TOOL = "routes_to_position";
+const NODE_DRILL: Record<string, [Parameters<typeof mkDrill>[2], string]> = {
+  f_infosys: ["company", "Infosys"],
+  f_tcs: ["company", "TCS"],
+  f_accenture: ["company", "Accenture"],
+  f_zalando: ["company", "Zalando"],
+  f_dh: ["company", "Delivery Hero"],
+  t_swe: ["route_step", "Software Engineer"],
+  t_da: ["route_step", "Data Analyst"],
+  t_ws: ["route_step", "Working Student, Data"],
+  t_sys: ["route_step", "Systems Engineer"],
+  t_jde: ["route_step", "Junior Data Engineer"],
+  t_be: ["route_step", "Backend Engineer"],
+  goal: ["role", "Data Engineer"],
+};
+
+const YEARS_BAND: Record<string, string> = {
+  "Under 1 year": "0-1",
+  "1 to 2 years": "1-2",
+  "3 to 5 years": "3-5",
+  "6 or more": "6+",
+};
+
+function decorate(result: ResultEnvelope): ResultEnvelope {
+  const sections = result.sections.map((s): Section => {
+    if (s.kind === "routes") {
+      const nodes = s.data.nodes.map((n) => {
+        const d = NODE_DRILL[n.id];
+        return d ? withDrill(n, mkDrill(TOOL, PARAMS, d[0], d[1], n.id === "goal" ? "Data Engineer, Berlin" : d[1])) : n;
+      });
+      return { ...s, data: { ...s.data, nodes } };
+    }
+    if (s.kind === "ranked_table") {
+      const dim = s.id === "feeders" ? "company" : s.id === "titles" ? "route_step" : s.id === "schools" ? "school" : null;
+      const key = s.id === "feeders" ? "employer" : s.id === "titles" ? "title" : "school";
+      if (!dim) return s;
+      const rows = s.data.rows.map((r) => {
+        const v = String(r.cells[key] ?? "");
+        return r.rest ? r : withDrill(r, mkDrill(TOOL, PARAMS, dim, dim === "school" ? v.split(",")[0] : v, v));
+      });
+      return { ...s, data: { ...s.data, rows } };
+    }
+    if (s.kind === "distribution" && s.id === "years") {
+      const items = s.data.items.map((i) => withDrill(i, mkDrill(TOOL, PARAMS, "years_band", YEARS_BAND[i.label] ?? i.label, i.label)));
+      return { ...s, data: { ...s.data, items } };
+    }
+    return s;
+  });
+  return { ...result, sections };
+}
+
+export const mockResult: ResultEnvelope = decorate(fullResult);
+export const mockResultThin: ResultEnvelope = thinResult;

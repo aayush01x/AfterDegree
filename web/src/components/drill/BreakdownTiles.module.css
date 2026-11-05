@@ -1,0 +1,33 @@
+.peek {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0 var(--ad-space-2);
+}
+.peekGroup {
+  margin: 0;
+  min-width: 0;
+}
+.peekGroup dt {
+  padding-bottom: 4px;
+  border-bottom: 1px solid currentColor;
+  font-size: var(--ad-text-xs);
+  font-weight: 700;
+  opacity: 0.8;
+}
+.peekGroup dd {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  padding: 3px 0;
+  font-size: var(--ad-text-sm);
+  line-height: 18px;
+}
+.peekGroup dd span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.num {
+  font-weight: 700;
+}

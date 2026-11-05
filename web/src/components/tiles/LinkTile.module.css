@@ -1,0 +1,43 @@
+.tile {
+  flex: 1 0 192px !important;
+  max-width: 448px;
+  height: 160px;
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-rule);
+  --ad-focus: var(--ad-focus-paper);
+}
+.link {
+  position: absolute;
+  left: var(--ad-space-2);
+  bottom: var(--ad-space-2);
+  display: block;
+  width: 160px;
+  padding: 10px 36px 10px 12px;
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  border: 1px solid var(--ad-rule);
+  font-family: var(--ad-font-read);
+  text-decoration: none;
+}
+.link:hover,
+.link:focus-visible {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.q {
+  display: block;
+  font-size: var(--ad-text-xs);
+  line-height: 16px;
+  font-weight: 600;
+}
+.l {
+  display: block;
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+}
+.chev {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  margin-top: -8px;
+}

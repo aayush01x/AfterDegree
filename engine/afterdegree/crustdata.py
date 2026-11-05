@@ -169,6 +169,8 @@ class RateLimiter:
 
 # ---------------------------------------------------------------- cache
 
+PERSON_TTL_S = 7 * 86400  # cached person data expires within 7 days
+
 
 def canonical_json(body: Any) -> str:
     return json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
@@ -187,6 +189,12 @@ class DiskCache:
     def _path(self, key: str) -> Path:
         return self.dir / key[:2] / f"{key}.json"
 
+    def ttl_for(self, endpoint: str | None) -> float:
+        """Person data never outlives PERSON_TTL_S (Crustdata Data Export Terms: 30-day opt-out window)."""
+        if endpoint and endpoint.startswith("/person/"):
+            return min(self.ttl_s, PERSON_TTL_S)
+        return self.ttl_s
+
     def get(self, key: str) -> dict | None:
         path = self._path(key)
         if not path.exists():
@@ -195,9 +203,32 @@ class DiskCache:
             entry = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             return None
-        if self.clock() - float(entry.get("stored_at", 0)) > self.ttl_s:
+        if self.clock() - float(entry.get("stored_at", 0)) > self.ttl_for(entry.get("endpoint")):
+            try:
+                path.unlink()  # expired: delete, don't keep stale personal data around
+            except OSError:
+                pass
             return None
         return entry
+
+    def purge_expired(self) -> int:
+        """Delete every expired cache file. Returns how many were removed."""
+        removed = 0
+        if not self.dir.exists():
+            return 0
+        for path in self.dir.glob("*/*.json"):
+            try:
+                entry = json.loads(path.read_text(encoding="utf-8"))
+                expired = self.clock() - float(entry.get("stored_at", 0)) > self.ttl_for(entry.get("endpoint"))
+            except (OSError, json.JSONDecodeError, ValueError):
+                expired = True
+            if expired:
+                try:
+                    path.unlink()
+                    removed += 1
+                except OSError:
+                    pass
+        return removed
 
     def set(self, key: str, endpoint: str, body: Any, response: Any, fetched_at: str) -> None:
         path = self._path(key)

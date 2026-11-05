@@ -1,0 +1,17 @@
+.went {
+  display: grid;
+  gap: 2px;
+  font-family: var(--font-ui), system-ui, sans-serif;
+  font-size: var(--ad-text-sm);
+  line-height: 18px;
+}
+.went dt {
+  font-weight: 700;
+  color: var(--ad-muted);
+}
+.went dd {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ad-space-1);
+  font-weight: 600;
+}

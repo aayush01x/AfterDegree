@@ -1,0 +1,29 @@
+.tag {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  min-height: 20px;
+  padding: 0 6px;
+  font-family: var(--ad-font-read);
+  font-size: var(--ad-text-xs);
+  line-height: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ink {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.accent {
+  background: var(--ad-accent);
+  color: var(--ad-accent-ink);
+}
+.soft {
+  background: var(--ad-accent-soft);
+  color: var(--ad-ink);
+}
+.paper {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  border: 1px solid var(--ad-rule);
+}

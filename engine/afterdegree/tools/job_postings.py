@@ -10,7 +10,7 @@ from ..crustdata import BudgetExceeded
 from ..schemas import Result
 from ..stats import make_count
 from ..toolkit import ToolContext, iso, months_ago, section, stat_section
-from .common import distribution_section, job_title_or, pct, place_text, require_role, resolve_place, step, title_or
+from .common import company_value, distribution_section, job_title_or, pct, place_text, require_role, resolve_place, step, title_or
 
 TOOL = "job_postings"
 TREND_MONTHS = 12
@@ -33,6 +33,7 @@ async def run(ctx: ToolContext) -> Result:
     city, country = resolve_place(p.get("city"), p.get("country"), required_country=True)
     role_label = tx.display_role(role)
     place = place_text(city, country)
+    ctx.tool = TOOL
     ctx.total_steps = 6
     today = ctx.today
 
@@ -54,7 +55,7 @@ async def run(ctx: ToolContext) -> Result:
         try:
             n_m, _, _ = await ctx.count_jobs(F.and_(base, *F.job_date_range(iso(start), iso(end) if end else None)) or {},
                                              f"Postings added in {start.strftime('%Y-%m')}")
-            points.append({"period": start.strftime("%Y-%m"), "value": n_m})
+            points.append({"period": start.strftime("%Y-%m"), "value": n_m, "drill": ctx.drill("quarter", start.strftime("%Y-%m"))})
         except BudgetExceeded:
             ctx._budget_warning()
             break
@@ -119,6 +120,7 @@ async def run(ctx: ToolContext) -> Result:
         rows.append({
             "id": str(emp["id"]),
             "cells": {"employer": emp["name"], "postings": emp["postings"], "hires": hires, "signal": signal},
+            "drill": ctx.drill("posting_employer", company_value(emp["name"], emp["id"]), emp["name"]),
             "you": bool(ctx.derived.get("current_company") and emp["name"].lower() == ctx.derived["current_company"].lower()),
         })
     unchecked = employers[HIRE_CHECKS:]
@@ -139,14 +141,17 @@ async def run(ctx: ToolContext) -> Result:
         section("trend", "timeseries", "Postings added per month", {"points": points, "unit": "postings",
                 "caption": "Postings stay in the index after they close, so these are postings added each month, not live vacancies."}),
         distribution_section("seniority", "Seniority asked for", seniority_ordered, sum(seniority_ordered.values()), [ev_agg], top=None,
-                             unit="postings", keep_order=True, caption="From the job titles of every posting in the last 90 days."),
+                             unit="postings", keep_order=True, caption="From the job titles of every posting in the last 90 days.",
+                             drill=lambda label: ctx.drill("seniority", label)),
         section("skills", "keywords", "Skills in demand", {
-            "items": [{"term": t, "count": c, "share": round(c / n_jobs, 3) if n_jobs >= 10 else None, "you_have": t in ctx.user_skills()}
+            "items": [{"term": t, "count": c, "share": round(c / n_jobs, 3) if n_jobs >= 10 else None, "you_have": t in ctx.user_skills(),
+                       "drill": ctx.drill("skill", t)}
                       for t, c in skills.most_common(20) if c >= 2],
             "n": n_jobs, "caption": f"Mentions in the {n_jobs} most recent postings.",
         }, ev_s),
         distribution_section("languages", "Language requirements", langs, n_jobs, ev_s, top=None, unit="postings",
-                             caption="Read from posting text: 'required' means the posting asks for the language, not just mentions it."),
+                             caption="Read from posting text: 'required' means the posting asks for the language, not just mentions it.",
+                             drill=lambda label: ctx.drill("language", label)),
         stat_section("visa", "Visa sponsorship", "postings mention visa sponsorship or relocation support", count=visa_count,
                      note=f"{visa.get('rules_out', 0)} of {n_jobs} postings read say they can't sponsor; the rest don't say."),
         section("employers", "ranked_table", "Employers posting most, and whether postings led to hires", {

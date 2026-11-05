@@ -1,5 +1,9 @@
+"use client";
+
 import type { RankedRow, RankedTableData } from "@/lib/types";
 import { fmtInt } from "@/lib/format";
+import { drillOf } from "@/components/data/Drillable";
+import { useDrill } from "@/components/drill/useDrill";
 import styles from "./EmployersTable.module.css";
 
 export type HireSignal = "high" | "some" | "unclear";
@@ -27,6 +31,7 @@ const TEXT: Record<HireSignal, { name: string; note: string }> = {
 const TILE = 12;
 
 export function EmployersTable({ data }: { data: RankedTableData }) {
+  const drill = useDrill();
   const real = data.rows.filter((r) => !r.rest);
   const max = Math.max(1, ...real.map((r) => Number(r.cells.postings ?? 0)));
   return (
@@ -51,9 +56,19 @@ export function EmployersTable({ data }: { data: RankedTableData }) {
             const hires = Number(row.cells.hires ?? 0);
             const sig = row.rest ? null : signalOf(row);
             const cells = Math.max(postings > 0 ? 1 : 0, Math.round((postings / max) * TILE));
+            const name = String(row.cells.employer ?? "");
+            const tok = row.rest ? undefined : drillOf(row);
             return (
-              <tr key={row.id ?? ri} className={row.rest ? styles.rest : undefined}>
-                <th scope="row">{String(row.cells.employer ?? "")}</th>
+              <tr key={row.id ?? ri} className={[row.rest && styles.rest, tok && styles.link].filter(Boolean).join(" ")}>
+                <th scope="row">
+                  {tok ? (
+                    <button type="button" className={styles.pick} onClick={() => drill.open(tok, name)} aria-label={`${name}: ${fmtInt(postings)} postings. Open the company profile`}>
+                      {name}
+                    </button>
+                  ) : (
+                    name
+                  )}
+                </th>
                 <td className={styles.right}>
                   <span className={styles.postings}>
                     {!row.rest && (

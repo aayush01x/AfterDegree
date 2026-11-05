@@ -135,3 +135,20 @@ def test_extract_goals_and_home_steps():
     steps = home_next_steps(riya_profile(), g)
     tools = [s.tool for s in steps]
     assert tools[0] == "people_like_me" and "reverse_gps" in tools and "indian_friendly" in tools
+
+
+async def test_reasoning_model_none_content_falls_back(llm_settings):
+    """A reasoning model can spend every token on `reasoning` and return content=None: treat it as a failure."""
+    payload = {"choices": [{"finish_reason": "length", "message": {"role": "assistant", "content": None,
+                                                                    "reasoning": "Thinking about Berlin, 42 people..."}}]}
+    with respx.mock(assert_all_called=False) as router:
+        route = router.post(OR_URL).mock(return_value=httpx.Response(200, json=payload))
+        llm = LLM(llm_settings)
+        goal, used = await llm.parse_goal("Data engineer in Berlin")
+        assert not used and goal.role == "Data engineer" and goal.city == "Berlin"
+        assert await llm.summarize("Topic", ["Fact 1"]) is None
+        assert llm.last_error
+        resp = await Onboarding(llm).turn(riya_profile(), [])
+        assert resp.reply.startswith("Hi! I'm AfterDegree")  # deterministic flow
+        sent = json.loads(route.calls[0].request.content)
+        assert sent["max_tokens"] >= 1500

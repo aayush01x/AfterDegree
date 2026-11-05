@@ -1,0 +1,166 @@
+/* Drill pages: /explore (generic + company) and /people/<id>. Edges on the 32px grid. */
+.page {
+  display: grid;
+  gap: var(--ad-space-4);
+  min-width: 0;
+  color: var(--ad-on-field);
+}
+.narrow {
+  max-width: 640px;
+}
+.loadingTitle {
+  font-family: var(--ad-font-head);
+  font-size: var(--ad-text-3xl);
+  line-height: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.loadingPanel {
+  max-width: 672px;
+  padding: var(--ad-space-3);
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-rule);
+  color: var(--ad-ink);
+}
+
+/* ---------- hero ---------- */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 576px);
+  gap: var(--ad-space-4);
+  align-items: start;
+}
+.heroText {
+  display: grid;
+  gap: var(--ad-space-2);
+  align-content: start;
+  min-width: 0;
+}
+.count {
+  display: flex;
+  align-items: stretch;
+  gap: var(--ad-space-4);
+  color: var(--ad-ink);
+}
+.count svg {
+  flex: none;
+  max-width: 100%;
+  height: auto;
+}
+.countSide {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px 0;
+  min-width: 0;
+}
+.atLeast {
+  font-family: var(--ad-font-head);
+  font-size: var(--ad-text-xl);
+  line-height: 28px;
+  font-weight: 600;
+}
+.countOf {
+  max-width: 18ch;
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+  font-weight: 500;
+}
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ad-space-1) var(--ad-space-2);
+  margin-top: var(--ad-space-2);
+  font-family: var(--ad-font-head);
+  font-size: 44px;
+  line-height: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--ad-ink);
+}
+.title > span {
+  align-self: center;
+}
+.lede {
+  max-width: 62ch;
+  font-size: var(--ad-text-body);
+  line-height: 24px;
+  color: var(--ad-on-field);
+}
+.warning {
+  max-width: 62ch;
+  font-size: var(--ad-text-sm);
+  line-height: 20px;
+  font-weight: 700;
+}
+
+/* ---------- rows + panels ---------- */
+.block {
+  display: grid;
+  gap: var(--ad-space-2);
+}
+.rowTitle {
+  font-family: var(--ad-font-head);
+  font-size: var(--ad-text-2xl);
+  line-height: 32px;
+  font-weight: 700;
+  color: var(--ad-ink);
+}
+.panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--ad-space-4);
+  align-items: start;
+}
+
+/* ---------- footer ---------- */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ad-space-2);
+  padding: var(--ad-space-1);
+  padding-left: var(--ad-space-2);
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-rule);
+  color: var(--ad-ink);
+}
+.privacy {
+  display: flex;
+  align-items: center;
+  gap: var(--ad-space-2);
+  min-width: 0;
+  flex: 1 1 360px;
+}
+.privacy svg {
+  flex: none;
+  outline: 1px solid var(--ad-ink);
+}
+.privacy p {
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+  max-width: 70ch;
+}
+.footerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ad-space-1);
+}
+
+@media (max-width: 1180px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .title {
+    font-size: var(--ad-text-3xl);
+    line-height: 40px;
+  }
+  .count {
+    gap: var(--ad-space-2);
+  }
+}

@@ -5,63 +5,25 @@
   min-width: 0;
 }
 
-/* ---- top: the ratio, then the two cell stacks ---- */
-.top {
-  display: grid;
-  grid-template-columns: minmax(280px, 400px) minmax(0, 1fr);
-  gap: var(--ad-space-4);
-  align-items: start;
-}
-.answer {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--ad-space-2);
-  min-width: 0;
-}
-.least {
-  max-width: 24ch;
-  font-family: var(--font-display), var(--font-ui), sans-serif;
-  font-size: 20px;
-  line-height: 24px;
-  font-weight: 800;
-}
 .ratio {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: 16px;
 }
 .dot {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: 29px;
+  height: 29px;
   margin-bottom: 0;
   background: var(--ad-ink);
 }
-.label {
-  font-family: var(--font-display), var(--font-ui), sans-serif;
-  font-size: var(--ad-text-3xl);
-  line-height: 44px;
-  font-weight: 800;
-  text-wrap: balance;
-}
-.say {
-  max-width: 34ch;
-  font-size: var(--ad-text-lg);
-  line-height: 26px;
-  font-weight: 600;
-}
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ad-space-1);
-  margin-top: var(--ad-space-1);
-}
 .summary {
-  max-width: 76ch;
-  font-size: var(--ad-text-body);
-  line-height: 24px;
-  font-weight: 600;
+  max-width: 70ch;
+  font-family: var(--font-ui), system-ui, sans-serif;
+  font-size: var(--ad-text-lg);
+  line-height: 28px;
+  font-weight: 500;
+  text-wrap: pretty;
 }
 
 /* ---- stacks ---- */
@@ -90,11 +52,9 @@
   line-height: 20px;
 }
 .big {
-  font-family: var(--font-display), var(--font-ui), sans-serif;
-  font-size: 40px;
-  line-height: 44px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: var(--ad-text-2xl);
+  line-height: 32px;
+  font-weight: 700;
 }
 .stack {
   display: grid;
@@ -111,10 +71,32 @@
   height: 8px;
 }
 .entrant {
-  background: var(--ad-orange);
+  background: var(--ad-accent);
 }
 .opening {
   background: var(--ad-ink);
+}
+.stackButton {
+  display: block;
+  padding: 0;
+  text-align: left;
+  border: 1px solid transparent;
+}
+.stackButton .stack {
+  border-top-color: transparent;
+  padding: var(--ad-space-2);
+}
+.stackButton:hover,
+.stackButton:focus-visible {
+  background: var(--ad-ink);
+}
+.stackButton:hover .opening,
+.stackButton:focus-visible .opening {
+  background: var(--ad-paper);
+}
+.stackButton:focus-visible {
+  outline: 2px solid var(--ad-focus-paper);
+  outline-offset: 2px;
 }
 .legend {
   display: flex;
@@ -190,7 +172,6 @@
 }
 
 @media (max-width: 1000px) {
-  .top,
   .mid {
     grid-template-columns: minmax(0, 1fr);
   }

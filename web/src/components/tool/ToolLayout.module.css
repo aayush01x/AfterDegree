@@ -1,34 +1,47 @@
 .page {
+  /* the app shell pads <main> by this much; tile rows bleed out of it to the viewport edge */
+  --ad-row-bleed: var(--ad-space-4);
   display: grid;
   gap: var(--ad-space-4);
-  max-width: 1376px;
+  align-content: start;
+  min-width: 0;
 }
 .head {
   display: grid;
   gap: var(--ad-space-1);
-  max-width: 72ch;
+  max-width: 78ch;
 }
-.tag {
+.titleRow {
   display: flex;
-  min-height: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--ad-space-2);
+  row-gap: var(--ad-space-1);
+  min-height: 48px;
 }
 .title {
   font-family: var(--font-display), sans-serif;
-  font-size: var(--ad-text-3xl);
+  font-size: 48px;
   line-height: 48px;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 .purpose {
-  font-size: var(--ad-text-lg);
-  line-height: 26px;
+  font-family: var(--font-ui), system-ui, sans-serif;
+  font-size: var(--ad-text-body);
+  line-height: 24px;
   font-weight: 500;
 }
+/* the parameter form: one compact white panel on the 32px grid */
 .form {
+  --ad-focus: var(--ad-focus-paper);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--ad-space-2) var(--ad-space-3);
   align-items: end;
+  padding: var(--ad-space-3);
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-rule);
 }
 .formFields {
   min-width: 0;
@@ -36,10 +49,16 @@
 .actions {
   display: flex;
   align-items: flex-end;
-  padding-bottom: 0;
 }
 .formHasHints .actions {
   padding-bottom: 26px;
+}
+.progress {
+  max-width: 960px;
+}
+.results {
+  display: grid;
+  min-width: 0;
 }
 .empty {
   display: grid;
@@ -47,6 +66,7 @@
   max-width: 62ch;
   font-size: var(--ad-text-body);
   line-height: 24px;
+  font-weight: 500;
 }
 .emptyCells {
   display: flex;
@@ -64,9 +84,15 @@
 .skeleton {
   height: 96px;
 }
+@media (max-width: 899px) {
+  .page {
+    --ad-row-bleed: var(--ad-space-2);
+  }
+}
 @media (max-width: 720px) {
   .form {
     grid-template-columns: minmax(0, 1fr);
+    padding: var(--ad-space-2);
   }
   .formHasHints .actions {
     padding-bottom: 0;

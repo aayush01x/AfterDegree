@@ -1,0 +1,311 @@
+/* Tile widths step on the 32px grid and scale with the row (container) width:
+   about 5.5 posters, 6 cards or 3.5 wide tiles are visible, so the last one is cut. */
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  color: var(--ad-ink);
+  font-family: var(--ad-font-read);
+}
+.art {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+}
+.art > * {
+  width: 100%;
+  height: 100%;
+}
+.title {
+  font-family: var(--ad-font-head);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  font-size: 16px;
+  line-height: 20px;
+}
+.hit {
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+.hit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.hit:focus-visible {
+  outline: none;
+}
+.tile:has(.hit:focus-visible) {
+  outline: 2px solid var(--ad-focus);
+  outline-offset: 2px;
+}
+.count {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ad-space-1);
+  font-size: var(--ad-text-xs);
+  line-height: 14px;
+  font-weight: 500;
+}
+.badge {
+  position: absolute;
+  right: var(--ad-space-1);
+  top: var(--ad-space-1);
+  z-index: 2;
+}
+.note {
+  position: absolute;
+  left: var(--ad-space-1);
+  top: var(--ad-space-1);
+  z-index: 2;
+}
+
+/* ---- poster (destinations) ---- */
+.poster:not(.expanded) {
+  width: clamp(128px, round((100cqw - 288px) / 5.5 - 32px, 32px), 320px);
+  height: 320px;
+  margin-top: var(--ad-cell);
+}
+.poster:not(.expanded) .art {
+  height: 224px;
+}
+.poster:not(.expanded) .body {
+  position: relative;
+  flex: 1;
+  padding-top: 10px;
+}
+.poster:not(.expanded) .count {
+  position: absolute;
+  left: 0;
+  bottom: var(--ad-space-1);
+}
+.poster:not(.expanded) .title {
+  color: var(--ad-on-field);
+}
+.band.poster:not(.expanded) .title {
+  color: var(--ad-band-text);
+}
+.band.poster:not(.expanded) .count {
+  color: var(--ad-band-muted);
+}
+.band.poster:not(.expanded) .count svg {
+  fill: var(--ad-band-text);
+}
+.poster:not(.expanded):hover .title,
+.poster:not(.expanded):has(.hit:focus-visible) .title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---- card (companies, cities) ---- */
+.card:not(.expanded) {
+  width: clamp(128px, round(down, (100cqw - 192px) / 6 - 31px, 32px), 224px);
+  height: 160px;
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-rule);
+  overflow: hidden;
+}
+.card:not(.expanded) .art,
+.wide:not(.expanded) .art {
+  height: 97px;
+  margin: -1px -1px 0;
+  border-bottom: 1px solid var(--ad-rule);
+}
+.card:not(.expanded) .body {
+  position: relative;
+  flex: 1;
+  padding: var(--ad-space-1) 10px;
+}
+.card:not(.expanded) .count {
+  position: absolute;
+  left: 10px;
+  bottom: 9px;
+  gap: 6px;
+}
+.card:not(.expanded) .title,
+.wide:not(.expanded) .title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card:not(.expanded):hover,
+.wide:not(.expanded):hover,
+.card:not(.expanded):has(.hit:focus-visible),
+.wide:not(.expanded):has(.hit:focus-visible) {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.card:not(.expanded):not(:has(.hit)):hover,
+.wide:not(.expanded):not(:has(.hit)):hover {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+}
+.band.card:not(.expanded) {
+  border-color: var(--ad-band-rule);
+}
+
+/* ---- wide ---- */
+.wide:not(.expanded) {
+  width: clamp(352px, round((100cqw + 32px) / 3.5 - 32px, 32px), 640px);
+  height: 192px;
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-rule);
+  overflow: hidden;
+}
+.wide:not(.expanded) .body {
+  position: relative;
+  flex: 1;
+  padding: 10px var(--ad-space-2);
+}
+.wide:not(.expanded) .count {
+  position: absolute;
+  left: var(--ad-space-2);
+  bottom: 11px;
+}
+
+/* ---- expanded ---- */
+.expanded {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  border: 1px solid var(--ad-rule);
+  --ad-focus: var(--ad-focus-paper);
+}
+.band.expanded {
+  border-color: var(--ad-paper);
+}
+.expanded .body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 12px var(--ad-space-2) var(--ad-space-2);
+}
+.expanded .title {
+  font-size: 26px;
+  line-height: 28px;
+}
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  column-gap: var(--ad-space-1);
+  row-gap: 4px;
+  margin-top: var(--ad-space-1);
+  font-size: var(--ad-text-sm);
+  line-height: 16px;
+  font-weight: 600;
+}
+.lineText {
+  padding-bottom: 1px;
+}
+.details {
+  margin-top: 10px;
+  padding-top: var(--ad-space-1);
+  border-top: 1px solid var(--ad-rule-soft);
+  font-size: var(--ad-text-sm);
+  line-height: 18px;
+}
+.go {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ad-space-1);
+  min-height: 40px;
+  margin-top: auto;
+  padding: 0 12px 0 var(--ad-space-2);
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+  border: 1px solid var(--ad-ink);
+  font-family: var(--ad-font-read);
+  font-size: var(--ad-text-md);
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+}
+.details + .go,
+.line + .go {
+  margin-top: 12px;
+}
+.go:hover {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+}
+.go:focus-visible {
+  outline: 2px solid var(--ad-focus-paper);
+  outline-offset: 2px;
+}
+
+.poster.expanded {
+  width: 288px;
+  min-height: 384px;
+}
+.poster.expanded .art {
+  height: 97px;
+  border-bottom: 1px solid var(--ad-rule);
+}
+
+/* expanded card: an ink panel, art on the left */
+.card.expanded,
+.wide.expanded {
+  flex-direction: row;
+  width: clamp(448px, round(down, (100cqw - 192px) / 2.4, 32px), 544px);
+  min-height: 160px;
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+  border-color: var(--ad-ink);
+  --ad-focus: var(--ad-paper);
+}
+.card.expanded .art,
+.wide.expanded .art {
+  width: 160px;
+  align-self: stretch;
+}
+.card.expanded .body,
+.wide.expanded .body {
+  padding: 12px var(--ad-space-3) var(--ad-space-2) var(--ad-space-3);
+}
+.card.expanded .details,
+.wide.expanded .details {
+  border-top-color: var(--ad-band-rule);
+  color: var(--ad-band-text);
+}
+.card.expanded .go,
+.wide.expanded .go {
+  align-self: flex-start;
+  min-height: 32px;
+  background: var(--ad-accent);
+  border-color: var(--ad-accent);
+  color: var(--ad-accent-ink);
+}
+.card.expanded .go:hover,
+.wide.expanded .go:hover {
+  background: var(--ad-paper);
+  border-color: var(--ad-paper);
+  color: var(--ad-ink);
+}
+.band.card.expanded,
+.band.wide.expanded {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  border-color: var(--ad-paper);
+  --ad-focus: var(--ad-focus-paper);
+}
+.band.card.expanded .details,
+.band.wide.expanded .details {
+  border-top-color: var(--ad-rule-soft);
+  color: var(--ad-ink);
+}
+
+@media (max-width: 720px) {
+  .card.expanded,
+  .wide.expanded {
+    flex-direction: column;
+    width: min(320px, 86cqw);
+  }
+  .card.expanded .art,
+  .wide.expanded .art {
+    width: auto;
+    height: 97px;
+  }
+}

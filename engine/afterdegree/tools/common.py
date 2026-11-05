@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Callable
 from typing import Any
 
 from .. import filters as F
@@ -52,11 +53,23 @@ def job_title_or(role: str) -> dict:
     return cond
 
 
+DrillFn = Callable[[str], "dict | None"]
+
+
 def distribution_section(id_: str, title: str, counts: dict[str, int] | Counter, n: int, evidence_ids: list[str],
                          unit: str | None = None, caption: str | None = None, top: int | None = 8, other_label: str = OTHER_LABEL,
-                         target: str | None = None, remainders: dict[str, int] | None = None, keep_order: bool = False):
+                         target: str | None = None, remainders: dict[str, int] | None = None, keep_order: bool = False,
+                         drill: DrillFn | None = None, sample_n: int | None = None):
+    """Distribution with folded small groups. `drill(label)` returns the token for an item (never for the folded "Other" item)."""
     items, _ = distribution(dict(counts), n, top=top, other_label=other_label, target=target, remainders=remainders, keep_order=keep_order)
-    return section(id_, "distribution", title, {"n": n, "items": items, "unit": unit, "caption": caption}, evidence_ids)
+    if drill is not None:
+        for it in items:
+            if it["label"] == other_label:
+                continue
+            tok = drill(it["label"])
+            if tok:
+                it["drill"] = tok
+    return section(id_, "distribution", title, {"n": n, "items": items, "unit": unit, "caption": caption, "sample_n": sample_n}, evidence_ids)
 
 
 def counts_table_section(
@@ -71,21 +84,36 @@ def counts_table_section(
     other_label: str = OTHER_LABEL,
     top: int = 10,
     caption: str | None = None,
+    drill: DrillFn | None = None,
+    empty_note: str | None = None,
+    sample_n: int | None = None,
 ):
-    """Two-column table (name, people) with a bar; groups under 5 people fold into a muted `rest` row."""
+    """Two-column table (name, people) with a bar; groups under 5 people fold into a muted `rest` row.
+    When no group reaches 5 people, the table is empty and carries a short `note` instead of an "Other"-only row."""
     kept, other = fold_small(dict(counts), top=top)
     rows: list[dict[str, Any]] = []
     for label, k in kept:
-        rows.append({
+        row = {
             "id": _slug(label),
             "cells": {key: label, "people": k},
             "count": make_count(k, n, evidence_ids).model_dump(),
             "you": bool(you_label and label.lower() == you_label.lower()),
-        })
-    if other:
+        }
+        tok = drill(label) if drill is not None else None
+        if tok:
+            row["drill"] = tok
+        rows.append(row)
+    note = None
+    if other and not kept:
+        note = empty_note or (f"None of the {other} people in the profiles read share a {header.lower()} with 4 others, "
+                              "so no single one can be shown without pointing at individuals.")
+        rows = []
+        caption = f"{caption}. {note}" if caption else note
+    elif other:
         rows.append({"id": "other", "cells": {key: other_label, "people": other}, "count": make_count(other, n, evidence_ids).model_dump(), "rest": True})
     columns = [{"key": key, "label": header, "type": "text"}, {"key": "people", "label": "People", "type": "int", "bar": True}]
-    return section(id_, "ranked_table", title, {"n": n, "columns": columns, "rows": rows, "caption": caption}, evidence_ids)
+    return section(id_, "ranked_table", title, {"n": n, "columns": columns, "rows": rows, "caption": caption, "note": note,
+                                                "sample_n": sample_n}, evidence_ids)
 
 
 def _slug(text: str) -> str:
@@ -115,3 +143,20 @@ def user_target_role(ctx: ToolContext) -> str | None:
         return roles[0]
     fam = tx.title_family(ctx.derived.get("current_title"))
     return None if fam == "Intern / Working Student" else fam
+
+
+def company_value(name: str | None, company_id: Any = None) -> str | None:
+    """Drill value for a company: its Crustdata id when known (exact), else its name."""
+    if company_id not in (None, "", 0):
+        try:
+            return str(int(company_id))
+        except (TypeError, ValueError):
+            pass
+    return name or None
+
+
+def company_value_from_key(key: str, name: str) -> str:
+    """From Role.company_key() ('id:123' / 'name:sap') to a drill value."""
+    if key.startswith("id:"):
+        return key[3:]
+    return name

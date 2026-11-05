@@ -1,19 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Panel } from "@/components/data/Panel";
 import { EvidenceKey } from "@/components/data/EvidenceKey";
-import { GridNumber } from "@/components/data/GridNumber";
 import { ResultView, SectionView } from "@/components/data/ResultView";
+import { useDrill } from "@/components/drill/useDrill";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { Chip } from "@/components/ui/Chip";
-import { ExampleBadge } from "@/components/ui/ExampleBadge";
 import { Select } from "@/components/ui/Select";
+import { CohortCard, HeroNumber, Notes, ResultFoot, ToolHero } from "@/components/tool/ToolHero";
+import { drillOf } from "@/components/data/Drillable";
+import type { DrillToken } from "@/lib/drill-types";
 import { makeCount, isCount } from "@/lib/count";
-import { fmtInt, fmtPct, formatDate } from "@/lib/format";
+import { fmtInt, fmtPct } from "@/lib/format";
 import { toolHref } from "@/lib/tools";
 import type { CellValue, Count, RankedRow, RankedTableData, ResultEnvelope, Section } from "@/lib/types";
-import { config } from "./config";
+import { config, countryOptions } from "./config";
+import { EmployerTiles } from "./EmployerTiles";
 import styles from "./View.module.css";
 
 /* ---------- reading the ranked_table section into employers ---------- */
@@ -31,6 +34,7 @@ interface Employer {
   cities: string[];
   roles: string[];
   rest: boolean;
+  drill: DrillToken | null;
 }
 
 const num = (v: CellValue | undefined): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
@@ -53,6 +57,7 @@ function toEmployer(row: RankedRow, i: number): Employer {
     cities: strs(c.cities),
     roles: strs(c.roles),
     rest: Boolean(row.rest),
+    drill: row.rest ? null : (drillOf(row) ?? null),
   };
 }
 
@@ -74,7 +79,7 @@ function foldSmall(list: Employer[], min: number): Employer[] {
       : rest.senior;
     return keep.map((e) => (e === rest ? { ...rest, hires: rest.hires + hires, recent: rest.recent + recent, senior: merged } : e));
   }
-  return [...keep, { id: "other", name: "Other employers", hires, recent, senior: null, tenure: null, signals: [], cities: [], roles: [], rest: true }];
+  return [...keep, { id: "other", name: "Other employers", hires, recent, senior: null, tenure: null, signals: [], cities: [], roles: [], rest: true, drill: null }];
 }
 
 type SortKey = "hires" | "recent" | "senior" | "tenure";
@@ -174,84 +179,59 @@ function Screen({
   others: Section[];
 }) {
   const data: RankedTableData = table.data;
+  const router = useRouter();
+  const drill = useDrill();
   const employers = useMemo(() => foldSmall(data.rows.map(toEmployer), config.minRowSize), [data.rows]);
   const named = employers.filter((e) => !e.rest);
 
   const [role, setRole] = useState("");
   const [city, setCity] = useState("");
   const [sort, setSort] = useState<SortKey>("hires");
-  const [picked, setPicked] = useState<string | null>(null);
 
   const roles = useMemo(() => Array.from(new Set(named.flatMap((e) => e.roles))).sort(), [named]);
   const cities = useMemo(() => Array.from(new Set(named.flatMap((e) => e.cities))).sort(), [named]);
   const filtering = Boolean(role || city);
 
-  const shown = useMemo(() => {
+  const sorted = useMemo(() => {
     const keep = named.filter((e) => (!role || e.roles.includes(role)) && (!city || e.cities.includes(city)));
     keep.sort((a, b) => sortValue(b, sort) - sortValue(a, sort) || b.hires - a.hires);
-    const rest = employers.filter((e) => e.rest);
-    return filtering ? keep : [...keep, ...rest];
-  }, [named, employers, role, city, sort, filtering]);
+    return keep;
+  }, [named, role, city, sort]);
+  const shown = useMemo(() => (filtering ? sorted : [...sorted, ...employers.filter((e) => e.rest)]), [sorted, employers, filtering]);
 
   const biggest = Math.max(1, ...employers.map((e) => e.hires));
   const per = biggest > 400 ? Math.ceil(biggest / 200) : 1;
-  const country = typeof result.cohort?.filters?.work_country === "string" ? (result.cohort.filters.work_country as string) : null;
+  const filters = result.cohort?.filters ?? {};
+  const country = typeof filters.work_country === "string" ? (filters.work_country as string) : null;
+  const searchRole = typeof filters.role === "string" ? (filters.role as string) : "";
 
-  const exampleNote = result.warnings.find((w) => /^example data/i.test(w));
-  const warnings = result.warnings.filter((w) => w !== exampleNote);
-  const [first, ...more] = result.next_steps;
+  const warnings = result.warnings.filter((w) => !/^example data/i.test(w));
+  const first = result.next_steps[0];
   const thin = result.confidence === "low" || (data.n ?? 0) < 100;
   const total = employers.reduce((a, e) => a + e.hires, 0);
   const people = shown.reduce((a, e) => a + e.hires, 0);
+  const countries = useMemo(() => countryOptions(country), [country]);
+
+  // A new country is a new search: ToolLayout re-prefills the form from the URL and runs again.
+  const pickCountry = (next: string) => {
+    if (!next || next === country) return;
+    router.push(toolHref("indian_friendly", { country: next, ...(searchRole ? { role: searchRole } : {}) }));
+  };
 
   return (
     <div className={styles.root}>
-      <div className={styles.top}>
-        <div className={styles.answer}>
-          {exampleNote && <ExampleBadge force>{exampleNote}</ExampleBadge>}
-          <p className={styles.least}>{thin ? "So far" : "At least"}</p>
-          <GridNumber
-            value={named.length}
-            cell={20}
-            gap={3}
-            label={`${named.length} employers`}
-          />
-          <p className={styles.say}>
-            {named.length === 1 ? "employer" : "employers"}
-            {country ? ` in ${country}` : ""} have each hired {config.minRowSize} or more people who studied in India.
-          </p>
-          {first && (
-            <div className={styles.actions}>
-              <ButtonLink href={toolHref(first.tool, first.params)}>{first.label}</ButtonLink>
-              {more.map((s) => (
-                <ButtonLink key={s.label} variant="secondary" slash={false} href={toolHref(s.tool, s.params)}>
-                  {s.label}
-                </ButtonLink>
-              ))}
-            </div>
-          )}
-        </div>
+      <ToolHero
+        lead={thin ? "So far" : "At least"}
+        numeral={<HeroNumber value={named.length} label={`${named.length} employers`} />}
+        say={`${named.length === 1 ? "employer" : "employers"}${country ? ` in ${country}` : ""} have each hired ${config.minRowSize} or more people who studied in India.`}
+        actions={first && <ButtonLink href={toolHref(first.tool, first.params)}>{first.label}</ButtonLink>}
+        aside={<CohortCard result={result} n={result.cohort?.n_visible ?? data.n} />}
+      />
 
-        <Panel
-          title="In plain words"
-          headingLevel={2}
-          evidence={<EvidenceKey n={result.cohort?.n_visible ?? data.n} date={result.data_date} evidence={result.evidence} note={result.coverage_note} />}
-          className={styles.plain}
-        >
-          {result.summary && <p className={styles.summary}>{result.summary}</p>}
-          {result.cohort && (
-            <p className={styles.cohort}>
-              <b>Who is counted.</b> {result.cohort.definition}.
-              {result.cohort.widened && result.cohort.widened_reason ? ` ${result.cohort.widened_reason}` : ""}
-            </p>
-          )}
-          {thin && (
-            <p className={styles.cohort}>
-              <b>Early picture.</b> Few people match, so treat the order below as rough.
-            </p>
-          )}
-        </Panel>
-      </div>
+      {result.summary && <p className={styles.summary}>{result.summary}</p>}
+      <Notes lines={[...(thin ? ["Few people match, so treat the order below as rough."] : []), ...warnings]} />
+
+      <EmployerTiles employers={shown.filter((e) => !e.rest).slice(0, 10)} country={country} />
 
       <Panel
         title={table.title}
@@ -261,12 +241,7 @@ function Screen({
         className={styles.main}
       >
         <div className={styles.filters}>
-          {country ? (
-            <div className={styles.scope}>
-              <span className={styles.scopeLabel}>Country</span>
-              <Chip>{country}</Chip>
-            </div>
-          ) : null}
+          <Select label="Country" value={country ?? ""} onChange={(e) => pickCountry(e.target.value)} options={countries} />
           <Select
             label="Role"
             value={role}
@@ -281,12 +256,7 @@ function Screen({
             options={[{ value: "", label: "Any city" }, ...cities.map((c) => ({ value: c, label: c }))]}
             disabled={!cities.length}
           />
-          <Select
-            label="Sort by"
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-            options={SORTS}
-          />
+          <Select label="Sort by" value={sort} onChange={(e) => setSort(e.target.value as SortKey)} options={SORTS} />
           {filtering && (
             <Button
               variant="ghost"
@@ -308,14 +278,12 @@ function Screen({
           <span>
             <i className={styles.hollow} /> Started earlier
           </span>
-          <span className={styles.each}>
-            {per === 1 ? "One square is one person." : `One square is up to ${per} people.`}
-          </span>
+          <span className={styles.each}>{per === 1 ? "One square is one person." : `One square is up to ${per} people.`}</span>
         </div>
 
         {filtering && (
           <p className={styles.filterNote} role="status">
-            Showing {shown.length} {shown.length === 1 ? "employer" : "employers"}
+            Showing {sorted.length} {sorted.length === 1 ? "employer" : "employers"}
             {city ? ` with people in ${city}` : ""}
             {role && city ? " and" : ""}
             {role ? ` with ${role} roles` : ""}. Counts are for {country ?? "all of the country"}, not only the filter.
@@ -329,7 +297,7 @@ function Screen({
         ) : (
           <table className={styles.table}>
             <caption className="visually-hidden">
-              {table.title}: people seen per employer, with seniority reached, median stay and visa signals
+              {table.title}: people seen per employer, with seniority reached, median stay and visa signals. Each employer opens its company profile.
             </caption>
             <thead>
               <tr>
@@ -341,29 +309,27 @@ function Screen({
               </tr>
             </thead>
             <tbody>
-              {shown.map((e, i) => {
-                const on = picked === e.id;
-                return (
-                  <tr
-                    key={e.id}
-                    className={[styles.row, "ad-assemble", on && styles.on, e.rest && styles.rest].filter(Boolean).join(" ")}
-                    style={{ ["--i" as string]: i, ["--n" as string]: shown.length }}
-                  >
-                    <th scope="row" className={styles.name}>
-                      <button
-                        type="button"
-                        className={styles.pick}
-                        aria-pressed={on}
-                        onClick={() => setPicked(on ? null : e.id)}
-                      >
-                        <span className={styles.empName}>{e.rest ? "Other employers" : e.name}</span>
-                        <span className={styles.where}>
-                          {e.rest ? "each with fewer than 5 people" : e.cities.slice(0, 3).join(", ")}
-                        </span>
+              {shown.map((e, i) => (
+                <tr
+                  key={e.id}
+                  className={[styles.row, "ad-assemble", e.drill && styles.link, e.rest && styles.rest].filter(Boolean).join(" ")}
+                  style={{ ["--i" as string]: i, ["--n" as string]: shown.length }}
+                >
+                  <th scope="row" className={styles.name}>
+                    {e.drill ? (
+                      <button type="button" className={styles.pick} onClick={() => drill.open(e.drill!, e.name)} aria-label={`${e.name}: ${fmtInt(e.hires)} people seen. Open the company profile`}>
+                        <span className={styles.empName}>{e.name}</span>
+                        <span className={styles.where}>{e.cities.slice(0, 3).join(", ")}</span>
                       </button>
-                    </th>
-                    <td data-label="People seen">
-                      <div className={styles.people}>
+                    ) : (
+                      <span className={styles.pick}>
+                        <span className={styles.empName}>{e.rest ? "Other employers" : e.name}</span>
+                        <span className={styles.where}>{e.rest ? "each with fewer than 5 people" : e.cities.slice(0, 3).join(", ")}</span>
+                      </span>
+                    )}
+                  </th>
+                  <td data-label="People seen">
+                    <div className={styles.people}>
                       <PeopleCells
                         hires={e.hires}
                         recent={e.recent}
@@ -374,29 +340,28 @@ function Screen({
                         <b>{fmtInt(e.hires)}</b>
                         <small>{fmtInt(e.recent)} recent</small>
                       </span>
-                      </div>
-                    </td>
-                    <td data-label="Senior or above">
-                      <SeniorCell senior={e.senior} />
-                    </td>
-                    <td data-label="Median stay">
-                      {e.tenure !== null ? (
-                        <span className={styles.stat}>
-                          <b>{e.tenure.toFixed(1)}</b>
-                          <small>years</small>
-                        </span>
-                      ) : (
-                        <span className={styles.stat}>
-                          <b className={styles.dash}>–</b>
-                        </span>
-                      )}
-                    </td>
-                    <td data-label="Visa signals">
-                      <Signals signals={e.signals} rest={e.rest} />
-                    </td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+                  <td data-label="Senior or above">
+                    <SeniorCell senior={e.senior} />
+                  </td>
+                  <td data-label="Median stay">
+                    {e.tenure !== null ? (
+                      <span className={styles.stat}>
+                        <b>{e.tenure.toFixed(1)}</b>
+                        <small>years</small>
+                      </span>
+                    ) : (
+                      <span className={styles.stat}>
+                        <b className={styles.dash}>–</b>
+                      </span>
+                    )}
+                  </td>
+                  <td data-label="Visa signals">
+                    <Signals signals={e.signals} rest={e.rest} />
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
@@ -412,24 +377,13 @@ function Screen({
             <Paragraphs text={method.data.text} />
           </Panel>
         )}
-        {warnings.length > 0 && (
-          <Panel title="Good to know" headingLevel={2} className={styles.know}>
-            <ul className={styles.list} role="list">
-              {warnings.map((w) => (
-                <li key={w}>{w}</li>
-              ))}
-            </ul>
-          </Panel>
-        )}
       </div>
 
       {others.map((s) => (
         <SectionView key={s.id} section={s} evidence={result.evidence} result={result} />
       ))}
 
-      <p className={styles.foot}>
-        {result.coverage_note} Data as of {formatDate(result.data_date)}.
-      </p>
+      <ResultFoot result={{ ...result, next_steps: result.next_steps.slice(1) }} primary={false} />
     </div>
   );
 }

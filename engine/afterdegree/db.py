@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import secrets
 import sqlite3
 import threading
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -38,6 +40,18 @@ CREATE TABLE IF NOT EXISTS evidence (
     id TEXT PRIMARY KEY,
     body TEXT NOT NULL,
     created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS server_meta (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS drill_people (
+    person_id TEXT NOT NULL,
+    profile_id TEXT NOT NULL,
+    body TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    expires_at REAL NOT NULL,
+    PRIMARY KEY (person_id, profile_id)
 );
 CREATE TABLE IF NOT EXISTS credit_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -190,6 +204,37 @@ class Store:
     def get_evidence(self, evidence_id: str) -> dict | None:
         row = self._exec("SELECT body FROM evidence WHERE id = ?", (evidence_id,)).fetchone()
         return json.loads(row["body"]) if row else None
+
+    # ---------- server secret & anonymous people (CONTRACT Appendix C) ----------
+
+    def server_secret(self) -> str:
+        """Per-server secret used to derive opaque person ids (HMAC). Created once, persisted."""
+        with self._lock:
+            row = self._conn.execute("SELECT value FROM server_meta WHERE key = 'person_id_secret'").fetchone()
+            if row:
+                return row["value"]
+            value = secrets.token_hex(32)
+            self._conn.execute("INSERT OR IGNORE INTO server_meta (key, value) VALUES ('person_id_secret', ?)", (value,))
+            row = self._conn.execute("SELECT value FROM server_meta WHERE key = 'person_id_secret'").fetchone()
+            return row["value"]
+
+    def save_drill_person(self, person_id: str, profile_id: str, body: dict, ttl_s: float) -> None:
+        """Stores an already-anonymised PersonDetail, resolvable only for this profile, for at most ttl_s seconds."""
+        self._exec(
+            "INSERT OR REPLACE INTO drill_people (person_id, profile_id, body, created_at, expires_at) VALUES (?,?,?,?,?)",
+            (person_id, profile_id, json.dumps(body), utcnow_iso(), time.time() + ttl_s),
+        )
+
+    def get_drill_person(self, person_id: str, profile_id: str) -> dict | None:
+        row = self._exec(
+            "SELECT body, expires_at FROM drill_people WHERE person_id = ? AND profile_id = ?", (person_id, profile_id)
+        ).fetchone()
+        if row is None or float(row["expires_at"]) < time.time():
+            return None
+        return json.loads(row["body"])
+
+    def purge_expired_people(self) -> int:
+        return self._exec("DELETE FROM drill_people WHERE expires_at < ?", (time.time(),)).rowcount
 
     # ---------- credit log ----------
 

@@ -69,7 +69,15 @@ async def parse_goal(ctx: ToolContext) -> tuple[ParsedGoal, str]:
     return parse_goal_fallback(text), "with simple rules"
 
 
+ROUTE_SEP = " → "
+
+
+def route_signature(steps: list[str]) -> str:
+    return ROUTE_SEP.join(steps)
+
+
 async def run(ctx: ToolContext) -> Result:
+    ctx.tool = TOOL
     ctx.total_steps = 6
     await ctx.step("Reading your goal")
     goal, how = await parse_goal(ctx)
@@ -134,6 +142,7 @@ async def run(ctx: ToolContext) -> Result:
             "typical_years": round(typical, 1) if typical is not None else None,
             "fit": route_fit(steps_l, done),
             "gaps": route_gaps(steps_l, done),
+            "drill": ctx.drill("route", route_signature(steps_l), route_title(steps_l)),
         })
         if len(route_items) >= 6:
             break
@@ -147,7 +156,10 @@ async def run(ctx: ToolContext) -> Result:
             continue
         for label in (a, b):
             if label not in nodes:
-                nodes[label] = {"id": f"n{len(nodes) + 1}", "label": label, "kind": step_kind(label, target_label)}
+                kind = step_kind(label, target_label)
+                nodes[label] = {"id": f"n{len(nodes) + 1}", "label": label, "kind": kind}
+                if kind != "goal":
+                    nodes[label]["drill"] = ctx.drill("route_step", label)
         edge_list.append({"from": nodes[a]["id"], "to": nodes[b]["id"], "count": c})
 
     await ctx.step("Checking which skills the role asks for")
@@ -164,7 +176,8 @@ async def run(ctx: ToolContext) -> Result:
         for term, cnt in sorted(skill_counts.items(), key=lambda kv: (kv[0] in mine, -kv[1])):
             if cnt < 3:
                 continue
-            items.append({"term": term, "count": cnt, "share": round(cnt / len(jobs), 3) if len(jobs) >= 10 else None, "you_have": term in mine})
+            items.append({"term": term, "count": cnt, "share": round(cnt / len(jobs), 3) if len(jobs) >= 10 else None, "you_have": term in mine,
+                          "drill": ctx.drill("skill", term)})
         items = items[:15]
         skills_section = section("skills_gap", "keywords", "Skills common in this role", {
             "items": items, "n": len(jobs),

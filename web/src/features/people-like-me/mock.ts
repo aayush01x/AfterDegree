@@ -1,4 +1,5 @@
 import { makeCount as count } from "@/lib/count";
+import type { DrillStep, DrillToken } from "@/lib/drill-types";
 import type { Cohort, Evidence, MatchLevel, ResultEnvelope, Section } from "@/lib/types";
 import type { MockContext } from "../types";
 
@@ -46,7 +47,39 @@ const cohort: Cohort = {
   widened_reason: null,
 };
 
-const sections: Section[] = [
+/** Drill token the engine would attach: the tool, the exact params of this run, and the path so far. */
+function token(params: Record<string, unknown>, path: DrillStep[]): DrillToken {
+  return { tool: "people_like_me", params, path };
+}
+const step = (dimension: DrillStep["dimension"], value: string, label = value): DrillStep => ({ dimension, value, label });
+const withDrill = <T extends object>(item: T, drill: DrillToken): T => ({ ...item, drill });
+
+/** Attach realistic drill tokens to every drillable row (never to folded "Other" rows or remainders). */
+function addDrills(list: Section[], params: Record<string, unknown>): Section[] {
+  const country = step("country", "Germany");
+  return list.map((sec): Section => {
+    if (sec.kind === "distribution") {
+      const dimension = sec.id === "countries" ? "country" : sec.id === "degree_countries" ? "degree_country" : sec.id === "further_degrees" ? "degree" : null;
+      if (!dimension) return sec;
+      const items = sec.data.items.map((i) =>
+        i.remainder || /^(other|abroad|took a further)/i.test(i.label) ? i : withDrill(i, token(params, [step(dimension, i.label)])),
+      );
+      return { ...sec, data: { ...sec.data, items } };
+    }
+    if (sec.kind === "ranked_table") {
+      const key = sec.id === "roles" ? "role" : sec.id === "employers_target" ? "company" : null;
+      if (!key) return sec;
+      const col = key === "role" ? "role" : "employer";
+      const rows = sec.data.rows.map((r) =>
+        r.rest ? r : withDrill(r, token(params, [...(key === "company" ? [country] : []), step(key, String(r.cells[col]))])),
+      );
+      return { ...sec, data: { ...sec.data, rows } };
+    }
+    return sec;
+  });
+}
+
+const rawSections: Section[] = [
   {
     id: "cohort_size",
     kind: "stat",
@@ -162,6 +195,8 @@ const sections: Section[] = [
     evidence_ids: ["ev_plm_search"],
   },
 ];
+
+const sections = addDrills(rawSections, { match: "exact_school", exp_band: [1, 3] });
 
 /** Riya Menon, exact school, 1 to 3 years: a full, high-confidence cohort. */
 const baseResult: ResultEnvelope = {
@@ -280,7 +315,7 @@ export function mockResult(ctx: MockContext): ResultEnvelope {
   const k = SCALE[match];
   let r = baseResult;
   if (match !== "exact_school" || band[0] !== 1 || band[1] !== 3) {
-    const sections = r.sections.map((sec) => scaleSection(sec, k));
+    const sections = addDrills(r.sections.map((sec) => scaleSection(sec, k)), { match, exp_band: band });
     const countries = sections.find((x) => x.id === "countries");
     const dist = countries?.kind === "distribution" ? countries.data : null;
     const n = dist?.n ?? r.cohort!.n_visible;

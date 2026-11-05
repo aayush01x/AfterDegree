@@ -50,13 +50,26 @@
   cursor: pointer;
 }
 
-.block:hover {
-  background: var(--ad-rule-soft);
+.block:hover,
+.block:focus-visible {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+  --ad-focus: var(--ad-paper);
 }
 
 .block:focus-visible {
-  outline: 2px solid var(--ad-blue);
+  outline: 2px solid var(--ad-ink);
   outline-offset: 2px;
+}
+
+/* folded groups ("Other employers"): hollow, never the star of the picture */
+.rest {
+  border-style: dashed;
+  border-color: var(--ad-hollow);
+  color: var(--ad-muted);
+}
+.rest .name {
+  font-weight: 500;
 }
 
 .name {
@@ -85,6 +98,28 @@
   color: var(--ad-paper);
 }
 
+.goalButton {
+  cursor: pointer;
+  border: 1px solid var(--ad-ink);
+}
+.goalButton:hover,
+.goalButton:focus-visible {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+}
+.goalButton:hover .goalPlace,
+.goalButton:focus-visible .goalPlace {
+  color: var(--ad-ink);
+}
+.goalButton:focus-visible {
+  outline: 2px solid var(--ad-focus-paper);
+  outline-offset: 2px;
+}
+.goalGo {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .goal {
   position: absolute;
   top: var(--y);
@@ -110,7 +145,7 @@
 .goalPlace {
   display: block;
   margin-top: var(--ad-space-1);
-  color: var(--ad-orange);
+  color: var(--ad-accent);
 }
 
 .goalCount {
@@ -141,20 +176,14 @@
   transition: stroke-opacity var(--ad-fast) var(--ad-ease);
 }
 
-.line {
-  stroke-opacity: 0.4;
-}
-
 .lineOn {
   stroke-opacity: 1;
 }
 
-.lineOff {
-  stroke-opacity: 0.08;
-}
 
 .status {
   min-height: 40px;
+  font-family: var(--font-ui), system-ui, sans-serif;
   font-size: var(--ad-text-md);
   line-height: 20px;
   color: var(--ad-muted);

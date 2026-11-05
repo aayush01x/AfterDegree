@@ -174,10 +174,23 @@ def country_variants(country: str) -> list[str]:
     return COUNTRY_VARIANTS.get(c, [c])
 
 
+_AREA_RE = re.compile(r"^(greater\s+)|(\s+(metropolitan|metro)?\s*(area|region))$", re.I)
+
+
+def clean_city(value: str) -> str:
+    """'Greater Munich Metropolitan Area' -> 'Munich', 'New Delhi Area' -> 'New Delhi' (real profile wording)."""
+    v = re.sub(r"\s+", " ", value).strip()
+    prev = None
+    while prev != v:
+        prev = v
+        v = _AREA_RE.sub("", v).strip()
+    return v or value.strip()
+
+
 def canonical_city(value: str | None) -> str | None:
     if not value:
         return None
-    v = value.strip()
+    v = clean_city(value)
     return CITY_CANONICAL.get(v.lower(), v.title() if v.islower() else v)
 
 
@@ -347,6 +360,20 @@ FIELD_RULES: tuple[tuple[str, str, str], ...] = (
     (r"biotech", "Biotechnology", "Biotechnology"),
     (r"business|management|commerce|\bmba\b|finance|economics", "Business and Management", "Business"),
 )
+
+
+FIELD_SEARCH_ALIASES: dict[str, list[str]] = {
+    # Real profiles write the same field many ways ("cse", "Computer Science Engineering", "Computer Engineering").
+    "Computer Science": ["Computer Science", "CSE", "Computer Engineering", "Computer Sc"],
+    "Information Technology": ["Information Technology", "Information Science"],
+    "Electronics": ["Electronics", "ECE"],
+}
+
+
+def field_search_phrases(phrase: str | None) -> list[str]:
+    if not phrase:
+        return []
+    return FIELD_SEARCH_ALIASES.get(phrase, [phrase])
 
 
 def normalise_field(field: str | None) -> tuple[str | None, str | None]:

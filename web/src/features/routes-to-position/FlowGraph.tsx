@@ -4,18 +4,22 @@ import { useMemo, useState } from "react";
 import type { RouteEdge, RouteNode, RoutesData } from "@/lib/types";
 import { fmtInt } from "@/lib/format";
 import { GridNumber } from "@/components/data/GridNumber";
+import { useDrill } from "@/components/drill/useDrill";
+import { drillOf } from "@/components/data/Drillable";
+import { pressable } from "@/components/tool/drill";
 import styles from "./FlowGraph.module.css";
 
 /**
  * The signature visual: feeder employers -> previous titles -> the position,
- * laid out on the grid with orthogonal connectors only. Blocks are buttons:
- * selecting one inverts it to black and follows its lines.
+ * laid out on the grid with orthogonal connectors only. Only the lines of the
+ * active block are drawn (hover or focus a block to follow its lines), so the
+ * picture never tangles. A block with a drill token opens the people behind it.
  */
 
 const BLOCK = 40;
 const GAP = 8;
 const PITCH = BLOCK + GAP;
-const MIN_H = 280;
+const MIN_H = 336;
 
 interface Laid {
   node: RouteNode;
@@ -146,18 +150,30 @@ function related(id: string, edges: RouteEdge[]) {
   return { up, down };
 }
 
+const isRest = (n: RouteNode) => /^other\b|fewer than/i.test(n.label);
+
 export function FlowGraph({ data, label }: { data: RoutesData; label: string }) {
   const g = useMemo(() => build(data), [data]);
-  const [selected, setSelected] = useState<string | null>(null);
+  const drill = useDrill();
+  // The widest title is followed by default; hovering or focusing a block follows that block instead.
+  const first = useMemo(() => {
+    const mids = g.columns.flat().filter((n) => g.laid.get(n.id)!.layer > 0 && g.laid.get(n.id)!.layer < g.last && !isRest(n));
+    mids.sort((a, b) => g.laid.get(b.id)!.count - g.laid.get(a.id)!.count);
+    return mids[0]?.id ?? null;
+  }, [g]);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [goalOn, setGoalOn] = useState(false);
+  const selected = picked && g.laid.has(picked) ? picked : first;
 
   const rel = useMemo(() => (selected ? related(selected, g.edges) : null), [selected, g.edges]);
+  // Only the active block's bundle is drawn. With nothing active, only the lines into the position are.
   const edgeOn = (e: RouteEdge) =>
-    !rel || (rel.up.has(e.from) && rel.up.has(e.to)) || (rel.down.has(e.from) && rel.down.has(e.to));
+    rel ? (rel.up.has(e.from) && rel.up.has(e.to)) || (rel.down.has(e.from) && rel.down.has(e.to)) : g.laid.get(e.to)!.layer === g.last;
   const nodeOn = (id: string) => !!rel && (rel.up.has(id) || rel.down.has(id));
 
   const labelOf = (id: string) => g.laid.get(id)?.node.label ?? id;
   const status = (() => {
-    if (!selected) return "Select an employer or a title to follow its lines to the position.";
+    if (!selected) return "Hover or focus an employer or a title to follow its lines to the position.";
     const L = g.laid.get(selected);
     if (!L) return "";
     const fmt = (es: RouteEdge[], pick: "from" | "to") =>
@@ -167,8 +183,15 @@ export function FlowGraph({ data, label }: { data: RoutesData; label: string }) 
     const o = g.outs.get(selected);
     if (i?.length) parts.push(`Came from ${fmt(i, "from")}.`);
     if (o?.length) parts.push(`Went on to ${fmt(o, "to")}.`);
+    if (drillOf(L.node)) parts.push("Press to see the people.");
     return parts.join(" ");
   })();
+
+  const open = (node: RouteNode) => {
+    const tok = drillOf(node);
+    if (tok) drill.open(tok, node.label);
+    else setPicked(node.id);
+  };
 
   const template = g.columns
     .map((_, i) => (i === g.last ? "minmax(0,1.25fr)" : "minmax(0,1fr)") + (i < g.last ? " minmax(40px,0.45fr)" : ""))
@@ -188,28 +211,53 @@ export function FlowGraph({ data, label }: { data: RoutesData; label: string }) 
                   const style = { ["--y" as string]: `${L.y}px`, ["--h" as string]: `${L.h}px` };
                   if (L.big) {
                     const cut = node.label.split(/\s*[,·]\s*/);
-                    return (
-                      <div key={node.id} className={styles.goal} style={style}>
+                    const tok = drillOf(node);
+                    const body = (
+                      <>
                         <p className={styles.goalTitle}>
                           {cut[0]}
                           {cut.length > 1 && <span className={styles.goalPlace}>{cut.slice(1).join(", ")}</span>}
                         </p>
                         <p className={styles.goalCount}>
-                          <GridNumber value={L.count} cell={String(L.count).length > 3 ? 8 : 12} gap={2} tone="paper" label={`${fmtInt(L.count)}`} />
+                          <GridNumber value={L.count} cell={String(L.count).length > 3 ? 8 : 12} gap={2} tone={goalOn && tok ? "ink" : "paper"} label={`${fmtInt(L.count)}`} />
                           <span>{plural(L.count)} we can see in this position</span>
+                          {tok && <span className={styles.goalGo}>See the {fmtInt(L.count)} {plural(L.count)}</span>}
                         </p>
+                      </>
+                    );
+                    return tok ? (
+                      <div
+                        key={node.id}
+                        className={`${styles.goal} ${styles.goalButton}`}
+                        style={style}
+                        aria-label={`${cut[0]}${cut[1] ? `, ${cut.slice(1).join(", ")}` : ""}: ${fmtInt(L.count)} ${plural(L.count)}. See the people`}
+                        onMouseEnter={() => setGoalOn(true)}
+                        onMouseLeave={() => setGoalOn(false)}
+                        onFocus={() => setGoalOn(true)}
+                        onBlur={() => setGoalOn(false)}
+                        {...pressable(() => open(node))}
+                      >
+                        {body}
+                      </div>
+                    ) : (
+                      <div key={node.id} className={styles.goal} style={style}>
+                        {body}
                       </div>
                     );
                   }
                   const on = selected === node.id;
+                  const tok = drillOf(node);
                   return (
                     <button
                       key={node.id}
                       type="button"
-                      className={`${styles.block} ad-assemble ${on ? styles.on : ""} ${nodeOn(node.id) && !on ? styles.rel : ""}`}
+                      className={`${styles.block} ad-assemble ${on ? styles.on : ""} ${nodeOn(node.id) && !on ? styles.rel : ""} ${isRest(node) ? styles.rest : ""}`}
                       style={{ ...style, ["--i" as string]: li * 8 + col.indexOf(node), ["--n" as string]: 40 }}
-                      aria-pressed={on}
-                      onClick={() => setSelected(on ? null : node.id)}
+                      aria-pressed={tok ? undefined : on}
+                      aria-label={`${node.label}, ${fmtInt(L.count)} ${plural(L.count)}${tok ? ". See the people" : ""}`}
+                      onPointerEnter={() => setPicked(node.id)}
+                      onFocus={() => setPicked(node.id)}
+                      onClick={() => open(node)}
                       title={node.label}
                     >
                       <span className={styles.name}>{node.label}</span>
@@ -224,7 +272,7 @@ export function FlowGraph({ data, label }: { data: RoutesData; label: string }) 
                 <div className={styles.colHead} />
                 <svg className={styles.svg} viewBox={`0 0 100 ${g.H}`} preserveAspectRatio="none" height={g.H}>
                   {g.edges
-                    .filter((e) => g.laid.get(e.from)!.layer === li && g.laid.get(e.to)!.layer === li + 1)
+                    .filter((e) => g.laid.get(e.from)!.layer === li && g.laid.get(e.to)!.layer === li + 1 && edgeOn(e))
                     .map((e) => {
                       const p = g.endpoints.get(e)!;
                       const bx = g.bus.get(e.from) ?? 50;
@@ -233,7 +281,7 @@ export function FlowGraph({ data, label }: { data: RoutesData; label: string }) 
                         <path
                           key={`${e.from}-${e.to}`}
                           d={d}
-                          className={edgeOn(e) ? (rel ? styles.lineOn : styles.line) : styles.lineOff}
+                          className={styles.lineOn}
                           strokeWidth={weight(e.count, g.maxEdge)}
                         />
                       );

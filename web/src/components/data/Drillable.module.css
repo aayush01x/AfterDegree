@@ -1,0 +1,13 @@
+.drill {
+  cursor: pointer;
+}
+.drill:hover,
+.drill:focus-visible {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+  --ad-focus: var(--ad-paper);
+}
+.drill:focus-visible {
+  outline: 2px solid var(--ad-focus-paper);
+  outline-offset: 0;
+}

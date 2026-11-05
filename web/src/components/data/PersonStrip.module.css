@@ -1,0 +1,84 @@
+.strip {
+  display: grid;
+  grid-template-columns: 192px minmax(0, 1fr);
+  min-height: calc(var(--ad-cell) * 3);
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  border: 1px solid var(--ad-rule);
+  --ad-focus: var(--ad-focus-paper);
+}
+.intro {
+  padding: 13px 15px 12px var(--ad-space-3);
+  font-family: var(--ad-font-read);
+  font-size: var(--ad-text-sm);
+  line-height: 18px;
+}
+.lead {
+  font-weight: 700;
+}
+.key {
+  margin-top: 6px;
+  font-size: var(--ad-text-xs);
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ad-key);
+}
+.wrap {
+  min-width: 0;
+  padding: 10px var(--ad-space-3) 10px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.canvas {
+  position: relative;
+  margin-left: -4px;
+}
+.canvas > svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.inv {
+  fill: var(--ad-ink);
+}
+.hit {
+  cursor: pointer;
+}
+.label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  font-family: var(--ad-font-read);
+  font-size: var(--ad-text-xs);
+  line-height: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--ad-ink);
+}
+button.label {
+  cursor: pointer;
+}
+button.label:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.on {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+  padding: 2px 6px;
+  margin-left: -4px;
+}
+.on:not(button) {
+  margin-left: -4px;
+}
+@media (max-width: 720px) {
+  .strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wrap {
+    padding-left: var(--ad-space-3);
+  }
+}

@@ -1,5 +1,9 @@
+"use client";
+
 import type { TimeseriesData } from "@/lib/types";
 import { fmtInt } from "@/lib/format";
+import { useDrill } from "@/components/drill/useDrill";
+import { drillOf } from "@/components/data/Drillable";
 import styles from "./StackedCells.module.css";
 
 /** Postings by month as stacked cell columns. Series stack from the bottom; one cell is `unit` postings. */
@@ -24,6 +28,7 @@ function unitFor(max: number) {
 }
 
 export function StackedCells({ data }: { data: TimeseriesData }) {
+  const drill = useDrill();
   const series = data.series?.length
     ? data.series
     : data.points
@@ -55,8 +60,9 @@ export function StackedCells({ data }: { data: TimeseriesData }) {
           });
           const year = yearOf(period);
           const showYear = year && (pi === 0 || periods[pi].endsWith("-01"));
-          return (
-            <li key={period} className={styles.col}>
+          const tok = series.map((x) => drillOf(x.points.find((p) => p.period === period))).find(Boolean) ?? null;
+          const inner = (
+            <>
               <p className={styles.total}>{fmtInt(totals[pi])}</p>
               <div className={styles.stack} aria-hidden="true">
                 {cells.map((c, i) => (
@@ -67,6 +73,22 @@ export function StackedCells({ data }: { data: TimeseriesData }) {
                 {periodLabel(period)}
                 {showYear && <span className={styles.year}> {year}</span>}
               </p>
+            </>
+          );
+          return (
+            <li key={period} className={styles.colWrap}>
+              {tok ? (
+                <button
+                  type="button"
+                  className={`${styles.col} ${styles.press}`}
+                  onClick={() => drill.open(tok, tok.path[tok.path.length - 1]?.label ?? period)}
+                  aria-label={`${tok.path[tok.path.length - 1]?.label ?? period}: ${fmtInt(totals[pi])} ${noun}. See them`}
+                >
+                  {inner}
+                </button>
+              ) : (
+                <div className={styles.col}>{inner}</div>
+              )}
             </li>
           );
         })}

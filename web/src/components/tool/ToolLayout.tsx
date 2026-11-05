@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { useJob } from "@/hooks/useJob";
 import { nestBody, toolBySlug, type ToolField } from "@/lib/tools";
 import type { ResultEnvelope } from "@/lib/types";
-import { Panel } from "@/components/data/Panel";
 import { JobProgress } from "@/components/data/JobProgress";
 import { GridFill } from "@/components/data/GridFill";
 import { ResultView } from "@/components/data/ResultView";
@@ -114,34 +113,39 @@ export function ToolLayout({ tool, title, purpose, form, fields, defaults, build
   return (
     <div className={styles.page}>
       <header className={styles.head}>
-        <div className={styles.tag}>
+        <div className={styles.titleRow}>
+          <h1 className={styles.title}>{title ?? def.title}</h1>
           <ExampleBadge />
         </div>
-        <h1 className={styles.title}>{title ?? def.title}</h1>
         <p className={styles.purpose}>{purpose ?? (university ? def.purposeUniversity : def.purpose)}</p>
       </header>
 
-      <Panel title="Your question" headingLevel={2}>
-        {ready ? (
-          <form ref={formRef} key={JSON.stringify(values)} className={[styles.form, hasHints && styles.formHasHints].filter(Boolean).join(" ")} onSubmit={onSubmit} noValidate>
-            <div className={styles.formFields}>{form ?? <ToolFields fields={list} values={values} errors={errors} />}</div>
-            <div className={styles.actions}>
-              <Button type="submit" loading={busy}>
-                {busy ? "Running" : runLabel}
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <div className={styles.skeleton} aria-busy="true">
-            <GridFill done={0} total={1} cells={24} size={12} />
+      {ready ? (
+        <form
+          ref={formRef}
+          key={JSON.stringify(values)}
+          aria-label="Your question"
+          className={[styles.form, hasHints && styles.formHasHints].filter(Boolean).join(" ")}
+          onSubmit={onSubmit}
+          noValidate
+        >
+          <div className={styles.formFields}>{form ?? <ToolFields fields={list} values={values} errors={errors} />}</div>
+          <div className={styles.actions}>
+            <Button type="submit" loading={busy}>
+              {busy ? "Running" : runLabel}
+            </Button>
           </div>
-        )}
-      </Panel>
+        </form>
+      ) : (
+        <div className={styles.skeleton} aria-busy="true">
+          <GridFill done={0} total={1} cells={24} size={12} onOrange />
+        </div>
+      )}
 
       {busy && (
-        <Panel title="Working on it">
-          <JobProgress phase={job.phase} job={job.job} />
-        </Panel>
+        <section className={styles.progress} aria-label="Working on it">
+          <JobProgress phase={job.phase} job={job.job} cells={96} size={16} onOrange />
+        </section>
       )}
 
       {job.phase === "error" && job.error && (
@@ -153,7 +157,9 @@ export function ToolLayout({ tool, title, purpose, form, fields, defaults, build
         />
       )}
 
-      {job.phase === "done" && job.result && (resultView ? resultView(job.result) : <ResultView result={job.result} />)}
+      {job.phase === "done" && job.result && (
+        <div className={styles.results}>{resultView ? resultView(job.result) : <ResultView result={job.result} />}</div>
+      )}
 
       {job.phase === "idle" && ready && (
         <div className={styles.empty}>

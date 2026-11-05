@@ -48,10 +48,15 @@ JOB_SAMPLE_FIELDS = [
     "job_details.employment_type",
     "company.basic_info.name",
     "company.basic_info.crustdata_company_id",
+    "job_details.url",
+    "job_details.source",
+    "company.basic_info.primary_domain",
+    "location.raw",
     "location.city",
     "location.country",
     "content.description",
     "metadata.date_added",
+    "metadata.date_updated",
 ]
 JOB_SORT = [{"field": "metadata.date_added", "order": "desc"}]
 PAGE_SIZE = 100
@@ -94,6 +99,9 @@ class ToolContext:
     sensitive: set[str] = field(default_factory=set)
     _step: int = 0
     budget_hit: bool = False
+    # Drill tokens (CONTRACT Appendix C): the origin tool, and the path already taken when building a drill result.
+    tool: str = ""
+    base_path: list[dict] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.budget = RunBudget(self.settings.max_live_calls_per_run, self.settings.max_credits_per_run)
@@ -133,6 +141,14 @@ class ToolContext:
             res = self.progress_fn(label, self._step, self.total_steps)
             if hasattr(res, "__await__"):
                 await res  # type: ignore[misc]
+
+    def drill(self, dimension: str, value: Any, label: str | None = None, path: list[dict] | None = None) -> dict | None:
+        """A drill token for one item: the origin tool, its full params and the path extended by one step."""
+        if not self.tool or value is None or str(value).strip() == "":
+            return None
+        base = self.base_path if path is None else path
+        return {"tool": self.tool, "params": self.params,
+                "path": [*base, {"dimension": dimension, "value": str(value)[:400], "label": (label or str(value))[:200]}]}
 
     def warn(self, text: str) -> None:
         if text not in self.warnings:

@@ -10,7 +10,7 @@ from ..analysis import experience_at_entry, feeder_role, find_target_role, highe
 from ..schemas import Cohort, Result
 from ..stats import YEAR_BUCKET_ORDER, bucket_years, make_count, median
 from ..toolkit import ToolContext, section
-from .common import counts_table_section, distribution_section, place_text, require_role, resolve_place, step, title_or
+from .common import company_value, counts_table_section, distribution_section, place_text, require_role, resolve_place, step, title_or
 
 TOOL = "routes_to_position"
 
@@ -22,6 +22,7 @@ async def run(ctx: ToolContext) -> Result:
     company = (p.get("company") or "").strip() or None
     role_label = tx.display_role(role)
     place = place_text(city, country)
+    ctx.tool = TOOL
     ctx.total_steps = 4
 
     await ctx.step("Finding people in this position")
@@ -49,6 +50,8 @@ async def run(ctx: ToolContext) -> Result:
     years_entry: Counter = Counter()
     raw_years: list[float] = []
     edges: Counter = Counter()
+    feeder_ids: dict[str, object] = {}
+    school_names: dict[str, str] = {}
     traced = 0
     for pp in sample.people:
         tr = find_target_role(pp, role, company, company_id)
@@ -59,20 +62,33 @@ async def run(ctx: ToolContext) -> Result:
         pr = previous_role(pp, tr)
         feeder = fr.company if fr and fr.company else "First job (no earlier employer)"
         feeders[feeder] += 1
+        if fr and fr.company and fr.company_id:
+            feeder_ids.setdefault(feeder, fr.company_id)
         title = tx.title_family(pr.title) if pr and pr.title else "No earlier role"
         prev_titles[title] += 1
         edges[(feeder, title)] += 1
         hd = highest_degree(pp)
         if hd:
-            schools[f"{tx.short_school(hd.school)}, {hd.level or 'degree'}"] += 1
+            school_label = f"{tx.short_school(hd.school)}, {hd.level or 'degree'}"
+            schools[school_label] += 1
+            school_names.setdefault(school_label, tx.short_school(hd.school) or hd.school or "")
         ye = experience_at_entry(pp, tr, ctx.today)
         raw_years.append(ye) if ye is not None else None
         b = bucket_years(ye)
         if b:
             years_entry[b] += 1
 
+    def feeder_drill(label: str):
+        if label in ("First job (no earlier employer)", "Other employers"):
+            return None
+        return ctx.drill("company", "feeder:" + (company_value(label, feeder_ids.get(label)) or label), label)
+
+    def title_drill(label: str):
+        return None if label in ("No earlier role", "Other roles") else ctx.drill("role", "previous:" + label, label)
+
     target_label = f"{role_label}" + (f" at {company}" if company else "") + f" in {place}"
-    nodes: dict[str, dict] = {"__target": {"id": "target", "label": target_label, "kind": "goal"}}
+    nodes: dict[str, dict] = {"__target": {"id": "target", "label": target_label, "kind": "goal",
+                                           "drill": {"tool": TOOL, "params": ctx.params, "path": []}}}
     edge_list = []
     title_totals: Counter = Counter()
     big_feeders = {f for f, c in feeders.items() if c >= 5}
@@ -84,9 +100,9 @@ async def run(ctx: ToolContext) -> Result:
         if c < 5:
             continue
         if f"f:{feeder}" not in nodes:
-            nodes[f"f:{feeder}"] = {"id": f"f{len(nodes)}", "label": feeder, "kind": "employer"}
+            nodes[f"f:{feeder}"] = {"id": f"f{len(nodes)}", "label": feeder, "kind": "employer", "drill": feeder_drill(feeder)}
         if f"t:{title}" not in nodes:
-            nodes[f"t:{title}"] = {"id": f"t{len(nodes)}", "label": title, "kind": "title"}
+            nodes[f"t:{title}"] = {"id": f"t{len(nodes)}", "label": title, "kind": "title", "drill": title_drill(title)}
         edge_list.append({"from": nodes[f"f:{feeder}"]["id"], "to": nodes[f"t:{title}"]["id"], "count": c})
         title_totals[title] += c
     for title, c in title_totals.items():
@@ -101,14 +117,16 @@ async def run(ctx: ToolContext) -> Result:
         }, ev),
         counts_table_section("feeders", "Feeder employers", "employer", "Employer", feeders, traced, ev,
                              you_label=ctx.derived.get("current_company"), other_label="Other employers",
-                             caption="Last employer before joining."),
+                             caption="Last employer before joining.", drill=feeder_drill, sample_n=len(sample.people)),
         counts_table_section("titles", "Previous titles", "title", "Title", prev_titles, traced, ev,
-                             you_label=you_titles, other_label="Other titles"),
+                             you_label=you_titles, other_label="Other titles", drill=title_drill, sample_n=len(sample.people)),
         counts_table_section("schools", "Schools and degrees", "school", "School and degree", schools, traced, ev,
-                             other_label="Other schools", caption="Each person's highest degree."),
+                             other_label="Other schools", caption="Each person's highest degree.",
+                             drill=lambda label: ctx.drill("school", school_names.get(label) or label, label), sample_n=len(sample.people)),
         distribution_section("years", "Years of experience at entry", ordered_years, sum(ordered_years.values()), ev, top=None,
                              unit="people", keep_order=True, other_label="Other",
-                             caption=(f"Median {median(raw_years):.1f} years of experience at entry." if raw_years else None)),
+                             caption=(f"Median {median(raw_years):.1f} years of experience at entry." if raw_years else None),
+                             drill=lambda label: ctx.drill("years_band", "entry:" + label, label), sample_n=len(sample.people)),
     ]
 
     next_steps = [step(f"Plan your own route to {role_label} in {place}", "reverse_gps", role=role, city=city, country=country, company=company)]

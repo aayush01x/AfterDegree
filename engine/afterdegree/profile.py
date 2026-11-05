@@ -234,9 +234,13 @@ def parse_person(data: dict) -> ParsedPerson:
     skills = _get(data, "skills.professional_network_skills") or []
     city = loc.get("city") if isinstance(loc, dict) else None
     country = _location_country(loc) if loc else None
-    if city is None and isinstance(loc, dict) and loc.get("raw"):
-        first = loc["raw"].split(",")[0].strip()
-        city = first if tx.country_for_city(first) else None
+    if city is None and isinstance(loc, dict) and (loc.get("full_location") or loc.get("raw")):
+        # Real search profiles often have city=null with the place only in full_location ("Delhi, India").
+        parts = [x.strip() for x in str(loc.get("full_location") or loc.get("raw")).split(",") if x.strip()]
+        first = tx.clean_city(parts[0]) if parts else ""
+        known = tx.country_for_city(first)
+        not_region = first.lower() not in {str(loc.get("state") or "").lower(), str(loc.get("country") or "").lower()}
+        city = first if first and (known or (len(parts) >= 2 and not_region)) else None
     return ParsedPerson(
         person_id=data.get("crustdata_person_id"),
         country=country,

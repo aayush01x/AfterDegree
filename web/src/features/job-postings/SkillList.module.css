@@ -1,0 +1,85 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ad-space-2);
+}
+.list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--ad-space-4);
+  list-style: none;
+}
+.item {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) 72px minmax(48px, 120px);
+  align-items: center;
+  gap: var(--ad-space-1);
+  min-height: 40px;
+  padding: 0 var(--ad-space-1);
+  border-top: 1px solid var(--ad-rule-soft);
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+}
+.term {
+  font-weight: 600;
+  min-width: 0;
+}
+.count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-weight: 700;
+}
+.count small {
+  font-size: var(--ad-text-xs);
+  line-height: 14px;
+  font-weight: 500;
+  color: var(--ad-muted);
+}
+.bar {
+  min-width: 0;
+}
+.mark {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--ad-ink);
+}
+.have {
+  background: var(--ad-ink);
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ad-space-3);
+  font-size: var(--ad-text-sm);
+  line-height: 20px;
+  color: var(--ad-muted);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+@media (max-width: 860px) {
+  .list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* a skill with a drill token inverts on hover and focus */
+.item[role="button"]:hover small,
+.item[role="button"]:focus-visible small {
+  color: var(--ad-paper);
+}
+.item[role="button"]:hover .mark,
+.item[role="button"]:focus-visible .mark {
+  border-color: var(--ad-paper);
+}
+.item[role="button"]:hover .have,
+.item[role="button"]:focus-visible .have {
+  background: var(--ad-paper);
+}
+.item[role="button"]:hover .bar,
+.item[role="button"]:focus-visible .bar {
+  filter: invert(1);
+}

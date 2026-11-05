@@ -1,4 +1,5 @@
-import type { Count, Evidence, ResultEnvelope } from "@/lib/types";
+import type { Count, Evidence, ResultEnvelope, Section } from "@/lib/types";
+import { mkDrill, withDrill } from "@/components/tool/drill";
 
 /**
  * Example results for Riya Menon (BTech CSE, VIT Vellore 2022, 2 years at Infosys,
@@ -59,7 +60,7 @@ const employers: Row[] = [
   { employer: "Trade Republic", postings: 9, hires: 0, signal: ["Unclear"] },
 ];
 
-export const mockResult: ResultEnvelope = {
+const fullResult: ResultEnvelope = {
   tool: "job_postings",
   title: "Data Engineer postings in Berlin",
   summary:
@@ -209,7 +210,7 @@ export const mockResult: ResultEnvelope = {
 
 /* ---- thin result: a smaller city ---- */
 
-export const mockResultThin: ResultEnvelope = {
+const thinResult: ResultEnvelope = {
   tool: "job_postings",
   title: "Data Engineer postings in Leipzig",
   summary:
@@ -338,3 +339,40 @@ export const mockResultThin: ResultEnvelope = {
     },
   ],
 };
+
+/* ---- drill tokens (CONTRACT Appendix C): employers open the company profile, skills, languages and months open their postings ---- */
+
+const PARAMS = { role: "Data Engineer", city: "Berlin", country: "Germany" };
+const TOOL = "job_postings";
+const LANG: Record<string, string> = { "English only": "english_only", "German required": "german_required" };
+const MONTH_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function decorate(result: ResultEnvelope): ResultEnvelope {
+  const sections = result.sections.map((s): Section => {
+    if (s.kind === "ranked_table" && s.id === "employers") {
+      const rows = s.data.rows.map((r) => (r.rest ? r : withDrill(r, mkDrill(TOOL, PARAMS, "company", String(r.cells.employer)))));
+      return { ...s, data: { ...s.data, rows } };
+    }
+    if (s.kind === "keywords") {
+      const items = s.data.items.map((i) => withDrill(i, mkDrill(TOOL, PARAMS, "skill", i.term)));
+      return { ...s, data: { ...s.data, items } };
+    }
+    if (s.kind === "distribution" && s.id === "languages") {
+      const items = s.data.items.map((i) => (LANG[i.label] ? withDrill(i, mkDrill(TOOL, PARAMS, "language", LANG[i.label], i.label)) : i));
+      return { ...s, data: { ...s.data, items } };
+    }
+    if (s.kind === "timeseries" && s.id === "trend") {
+      const stamp = <P extends { period: string }>(p: P) => {
+        const m = /^(\d{4})-(\d{2})$/.exec(p.period);
+        return m ? withDrill(p, mkDrill(TOOL, PARAMS, "quarter", p.period, `${MONTH_LONG[Number(m[2]) - 1]} ${m[1]}`)) : p;
+      };
+      const series = s.data.series?.map((x) => ({ ...x, points: x.points.map(stamp) }));
+      return { ...s, data: { ...s.data, series } };
+    }
+    return s;
+  });
+  return { ...result, sections };
+}
+
+export const mockResult: ResultEnvelope = decorate(fullResult);
+export const mockResultThin: ResultEnvelope = thinResult;

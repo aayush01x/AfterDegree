@@ -1,4 +1,5 @@
 import { makeCount } from "@/lib/count";
+import type { DrillStep, DrillToken } from "@/lib/drill-types";
 import type {
   DistributionItem,
   Evidence,
@@ -24,12 +25,18 @@ const evidence = (id: string, endpoint: string, total: number, used: number, fil
 
 type Seed = { company: string; country: string; seen: number; converted: number };
 
-function row(s: Seed, evId: string): RankedRow {
-  return {
+/** Drill token the engine attaches: this run's scope plus the path so far. */
+const SCOPE = { scope: { field: "Computer Science" } };
+const tok = (path: DrillStep[], params: Record<string, unknown> = SCOPE): DrillToken => ({ tool: "conversion_map", params, path });
+const step = (dimension: DrillStep["dimension"], value: string): DrillStep => ({ dimension, value, label: value });
+const withDrill = <T extends object>(item: T, drill: DrillToken): T => ({ ...item, drill });
+
+function row(s: Seed, evId: string, params: Record<string, unknown> = SCOPE): RankedRow {
+  return withDrill({
     id: s.company.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
     cells: { company: s.company, country: s.country, seen: s.seen, converted: s.converted },
     count: count(s.converted, s.seen, [evId]),
-  };
+  }, tok([step("company", s.company)], params));
 }
 
 function restRow(seen: number, converted: number, evId: string): RankedRow {
@@ -59,12 +66,12 @@ function byCountry(seeds: Seed[], rest: { seen: number; converted: number }, evI
   }
   const items: DistributionItem[] = [...map.entries()]
     .sort((a, b) => b[1].converted / b[1].seen - a[1].converted / a[1].seen)
-    .map(([label, v]) => ({
+    .map(([label, v]) => withDrill({
       label,
       count: v.converted,
       share: Math.round((v.converted / v.seen) * 1000) / 1000,
       target: label === "Germany",
-    }));
+    }, tok([step("country", label)])));
   items.push({
     label: "Other countries",
     count: rest.converted,
@@ -189,6 +196,7 @@ export const mockResult: ResultEnvelope = {
 /* Thin result: narrowed to VIT Vellore in the Netherlands, widened    */
 /* ------------------------------------------------------------------ */
 
+const THIN_SCOPE = { scope: { school: "VIT Vellore", field: "Computer Science", country: "Netherlands" } };
 const THIN: Seed[] = [
   { company: "Booking.com", country: "Netherlands", seen: 7, converted: 4 },
   { company: "ASML", country: "Netherlands", seen: 6, converted: 3 },
@@ -233,7 +241,7 @@ export const mockResultThin: ResultEnvelope = {
       data: {
         n: THIN_SEEN,
         columns: COLUMNS,
-        rows: [...THIN.map((s) => row(s, "ev_cmt_2")), restRow(THIN_REST.seen, THIN_REST.converted, "ev_cmt_2")],
+        rows: [...THIN.map((s) => row(s, "ev_cmt_2", THIN_SCOPE)), restRow(THIN_REST.seen, THIN_REST.converted, "ev_cmt_2")],
         default_sort: { key: "chance", dir: "desc" },
         caption: "One square is one intern or working student. Filled means they went full-time at that company.",
       },
@@ -247,7 +255,7 @@ export const mockResultThin: ResultEnvelope = {
         n: THIN_SEEN,
         unit: "people who went full-time",
         items: [
-          { label: "Netherlands", count: 9, share: null, target: true },
+          withDrill({ label: "Netherlands", count: 9, share: null, target: true }, tok([step("country", "Netherlands")], THIN_SCOPE)),
           { label: "Other countries", count: 1, share: null, remainder: true },
         ],
         caption: "Too few people to compare countries.",

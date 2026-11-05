@@ -1,5 +1,7 @@
 import type { DistributionData } from "@/lib/types";
 import { fmtInt } from "@/lib/format";
+import { useDrill } from "@/components/drill/useDrill";
+import { drillOf } from "@/components/data/Drillable";
 import styles from "./CellColumns.module.css";
 
 /** A distribution drawn as columns of cells, one cell per person (scaled only when a column is very tall). */
@@ -18,6 +20,7 @@ export function CellColumns({ data, noun = "people" }: { data: DistributionData;
   const unit = unitFor(max);
   const n = data.n || items.reduce((s, i) => s + i.count, 0);
   const total = items.reduce((s, i) => s + Math.ceil(i.count / unit), 0);
+  const drill = useDrill();
   let seq = 0;
 
   return (
@@ -26,8 +29,9 @@ export function CellColumns({ data, noun = "people" }: { data: DistributionData;
         {items.map((item) => {
           const cells = Math.max(item.count > 0 ? 1 : 0, Math.round(item.count / unit));
           const tone = item.target ? styles.target : item.remainder ? styles.hollow : "";
-          return (
-            <li key={item.label} className={styles.col}>
+          const tok = drillOf(item);
+          const inner = (
+            <>
               <div className={styles.stack} aria-hidden="true">
                 {Array.from({ length: cells }, (_, i) => (
                   <i
@@ -39,6 +43,22 @@ export function CellColumns({ data, noun = "people" }: { data: DistributionData;
               </div>
               <p className={styles.num}>{fmtInt(item.count)}</p>
               <p className={styles.label}>{item.label}</p>
+            </>
+          );
+          return (
+            <li key={item.label} className={styles.item}>
+              {tok ? (
+                <button
+                  type="button"
+                  className={`${styles.col} ${styles.drill}`}
+                  onClick={() => drill.open(tok, item.label)}
+                  aria-label={`${item.label}: ${fmtInt(item.count)} ${noun}. See who they are`}
+                >
+                  {inner}
+                </button>
+              ) : (
+                <div className={styles.col}>{inner}</div>
+              )}
             </li>
           );
         })}

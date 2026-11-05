@@ -9,7 +9,7 @@ from ..cohort import build_cohort
 from ..schemas import Cohort, Result
 from ..stats import fold_small, make_count
 from ..toolkit import ToolContext, section
-from .common import distribution_section, resolve_place, step, title_or
+from .common import company_value_from_key, distribution_section, resolve_place, step, title_or
 from .internship_chances import company_tallies, intern_element, role_filter_for
 
 TOOL = "conversion_map"
@@ -21,6 +21,7 @@ async def run(ctx: ToolContext) -> Result:
     role = (scope.get("role") or "").strip() or None
     school = (scope.get("school") or "").strip() or None
     field = (scope.get("field") or "").strip() or None
+    ctx.tool = TOOL
     ctx.total_steps = 4
 
     await ctx.step("Finding interns in this scope")
@@ -56,7 +57,7 @@ async def run(ctx: ToolContext) -> Result:
     for t in kept:
         c = make_count(t.converted, t.seen, ev).model_dump()
         rows.append({"id": t.key, "cells": {"company": t.name, "country": t.country, "seen": t.seen, "converted": t.converted, "rate": c},
-                     "count": c})
+                     "count": c, "drill": ctx.drill("company", company_value_from_key(t.key, t.name), t.name)})
     if rest:
         c = make_count(rest.converted, rest.seen, ev).model_dump()
         rows.append({"id": "other", "cells": {"company": rest.name, "country": None, "seen": rest.seen, "converted": rest.converted, "rate": c},
@@ -81,7 +82,8 @@ async def run(ctx: ToolContext) -> Result:
         }, ev),
         distribution_section("by_country", "Conversions by country", conversions, sum(conversions.values()), ev,
                              unit="conversions", other_label="Other countries", target=country,
-                             caption="Internships that turned into a full-time job at the same company, by country of the internship."),
+                             caption="Internships that turned into a full-time job at the same company, by country of the internship.",
+                             drill=lambda label: None if label == "Country not listed" else ctx.drill("country", label)),
     ]
 
     # Extra (not in the contract table): conversion by school group, when the scope is not a single school.
@@ -101,7 +103,8 @@ async def run(ctx: ToolContext) -> Result:
         tier_rows = []
         for label, n_t in tier_kept:
             c = make_count(per_tier[label][0], n_t, ev).model_dump()
-            tier_rows.append({"id": label, "cells": {"group": label, "seen": n_t, "rate": c}, "count": c})
+            tier_rows.append({"id": label, "cells": {"group": label, "seen": n_t, "rate": c}, "count": c,
+                              "drill": None if label == "Other universities" else ctx.drill("school", label)})
         if tier_rows:
             sections.append(section("by_school_group", "ranked_table", "Conversion by school group", {
                 "n": finished,

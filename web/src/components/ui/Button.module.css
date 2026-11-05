@@ -6,7 +6,7 @@
   min-height: 48px;
   padding: 0 var(--ad-space-2) 0 var(--ad-space-3);
   border: 1px solid var(--ad-ink);
-  font-family: var(--font-ui), sans-serif;
+  font-family: var(--ad-font-read);
   font-size: var(--ad-text-body);
   font-weight: 700;
   line-height: 20px;
@@ -21,6 +21,17 @@
   padding: 0 var(--ad-space-2);
   gap: var(--ad-space-2);
   font-size: var(--ad-text-md);
+}
+.lg {
+  gap: var(--ad-space-2);
+  min-height: 64px;
+  padding: 10px var(--ad-space-3) 10px var(--ad-space-4);
+  font-size: 17px;
+  line-height: 22px;
+}
+.lg .slash {
+  width: 28px;
+  height: 28px;
 }
 .primary {
   background: var(--ad-ink);
@@ -37,6 +48,16 @@
 .secondary:hover:not(:disabled) {
   background: var(--ad-ink);
   color: var(--ad-paper);
+}
+.accent {
+  background: var(--ad-accent);
+  border-color: var(--ad-accent);
+  color: var(--ad-accent-ink);
+}
+.accent:hover:not(:disabled) {
+  background: var(--ad-paper);
+  border-color: var(--ad-paper);
+  color: var(--ad-ink);
 }
 .ghost {
   background: transparent;

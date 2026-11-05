@@ -1,0 +1,35 @@
+.box {
+  display: flex;
+  align-items: flex-end;
+  min-height: calc(var(--ad-cell) * 4);
+  padding: var(--ad-space-2);
+  border: 1px solid var(--ad-rule);
+  background: var(--ad-paper);
+}
+.field {
+  background: var(--ad-paper);
+}
+.card {
+  max-width: 44ch;
+  padding: 12px var(--ad-space-2);
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-rule);
+  font-family: var(--ad-font-read);
+}
+.title {
+  font-weight: 700;
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+}
+.body {
+  margin-top: 4px;
+  font-size: var(--ad-text-sm);
+  line-height: 18px;
+  color: var(--ad-muted);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ad-space-1);
+  margin-top: 12px;
+}

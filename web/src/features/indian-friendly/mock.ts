@@ -1,4 +1,5 @@
 import { makeCount } from "@/lib/count";
+import { mkDrill, withDrill } from "@/components/tool/drill";
 import type { Cohort, Evidence, NextStep, RankedRow, ResultEnvelope } from "@/lib/types";
 
 const DATA_DATE = "2026-11-06";
@@ -21,8 +22,8 @@ interface Seed {
   roles: string[];
 }
 
-function row(s: Seed, evId: string): RankedRow {
-  return {
+function row(s: Seed, evId: string, params: Record<string, unknown>): RankedRow {
+  return withDrill<RankedRow>({
     id: s.employer.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
     cells: {
       employer: s.employer,
@@ -35,7 +36,7 @@ function row(s: Seed, evId: string): RankedRow {
       roles: s.roles,
     },
     badges: s.signals,
-  };
+  }, mkDrill("indian_friendly", params, "company", s.employer));
 }
 
 const COLUMNS = [
@@ -143,7 +144,7 @@ export const mockResult: ResultEnvelope = {
       data: {
         n: 1000,
         columns: COLUMNS,
-        rows: [...seeds.map((s) => row(s, EV_PEOPLE)), otherRow],
+        rows: [...seeds.map((s) => row(s, EV_PEOPLE, { country: "Germany", role: "Data Engineer" })), otherRow],
         default_sort: { key: "hires", dir: "desc" },
         caption: "One square is one person. Solid squares started in the last 24 months.",
       },
@@ -217,7 +218,7 @@ export const mockResultThin: ResultEnvelope = {
         n: 61,
         columns: COLUMNS,
         rows: [
-          ...thinSeeds.map((s) => row(s, T_PEOPLE)),
+          ...thinSeeds.map((s) => row(s, T_PEOPLE, { country: "Netherlands", city: "Eindhoven" })),
           {
             id: "other",
             cells: {

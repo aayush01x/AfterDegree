@@ -2,14 +2,18 @@
 
 import Form from "next/form";
 import { useId, useMemo, useState, type ReactNode } from "react";
-import { CountDisplay } from "@/components/data/CountDisplay";
+import type { DrillToken } from "@/lib/drill-types";
+import { drillOf, pressable } from "@/components/tool/drill";
+import { HeroNumber, Notes, ResultFoot, ToolHero } from "@/components/tool/ToolHero";
+import { useDrill } from "@/components/drill/useDrill";
 import { EvidenceKey } from "@/components/data/EvidenceKey";
 import { Panel } from "@/components/data/Panel";
 import { SectionView } from "@/components/data/ResultView";
-import { Stat } from "@/components/data/Stat";
+import { CompanyMark } from "@/components/art/CompanyMark";
+import { PosterTile } from "@/components/tiles/PosterTile";
+import { TileRow } from "@/components/tiles/TileRow";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { ExampleBadge } from "@/components/ui/ExampleBadge";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { makeCount } from "@/lib/count";
@@ -35,6 +39,7 @@ interface Rung {
   country: string;
   count: Count;
   rest: boolean;
+  drill: DrillToken | null;
 }
 
 const MIN_FOR_SHARE = 10;
@@ -58,6 +63,7 @@ function toRung(row: RankedRow, i: number): Rung | null {
     country: cellText(row, "country"),
     count,
     rest: Boolean(row.rest),
+    drill: row.rest ? null : (drillOf(row) ?? null),
   };
 }
 
@@ -117,6 +123,7 @@ interface CountryRow {
   count: Count | null;
   target: boolean;
   remainder: boolean;
+  drill: DrillToken | null;
 }
 
 function countryRows(dist: DistributionData, rungs: Rung[]): CountryRow[] {
@@ -130,6 +137,7 @@ function countryRows(dist: DistributionData, rungs: Rung[]): CountryRow[] {
       count: n > 0 ? makeCount(k, n) : null,
       target: Boolean(it.target),
       remainder: Boolean(it.remainder),
+      drill: it.remainder ? null : (drillOf(it) ?? null),
     };
   });
 }
@@ -145,6 +153,7 @@ function CountryPanel({
   rungs: Rung[];
   evidenceNode: ReactNode;
 }) {
+  const drill = useDrill();
   const rows = useMemo(() => countryRows(section.data, rungs), [section.data, rungs]);
   return (
     <Panel
@@ -158,8 +167,8 @@ function CountryPanel({
           const c = r.count;
           const enough = c !== null && !thin(c);
           const lit = enough ? Math.round(rate(c) * BAR_CELLS) : 0;
-          return (
-            <li key={r.label} className={styles.countryRow} data-target={r.target || undefined}>
+          const inner = (
+            <>
               <span className={styles.countryName}>
                 {r.label}
                 {r.target && <small className={styles.tag}>Target</small>}
@@ -180,6 +189,24 @@ function CountryPanel({
                 {enough ? <b>{fmtPct(c.share)}</b> : <b aria-hidden="true">–</b>}
                 <span>{c ? c.display : `${r.converted} went full-time`}</span>
               </span>
+            </>
+          );
+          return (
+            <li key={r.label}>
+              {r.drill ? (
+                <div
+                  className={[styles.countryRow, styles.hit].join(" ")}
+                  data-target={r.target || undefined}
+                  aria-label={`${r.label}: open the people`}
+                  {...pressable(() => drill.open(r.drill as DrillToken, r.label))}
+                >
+                  {inner}
+                </div>
+              ) : (
+                <div className={styles.countryRow} data-target={r.target || undefined}>
+                  {inner}
+                </div>
+              )}
             </li>
           );
         })}
@@ -192,9 +219,11 @@ function CountryPanel({
 
 export function View({ result }: { result: ResultEnvelope }) {
   const uid = useId();
+  const drill = useDrill();
   const [sort, setSort] = useState<SortKey>("chance");
   const [country, setCountry] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const [tileFocus, setTileFocus] = useState<string | null>(null);
 
   const table = result.sections.find(isCompanyTable);
   const dist = result.sections.find((s): s is Extract<Section, { kind: "distribution" }> => s.kind === "distribution");
@@ -216,6 +245,14 @@ export function View({ result }: { result: ResultEnvelope }) {
     return sortRungs(country ? filtered.filter((r) => !r.rest) : filtered, sort);
   }, [rungs, sort, country]);
 
+  /* the companies that turn the most interns into employees, for the tile row */
+  const top = useMemo(() => {
+    const body = rungs.filter((r) => !r.rest);
+    const enough = body.filter((r) => !thin(r.count));
+    return sortRungs(enough.length > 0 ? enough : body, enough.length > 0 ? "chance" : "volume").slice(0, 8);
+  }, [rungs]);
+  const focusId = top.find((r) => r.id === tileFocus)?.id ?? top[0]?.id;
+
   const totalCells = visible.reduce((a, r) => a + r.count.n, 0);
   const offsets = visible.map((_, i) => visible.slice(0, i).reduce((a, r) => a + r.count.n, 0));
 
@@ -236,57 +273,129 @@ export function View({ result }: { result: ResultEnvelope }) {
 
   const selectedRung = visible.find((r) => r.id === selected) ?? null;
   const overall = stat?.data as StatData | undefined;
-  const mock = result.warnings.some((w) => /mock mode/i.test(w));
   const realWarnings = result.warnings.filter((w) => !/mock mode/i.test(w));
 
   const evNode = (
     <EvidenceKey n={cohort?.n_visible} date={formatDate(result.data_date)} evidence={result.evidence} />
   );
 
+  const sumN = rungs.reduce((a, r) => a + r.count.n, 0);
+  const sumK = rungs.reduce((a, r) => a + r.count.k, 0);
+  const oc = overall?.count ?? (sumN > 0 ? makeCount(sumK, sumN) : null);
+  const percent = oc && oc.share !== null ? Math.round(oc.share * 100) : null;
+  const notes = [
+    ...(isThin
+      ? [
+          `${cohort?.widened_reason ?? "We found only a few interns and working students that match, so these figures can swing a lot."} That is not a bad sign for you. It only means the data is thin, so read the squares as hints, not as a verdict.`,
+        ]
+      : []),
+    ...realWarnings,
+  ];
+  const [firstStep, ...otherSteps] = result.next_steps;
+
   return (
     <div className={styles.root}>
-      {/* 1. The answer and the summary */}
-      <div className={styles.top}>
-        {stat && overall && (
-          <Panel title={stat.title} evidence={evNode} as="section" className={styles.answer}>
-            <Stat data={overall} variant="hero" />
-          </Panel>
-        )}
-        <Panel title="What this shows" as="section" className={styles.about}>
-          {mock && <ExampleBadge force>Example data (mock mode)</ExampleBadge>}
-          {result.summary && <p className={styles.summary}>{result.summary}</p>}
-          {cohort && (
-            <p className={styles.cohort}>
-              <b>Who is counted:</b> {cohort.definition}.
-            </p>
-          )}
-          {realWarnings.length > 0 && (
-            <ul className={styles.warns} role="list">
-              {realWarnings.map((w) => (
-                <li key={w}>{w}</li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-      </div>
-
-      {/* 2. Thin data: a warm explanation and a way to widen */}
-      {isThin && (
-        <Panel title="Not many people here yet" as="section" className={styles.thin}>
-          <p>
-            {cohort?.widened_reason ??
-              "We found only a few interns and working students that match, so these figures can swing a lot."}{" "}
-            That is not a bad sign for you. It only means the data is thin, so read the squares as hints, not as a verdict.
-          </p>
-          {widenDrop && (
-            <ButtonLink href={toolHref("conversion_map", { scope: widened })} variant="secondary" size="sm">
-              Look again across {widenWord[widenDrop]}
-            </ButtonLink>
-          )}
-        </Panel>
+      {/* 1. The answer */}
+      {oc && (
+        <ToolHero
+          lead={percent === null ? "Out of" : "About"}
+          numeral={
+            percent !== null ? (
+              <div className={styles.numeral}>
+                <HeroNumber value={percent} label={`${percent} percent`} />
+                <span className={styles.pctMark} aria-hidden="true">
+                  %
+                </span>
+              </div>
+            ) : (
+              <HeroNumber value={oc.n} label={`${oc.n} people`} />
+            )
+          }
+          say={
+            percent !== null
+              ? `of interns and working students went full-time at the same company.`
+              : `${oc.k} of them went full-time at the same company. That is too few to call a chance.`
+          }
+          note={
+            <>
+              {result.summary}
+              {overall?.note ? ` ${overall.note}` : ""}
+            </>
+          }
+          actions={
+            firstStep && (
+              <ButtonLink href={toolHref(firstStep.tool, firstStep.params)} variant="primary">
+                {firstStep.label}
+              </ButtonLink>
+            )
+          }
+        />
       )}
 
-      {/* 3. Signature: the ladder */}
+      {/* 2. Who is counted, and a warm note when the data is thin */}
+      {(cohort || notes.length > 0) && (
+        <div className={styles.context}>
+          {cohort && (
+            <aside className={styles.cohortCard} aria-label="Who is counted">
+              <div className={styles.cardHead}>
+                <h2>Who is counted</h2>
+                {evNode}
+              </div>
+              <p>{cohort.definition}.</p>
+              {oc && <p className={styles.muted}>{oc.display} went full-time at the same company.</p>}
+            </aside>
+          )}
+          {notes.length > 0 && (
+            <div className={styles.notice}>
+              <Notes lines={notes} />
+              {isThin && widenDrop && (
+                <ButtonLink href={toolHref("conversion_map", { scope: widened })} variant="secondary" size="sm">
+                  Look again across {widenWord[widenDrop]}
+                </ButtonLink>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 3. Companies that turn interns into employees */}
+      {top.length > 0 && (
+        <TileRow
+          title="Top converters"
+          note={`${top.length} ${top.length === 1 ? "company" : "companies"} · went full-time, of the interns we saw`}
+          label="Companies that convert interns"
+        >
+          {top.map((r) => {
+            const on = r.id === focusId;
+            return (
+              <PosterTile
+                key={r.id}
+                variant="card"
+                title={r.name}
+                art={<CompanyMark name={r.name} shape="landscape" />}
+                count={r.count.k}
+                unit={`of ${r.count.n}`}
+                expanded={on}
+                note={thin(r.count) ? "Counts only" : undefined}
+                countLine={`at least ${r.count.k} of ${r.count.n} went full-time`}
+                details={
+                  on ? (
+                    <p className={styles.tileSay}>
+                      {detailFor(r).replace(/^[^:]+: /, "")}
+                      {r.country && r.country !== "Various" ? ` Based in ${r.country}.` : ""}
+                    </p>
+                  ) : undefined
+                }
+                drill={on ? r.drill : null}
+                drillLabel={`See the ${r.count.n} at ${r.name}`}
+                onSelect={on ? undefined : () => setTileFocus(r.id)}
+              />
+            );
+          })}
+        </TileRow>
+      )}
+
+      {/* 4. Signature: the ladder */}
       {table && (
         <Panel
           title="The ladder: who turns interns into employees"
@@ -336,13 +445,17 @@ export function View({ result }: { result: ResultEnvelope }) {
               {visible.map((r, idx) => {
                 const start = offsets[idx];
                 const on = r.id === selected;
+                const open = () => {
+                  setSelected(on && !r.drill ? null : r.id);
+                  if (r.drill) drill.open(r.drill, r.name);
+                };
                 return (
                   <li key={r.id} className={[styles.rung, on ? styles.on : "", r.rest ? styles.rest : ""].join(" ")}>
-                    <button
-                      type="button"
+                    <div
                       className={styles.pick}
-                      aria-pressed={on}
-                      onClick={() => setSelected(on ? null : r.id)}
+                      aria-label={r.drill ? `${r.name}: open the people` : `${r.name}: show the figures`}
+                      aria-pressed={r.drill ? undefined : on}
+                      {...pressable(open)}
                     >
                       <span className={styles.rank}>{r.rest ? "" : idx + 1}</span>
                       <span className={styles.who}>
@@ -355,11 +468,11 @@ export function View({ result }: { result: ResultEnvelope }) {
                         total={totalCells}
                         label={`${r.count.k} of ${r.count.n} went full-time`}
                       />
-                    </button>
-                    <span className={styles.count}>
-                      <CountDisplay count={r.count} size="sm" />
-                      {r.count.share !== null && <span className={styles.share}>{fmtPct(r.count.share)}</span>}
-                    </span>
+                      <span className={styles.count}>
+                        {thin(r.count) ? `${r.count.k} of ${r.count.n}` : r.count.display}
+                        {r.count.share !== null && <span className={styles.share}>{fmtPct(r.count.share)}</span>}
+                      </span>
+                    </div>
                   </li>
                 );
               })}
@@ -367,7 +480,7 @@ export function View({ result }: { result: ResultEnvelope }) {
           )}
 
           <p className={styles.detail} aria-live="polite">
-            {selectedRung ? detailFor(selectedRung) : "Select a company to see its exact figures."}
+            {selectedRung ? detailFor(selectedRung) : "Choose a company to open the people behind its figures."}
           </p>
 
           <Form action="/tools/conversion-map" className={styles.narrow} aria-labelledby={`${uid}-narrow`}>
@@ -388,7 +501,7 @@ export function View({ result }: { result: ResultEnvelope }) {
         </Panel>
       )}
 
-      {/* 4. Supporting panels */}
+      {/* 5. Supporting panels */}
       <div className={styles.support}>
         {dist && <CountryPanel section={dist} rungs={rungs} evidenceNode={evNode} />}
         {others
@@ -405,19 +518,7 @@ export function View({ result }: { result: ResultEnvelope }) {
           <SectionView key={s.id} section={s} evidence={result.evidence} result={result} />
         ))}
 
-      {/* 5. Next step and coverage */}
-      {result.next_steps.length > 0 && (
-        <div className={styles.next}>
-          {result.next_steps.map((n, i) => (
-            <ButtonLink key={n.label} href={toolHref(n.tool, n.params)} variant={i === 0 ? "primary" : "secondary"}>
-              {n.label}
-            </ButtonLink>
-          ))}
-        </div>
-      )}
-      <p className={styles.coverage}>
-        {result.coverage_note} Data as of {formatDate(result.data_date)}.
-      </p>
+      <ResultFoot result={{ ...result, next_steps: otherSteps }} />
     </div>
   );
 }

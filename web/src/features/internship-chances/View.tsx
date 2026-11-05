@@ -1,26 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type {
-  Count,
-  RankedRow,
-  RankedTableData,
-  ResultEnvelope,
-  Section,
-  SectionKind,
-  StatData,
-} from "@/lib/types";
+import type { DrillToken } from "@/lib/drill-types";
+import type { Count, RankedRow, RankedTableData, ResultEnvelope, Section, SectionKind, StatData } from "@/lib/types";
 import { toolHref } from "@/lib/tools";
-import { formatDate, fmtInt, fmtPct } from "@/lib/format";
+import { fmtInt, fmtPct } from "@/lib/format";
 import { isCount } from "@/lib/count";
+import { drillOf, pressable } from "@/components/tool/drill";
+import { HeroNumber, Notes, ResultFoot, ToolHero } from "@/components/tool/ToolHero";
+import { useDrill } from "@/components/drill/useDrill";
 import { Panel } from "@/components/data/Panel";
 import { SectionView, coverageOf } from "@/components/data/ResultView";
 import { EvidenceKey } from "@/components/data/EvidenceKey";
-import { CountDisplay } from "@/components/data/CountDisplay";
-import { GridNumber } from "@/components/data/GridNumber";
+import { RankedTable } from "@/components/data/RankedTable";
+import { CompanyMark } from "@/components/art/CompanyMark";
+import { PosterTile } from "@/components/tiles/PosterTile";
+import { TileRow } from "@/components/tiles/TileRow";
 import { ButtonLink } from "@/components/ui/Button";
-import { Chip } from "@/components/ui/Chip";
-import { ExampleBadge } from "@/components/ui/ExampleBadge";
 import styles from "./View.module.css";
 
 const CONF = {
@@ -42,6 +38,8 @@ interface Group {
   seen: number;
   converted: number;
   target: boolean;
+  rest: boolean;
+  drill: DrillToken | null;
 }
 
 /** Turn the ranked table into cell groups, one cell per intern, converted cells first. */
@@ -52,11 +50,18 @@ function groupsFrom(table: RankedTableData | undefined): Group[] {
     const c = row.count ?? (isCount(row.cells.chance) ? (row.cells.chance as Count) : undefined);
     if (!c) continue;
     const name = String(row.cells.company ?? row.id ?? "Company");
-    out.push({ key: row.id ?? name, company: name, seen: c.n, converted: c.k, target: !!row.you });
+    out.push({
+      key: row.id ?? name,
+      company: name,
+      seen: c.n,
+      converted: c.k,
+      target: !!row.you,
+      rest: !!row.rest,
+      drill: row.rest ? null : (drillOf(row) ?? null),
+    });
   }
   // keep the folded "Other" row last
-  const restKeys = new Set((table.rows as RankedRow[]).filter((r) => r.rest).map((r) => r.id ?? String(r.cells.company)));
-  return [...out.filter((g) => !restKeys.has(g.key)), ...out.filter((g) => restKeys.has(g.key))];
+  return [...out.filter((g) => !g.rest), ...out.filter((g) => g.rest)];
 }
 
 export function View({ result }: { result: ResultEnvelope }) {
@@ -69,12 +74,14 @@ export function View({ result }: { result: ResultEnvelope }) {
   const rest = sections.filter((s) => !HANDLED.has(s.id));
 
   const groups = useMemo(() => groupsFrom(companies?.data), [companies]);
+  const named = groups.filter((g) => !g.rest);
   const grouped = groups.reduce((s, g) => s + g.seen, 0);
   const useGroups = chance !== null && grouped === chance.n && groups.length > 0;
-  const [picked, setPicked] = useState<string | undefined>(groups.find((g) => g.target)?.key);
+  const [picked, setPicked] = useState<string | undefined>(undefined);
+  const gridFocus = picked ?? named.find((g) => g.target)?.key;
+  const focusKey = gridFocus ?? named[0]?.key;
 
   const thin = result.confidence === "low" || (chance ? chance.n < 10 : false);
-  const examples = result.warnings.filter((w) => /^example data/i.test(w));
   const cautions = result.warnings.filter((w) => !/^example data/i.test(w));
   const evidence = <EvidenceKey n={chance?.n} coverage={coverageOf(result)} date={result.data_date} evidence={result.evidence} note={result.coverage_note} />;
 
@@ -85,157 +92,187 @@ export function View({ result }: { result: ResultEnvelope }) {
   const percent = chance && chance.share !== null ? Math.round(chance.share * 100) : null;
   const lo = chance?.ci ? fmtPct(chance.ci[0]) : null;
   const hi = chance?.ci ? fmtPct(chance.ci[1]) : null;
+  const notes = [
+    ...(cohort?.widened && cohort.widened_reason ? [cohort.widened_reason] : []),
+    ...(thin
+      ? [
+          `We found only ${chance ? fmtInt(chance.n) : "a few"} people like you here. With so few, one more or one less would change the answer, so we show the counts and no percentage. This says nothing bad about your chances. It says we cannot see enough yet.`,
+        ]
+      : []),
+    ...cautions,
+  ];
+  const [firstStep, ...otherSteps] = result.next_steps;
+  const tail = chanceLabel.replace(/^interns and working students /, "");
 
   return (
     <div className={styles.view}>
-      {(result.summary || examples.length > 0) && (
-        <Panel title="What this tells you" evidence={evidence}>
-          {result.summary && <p className={styles.say}>{result.summary}</p>}
-          <p className={styles.sure}>How sure: {result.confidence}. {CONF[result.confidence]}</p>
-          {examples.length > 0 && (
-            <p className={styles.badgeRow}>
-              <ExampleBadge />
-            </p>
-          )}
-        </Panel>
-      )}
-
-      {(thin || cohort?.widened || cautions.length > 0) && (
-        <Panel title={thin ? "Not enough people to give a chance" : "Worth knowing"}>
-          {cohort?.widened && cohort.widened_reason && <p>{cohort.widened_reason}</p>}
-          {thin && (
-            <p>
-              We found only {chance ? fmtInt(chance.n) : "a few"} people like you here. With so few, one more or one less would change the
-              answer, so we show the counts and no percentage. This says nothing bad about your chances. It says we cannot see enough yet.
-            </p>
-          )}
-          {cautions.map((w) => (
-            <p key={w}>{w}</p>
-          ))}
-          {thin && widenHref && (
-            <p className={styles.actions}>
-              <ButtonLink variant="secondary" size="sm" href={widenHref}>
-                Look at any role in {country}
-              </ButtonLink>
-            </p>
-          )}
-        </Panel>
-      )}
-
       {chance && (
-        <div className={styles.hero}>
-          <div className={styles.chance}>
-            <p className={styles.least}>{thin ? "Out of" : "About"}</p>
-            <div className={styles.numeral}>
-              {percent !== null ? (
-                <>
-                  <GridNumber value={percent} cell={32} label={`${percent} percent`} />
-                  <span className={styles.pct} aria-hidden="true">
-                    %
-                  </span>
-                </>
-              ) : (
-                <GridNumber value={chance.n} cell={32} label={`${chance.n} people`} />
+        <ToolHero
+          lead={thin ? "Out of" : "About"}
+          numeral={
+            percent !== null ? (
+              <div className={styles.numeral}>
+                <HeroNumber value={percent} label={`${percent} percent`} />
+                <span className={styles.pct} aria-hidden="true">
+                  %
+                </span>
+              </div>
+            ) : (
+              <HeroNumber value={chance.n} label={`${chance.n} people`} />
+            )
+          }
+          say={
+            percent !== null
+              ? `of interns and working students like you ${tail}.`
+              : `${chance.k} of them ${tail}. That is too few to call a chance.`
+          }
+          note={
+            <>
+              {result.summary}
+              {lo && hi ? ` The range runs from ${lo} to ${hi}, and narrows as more people appear.` : ""}
+            </>
+          }
+          actions={
+            firstStep && (
+              <ButtonLink href={toolHref(firstStep.tool, firstStep.params)} variant="primary">
+                {firstStep.label}
+              </ButtonLink>
+            )
+          }
+        />
+      )}
+
+      {(chance || notes.length > 0) && (
+        <div className={styles.context}>
+          {chance && (
+            <aside className={styles.cohort} aria-label="Who we looked at">
+              <div className={styles.cohortHead}>
+                <h2>Who we looked at</h2>
+                {evidence}
+              </div>
+              {cohort && <p>{cohort.definition}.</p>}
+              <p className={styles.muted}>
+                {fmtInt(chance.k)} of {fmtInt(chance.n)} went full-time at the same company. How sure: {result.confidence}. {CONF[result.confidence]}
+              </p>
+            </aside>
+          )}
+          {notes.length > 0 && (
+            <div className={styles.notice}>
+              <Notes lines={notes} />
+              {thin && widenHref && (
+                <ButtonLink variant="secondary" size="sm" href={widenHref}>
+                  Look at any role in {country}
+                </ButtonLink>
               )}
             </div>
-            <p className={styles.chanceSay}>
-              {percent !== null
-                ? `of interns and working students like you ${chanceLabel.replace(/^interns and working students /, "")}.`
-                : `${chance.k} of them ${chanceLabel.replace(/^interns and working students /, "")}. That is too few to call a chance.`}
-            </p>
-            <p className={styles.count}>
-              <CountDisplay count={chance} size="lg" />
-            </p>
-            {lo && hi && (
-              <p className={styles.range}>
-                Likely between {lo} and {hi}. The more people we see, the narrower this gets.
-              </p>
-            )}
-          </div>
-
-          <Panel
-            title={`The ${fmtInt(chance.n)} people like you`}
-            caption="Each square is one intern or working student like you. Filled squares went full-time at the same company."
-            evidence={evidence}
-            className={styles.cellsPanel}
-          >
-            <CellGrid chance={chance} groups={useGroups ? groups : []} picked={picked} />
-            {useGroups && groups.length > 1 && (
-              <div className={styles.chips} role="group" aria-label="Highlight a company">
-                {groups.map((g) => (
-                  <Chip
-                    key={g.key}
-                    selected={picked === g.key}
-                    onClick={() => setPicked((cur) => (cur === g.key ? undefined : g.key))}
-                  >
-                    {g.company} · {g.converted} of {g.seen}
-                  </Chip>
-                ))}
-              </div>
-            )}
-            <ul className={styles.legend} role="list">
-              <li>
-                <i className={styles.keyFull} aria-hidden="true" /> Went full-time at the same company · {chance.k}
-              </li>
-              <li>
-                <i className={styles.keyHollow} aria-hidden="true" /> Did not, as far as we can see · {chance.n - chance.k}
-              </li>
-              {picked && (
-                <li>
-                  <i className={styles.keyPick} aria-hidden="true" /> Selected company
-                </li>
-              )}
-            </ul>
-          </Panel>
+          )}
         </div>
       )}
 
-      {companies && <SectionView section={companies} evidence={result.evidence} result={result} />}
+      {named.length > 0 && (
+        <TileRow
+          title="Companies that took interns"
+          note={`${named.length} ${named.length === 1 ? "company" : "companies"} · went full-time, of the interns we saw`}
+          label="Companies"
+        >
+          {named.map((g) => {
+            const on = g.key === focusKey;
+            const pct = g.seen >= 10 ? Math.round((g.converted / g.seen) * 100) : null;
+            return (
+              <PosterTile
+                key={g.key}
+                variant="card"
+                title={g.company}
+                art={<CompanyMark name={g.company} shape="landscape" />}
+                count={g.converted}
+                unit={`of ${g.seen}`}
+                expanded={on}
+                badge={g.target ? "On your list" : undefined}
+                countLine={`at least ${g.converted} of ${g.seen} went full-time`}
+                details={
+                  on ? (
+                    <p className={styles.tileSay}>
+                      {pct !== null ? `About ${pct}% of the interns we saw here went full-time.` : "Too few interns here to call a percentage."}
+                    </p>
+                  ) : undefined
+                }
+                drill={on ? g.drill : null}
+                drillLabel={`See the ${g.seen} at ${g.company}`}
+                onSelect={on ? undefined : () => setPicked(g.key)}
+              />
+            );
+          })}
+        </TileRow>
+      )}
+
+      {chance && (
+        <Panel
+          title={`The ${fmtInt(chance.n)} people like you`}
+          caption="Each square is one intern or working student like you. Filled squares went full-time at the same company. Choose a company to see who they were."
+          evidence={evidence}
+        >
+          <CellGrid chance={chance} groups={useGroups ? groups : []} focus={gridFocus} onPick={setPicked} />
+          <ul className={styles.legend} role="list">
+            <li>
+              <i className={styles.keyFull} aria-hidden="true" /> Went full-time at the same company · {chance.k}
+            </li>
+            <li>
+              <i className={styles.keyHollow} aria-hidden="true" /> Did not, as far as we can see · {chance.n - chance.k}
+            </li>
+          </ul>
+        </Panel>
+      )}
+
+      {companies && (
+        <Panel title={companies.title} caption={companies.data.caption} evidence={evidence}>
+          <RankedTable data={companies.data as RankedTableData} />
+        </Panel>
+      )}
       {method && <SectionView section={method} evidence={result.evidence} result={result} />}
 
       {rest.map((s) => (
         <SectionView key={s.id} section={s} evidence={result.evidence} result={result} />
       ))}
 
-      {result.next_steps.length > 0 && (
-        <div className={styles.next}>
-          {result.next_steps.map((s, i) => (
-            <ButtonLink
-              key={s.label}
-              href={toolHref(s.tool, s.params)}
-              variant={i === 0 ? "primary" : "secondary"}
-              size={i === 0 ? "md" : "sm"}
-            >
-              {s.label}
-            </ButtonLink>
-          ))}
-        </div>
-      )}
-
-      <p className={styles.foot}>
-        {result.coverage_note} Data as of {formatDate(result.data_date)}.
-      </p>
+      <ResultFoot result={{ ...result, next_steps: otherSteps }} />
     </div>
   );
 }
 
-function CellGrid({ chance, groups, picked }: { chance: Count; groups: Group[]; picked?: string }) {
+function Cells({ g, start, total, on }: { g: { seen: number; converted: number }; start: number; total: number; on?: boolean }) {
+  return (
+    <span className={styles.cells}>
+      {Array.from({ length: g.seen }, (_, i) => (
+        <i
+          key={i}
+          className={[styles.cell, i < g.converted ? styles.full : styles.hollow, on && styles.pick, "ad-assemble"].filter(Boolean).join(" ")}
+          style={{ ["--i" as string]: start + i, ["--n" as string]: total }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function CellGrid({
+  chance,
+  groups,
+  focus,
+  onPick,
+}: {
+  chance: Count;
+  groups: Group[];
+  focus?: string;
+  onPick: (key: string) => void;
+}) {
+  const drill = useDrill();
   const total = chance.n;
   if (groups.length === 0) {
     // No company breakdown that adds up: one run of cells, converted first.
     return (
-      <div
-        className={styles.cells}
-        role="img"
-        aria-label={`${chance.k} of ${chance.n} people like you went full-time at the same company`}
-      >
-        {Array.from({ length: total }, (_, i) => (
-          <i
-            key={i}
-            className={`${styles.cell} ${i < chance.k ? styles.full : styles.hollow} ad-assemble`}
-            style={{ ["--i" as string]: i, ["--n" as string]: total }}
-          />
-        ))}
+      <div className={styles.groups}>
+        <div className={styles.solo} role="img" aria-label={`${chance.k} of ${chance.n} people like you went full-time at the same company`}>
+          <Cells g={{ seen: total, converted: chance.k }} start={0} total={total} />
+        </div>
       </div>
     );
   }
@@ -243,32 +280,37 @@ function CellGrid({ chance, groups, picked }: { chance: Count; groups: Group[]; 
   return (
     <ul className={styles.groups} role="list">
       {groups.map((g, gi) => {
-        const start = starts[gi];
-        const on = picked === g.key;
-        return (
-          <li
-            key={g.key}
-            className={styles.group}
-            role="img"
-            aria-label={`${g.company}: ${g.converted} of ${g.seen} went full-time`}
-          >
+        const on = focus === g.key;
+        const label = `${g.company}: ${g.converted} of ${g.seen} went full-time`;
+        const open = () => {
+          onPick(g.key);
+          if (g.drill) drill.open(g.drill, g.company);
+        };
+        const body = (
+          <>
             <span className={styles.groupName}>{g.company}</span>
-            <span className={styles.cells}>
-              {Array.from({ length: g.seen }, (_, i) => (
-                <i
-                  key={i}
-                  className={[
-                    styles.cell,
-                    i < g.converted ? styles.full : styles.hollow,
-                    on && styles.pick,
-                    "ad-assemble",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  style={{ ["--i" as string]: start + i, ["--n" as string]: total }}
-                />
-              ))}
+            <Cells g={g} start={starts[gi]} total={total} on={on} />
+            <span className={styles.groupCount}>
+              {g.converted} of {g.seen}
             </span>
+          </>
+        );
+        return (
+          <li key={g.key}>
+            {g.rest ? (
+              <div className={styles.group} role="img" aria-label={label}>
+                {body}
+              </div>
+            ) : (
+              <div
+                className={[styles.group, styles.hit, on && styles.on].filter(Boolean).join(" ")}
+                aria-label={g.drill ? `${label}. Open the people at ${g.company}` : label}
+                aria-pressed={g.drill ? undefined : on}
+                {...pressable(open)}
+              >
+                {body}
+              </div>
+            )}
           </li>
         );
       })}
