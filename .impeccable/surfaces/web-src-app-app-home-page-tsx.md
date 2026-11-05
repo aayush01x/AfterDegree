@@ -33,3 +33,9 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 - Onboarding surface inherits this world: orange field, a white panel for the LinkedIn URL, the user's own profile revealed as cells, then the mentor conversation in a white panel with suggested replies as standard buttons.
 - University lens copy ("your graduates") on every tool.
+
+## Direction update (user-approved blend, 6 Nov 2026)
+
+RAISE from Streaming Wall (catalog pop-culture-shelf-streaming-title-card-wall): the app's organisation adopts horizontal rows of poster tiles (destinations, companies, cities, routes, people) that scroll sideways with snap; the focused tile expands to reveal its details and its drill-down action while the rest of the row's art dims; one active row may sit on a full-bleed black band. All tile art is built from grid cells (cell-constructed skylines, landmarks, abstract company marks, route paths) in flat saturated colours, so the wall stays inside the Grid Specimen world. Approved mockups: .impeccable/mocks/blend/home.html, drill.html, person.html, company.html (fluid pages; the build matches them).
+
+Drill-down is part of the surface: every count opens a page (breadcrumb + inherited "Filtered by" chips) with the next-level breakdown, anonymous career-path tiles and, for companies, a full company profile; a person opens a half-year grid timeline. Cell-built digits are for headline and tile counts only; table cells and badges use plain tabular figures.
