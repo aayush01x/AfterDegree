@@ -1,6 +1,7 @@
 # AfterDegree API contract (v0.1)
 
 > **Changelog**
+> - 2026-11-06 (company profile): a drill whose last step is `company` returns a full `company` block (Appendix D).
 > - 2026-11-06 (drill context): drills inherit the origin screen's full filters; Drill result adds `context` (Appendix C, Context inheritance).
 > - 2026-11-06 (drill-down, orchestrator): every count can be drilled. Rows/items/routes may carry an optional `drill` token; `POST /api/drill` and `GET /api/people/{person_id}` added (Appendix C). Individuals are shown only as anonymous career trajectories (Crustdata Data Export Terms §3.1–3.2, §4).
 > - 2026-11-06 (engine): additive only. Section `data` shapes per kind and section ids per tool pinned to `web/src/lib/types.ts` (see Appendix A); optional `result.coverage` (0–1); optional `section.evidence_ids`; `evidence.source` may also be `"mock"` in mock mode; `reverse_gps` puts the parsed goal in `cohort.filters.goal = {role, city, country, company}`; `people-like-me` accepts `exp_band` as `[min,max]` or `"min,max"`; `GET /api/health` adds optional `mock: bool`; `GET /api/usage` shape defined; `GET /api/profiles/{id}` shape defined (Appendix B).
@@ -213,3 +214,37 @@ Returns PersonDetail = PersonCard + `skills` (top 8) + `route_stats` (e.g. how m
 - Never list individuals for a slice with n < 5.
 - Cached person data expires within 7 days (well inside the 30-day opt-out deletion window).
 - Results are shown inside the app only; no export or bulk download of people.
+
+
+## Appendix D: Company profile (drill whose last path step is `company`)
+
+Clicking any company, employer or feeder anywhere opens the company profile. Everything about **people** respects the inherited context (Appendix C): "people like you", or the filtered slice the user came from; facts about the **company itself** (size, offices, postings) are company-wide and labelled as such. Sources: company identify + company enrich (headcount, growth, locations, funding, industry), person search (current and past employees matching the context), job search (postings).
+
+The Drill result adds:
+```json
+"company": {
+  "name": "SAP", "domain": "sap.com", "industry": "Enterprise software",
+  "hq": { "city": "Walldorf", "country": "Germany" },
+  "international": true,
+  "india_presence": { "has_india_office": true, "is_gcc": true, "india_cities": ["Bengaluru", "Gurugram"] },
+  "headcount": { "total": 107000, "growth_12m": 0.03, "by_function": [ { "label": "Engineering", "count": 38000, "growth_12m": 0.05 } ] },
+  "funding": null,
+  "offices": [ { "city": "Berlin", "country": "Germany", "people_like_you": 12 } ],
+  "people_like_you": Count,
+  "indian_educated": { "count": Count, "recent_24m": 41, "senior_share": Count, "median_tenure_years": 2.5 },
+  "hiring": {
+    "open_postings_90d": 214, "change_vs_prev": 0.12,
+    "by_role": [ { "label": "Data Engineer", "count": 18 } ],
+    "by_location": [ { "label": "Berlin", "count": 40 } ],
+    "language": { "english_only": 120, "german_required": 80, "other": 14 },
+    "sponsorship_mentions": Count,
+    "hire_through": { "postings_seen": 60, "matched_hires": 37, "label": "high | some | unclear", "note": "Postings 3–12 months old that led to a matching hire." },
+    "median_days_open": 38
+  },
+  "internship_conversion": Count,
+  "promotion": { "median_years_to_first_promotion": 2.0, "n": 54 },
+  "retention": { "median_tenure_years": 2.8, "left_within_1y": Count },
+  "visa_signals": [ { "label": "Mentions visa sponsorship in postings", "evidence_id": "ev_..." }, { "label": "On UK sponsor register (unverified web match)", "evidence_id": "ev_..." } ]
+}
+```
+Plus sections (Appendix A shapes, rows drillable): `feeder_employers` (where people worked before joining, ranked_table), `programs` (college + degree + field they came from, ranked_table), `degree_countries` (where their highest degree was earned), `roles` and `seniority` (distribution), `joined_by_year` (timeseries of people like you joining), `entry_routes` (route_list into this company), `open_roles` (ranked_table of current postings by role and city, each row carrying `posting_url` only for the company's own public posting), and `people` (anonymous trajectories, Appendix C rules). Missing data is `null` with a warning, never invented.

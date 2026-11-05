@@ -45,7 +45,35 @@ export interface DrillContext {
   filters: { label: string; value: string }[];
 }
 
+export interface CompanyProfile {
+  name: string;
+  domain?: string | null;
+  industry?: string | null;
+  hq?: { city?: string; country?: string } | null;
+  international?: boolean | null;
+  india_presence?: { has_india_office?: boolean; is_gcc?: boolean; india_cities?: string[] } | null;
+  headcount?: { total?: number | null; growth_12m?: number | null; by_function?: { label: string; count: number; growth_12m?: number | null }[] } | null;
+  funding?: { stage?: string; total_usd?: number | null; last_round_date?: string | null } | null;
+  offices?: { city: string; country: string; people_like_you?: number }[];
+  people_like_you?: Count;
+  indian_educated?: { count?: Count; recent_24m?: number; senior_share?: Count; median_tenure_years?: number | null } | null;
+  hiring?: {
+    open_postings_90d?: number; change_vs_prev?: number | null;
+    by_role?: { label: string; count: number }[]; by_location?: { label: string; count: number }[];
+    language?: { english_only?: number; german_required?: number; other?: number } | null;
+    sponsorship_mentions?: Count | null;
+    hire_through?: { postings_seen: number; matched_hires: number; label: "high" | "some" | "unclear"; note?: string } | null;
+    median_days_open?: number | null;
+  } | null;
+  internship_conversion?: Count | null;
+  promotion?: { median_years_to_first_promotion?: number | null; n?: number } | null;
+  retention?: { median_tenure_years?: number | null; left_within_1y?: Count | null } | null;
+  visa_signals?: { label: string; evidence_id?: string }[];
+}
+
 export interface DrillResult {
+  /** Present when the last path step is a company (CONTRACT Appendix D). */
+  company?: CompanyProfile;
   tool: "drill";
   title: string;
   path: DrillStep[];
