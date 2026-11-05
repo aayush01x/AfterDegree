@@ -1,0 +1,70 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ad-space-2);
+}
+
+.cols {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(76px, 152px));
+  gap: var(--ad-space-3);
+  align-items: end;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.stack {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  align-content: flex-start;
+  gap: 2px;
+  width: calc(6 * 12px - 2px);
+  min-height: 12px;
+}
+
+.cell {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background: var(--ad-orange);
+}
+
+.target {
+  background: var(--ad-ink);
+}
+
+.hollow {
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid var(--ad-hollow);
+}
+
+.num {
+  margin-top: var(--ad-space-1);
+  border-top: 1px solid var(--ad-ink);
+  padding-top: 4px;
+  font-size: var(--ad-text-lg);
+  line-height: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  font-size: var(--ad-text-md);
+  line-height: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.key {
+  max-width: 72ch;
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+  color: var(--ad-muted);
+}

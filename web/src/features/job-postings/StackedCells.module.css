@@ -1,0 +1,105 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ad-space-2);
+}
+
+.cols {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: var(--ad-space-1);
+  align-items: end;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.total {
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.stack {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  align-content: flex-start;
+  gap: 2px;
+  width: calc(3 * 14px - 2px);
+}
+
+.cell {
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+.orange {
+  background: var(--ad-orange);
+}
+
+.ink {
+  background: var(--ad-ink);
+}
+
+.hollow {
+  background: transparent;
+  border: 1px solid var(--ad-hollow);
+}
+
+.month {
+  align-self: stretch;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--ad-ink);
+  text-align: center;
+  font-size: var(--ad-text-sm);
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.year {
+  font-weight: 500;
+  color: var(--ad-muted);
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.keys {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ad-space-2);
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.keys li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+.unit {
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+  color: var(--ad-muted);
+}

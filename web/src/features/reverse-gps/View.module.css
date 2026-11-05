@@ -1,0 +1,379 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ad-space-3);
+  min-width: 0;
+}
+
+.summary {
+  font-size: var(--ad-text-lg);
+  line-height: 28px;
+  font-weight: 600;
+  max-width: 65ch;
+}
+.cohort,
+.prose,
+.have {
+  margin-top: var(--ad-space-2);
+  font-size: var(--ad-text-md);
+  line-height: 22px;
+  max-width: 70ch;
+}
+.warns {
+  margin-top: var(--ad-space-2);
+  font-size: var(--ad-text-sm);
+  line-height: 18px;
+  color: var(--ad-muted);
+}
+.warns li + li {
+  margin-top: 4px;
+}
+.read {
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+  font-weight: 600;
+  margin-top: calc(-1 * var(--ad-space-1));
+}
+
+/* ---- goal chips ---- */
+.goalForm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ad-space-2);
+  margin-top: var(--ad-space-2);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ad-space-1);
+  list-style: none;
+}
+.edit {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--ad-space-1);
+  width: min(100%, 420px);
+}
+.edit > :first-child {
+  flex: 1 1 200px;
+}
+.set {
+  min-height: 48px;
+}
+
+.thin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ad-space-2);
+}
+.thin p {
+  max-width: 70ch;
+  line-height: 22px;
+}
+.thin a {
+  align-self: flex-start;
+}
+
+/* ---- routes ---- */
+.routes {
+  list-style: none;
+  margin-top: var(--ad-space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ad-space-2);
+}
+.route {
+  border: 1px solid var(--ad-rule);
+  padding: var(--ad-space-3);
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  --ad-focus: var(--ad-blue);
+}
+.route.on {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+  --ad-focus: var(--ad-paper);
+}
+.routeHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--ad-space-2);
+}
+.routeTitle {
+  display: flex;
+  gap: var(--ad-space-2);
+  min-width: 0;
+  flex: 1 1 320px;
+}
+.routeTitle h3 {
+  font-size: var(--ad-text-lg);
+  line-height: 24px;
+  font-weight: 700;
+}
+.routeNo {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+  font-weight: 800;
+}
+.on .routeNo {
+  background: var(--ad-orange);
+  color: var(--ad-ink);
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px var(--ad-space-2);
+  margin-top: 4px;
+  font-size: var(--ad-text-sm);
+  line-height: 20px;
+  color: var(--ad-muted);
+}
+.on .meta {
+  color: var(--ad-rail-muted);
+}
+.tag {
+  padding: 0 6px;
+  background: var(--ad-orange);
+  color: var(--ad-ink);
+  font-size: var(--ad-text-xs);
+  line-height: 18px;
+  font-weight: 800;
+}
+.routeSide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--ad-space-1);
+  font-weight: 700;
+}
+.people {
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+}
+.pickRoute {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid currentColor;
+  font-size: var(--ad-text-sm);
+  font-weight: 700;
+}
+.pickRoute:hover {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.on .pickRoute:hover {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+}
+.pickRoute:focus-visible {
+  outline: 2px solid var(--ad-focus);
+  outline-offset: 2px;
+}
+
+/* the stepped cell path */
+.path {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--ad-space-1) 0;
+  margin-top: var(--ad-space-3);
+}
+.stepWrap {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.trail {
+  display: flex;
+  gap: 3px;
+  padding: 0 6px;
+}
+.trail i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: var(--ad-orange);
+}
+.step {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  width: 168px;
+  min-height: 64px;
+  padding: 8px 12px;
+  border: 1px solid var(--ad-ink);
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+}
+.stepLabel {
+  font-size: var(--ad-text-md);
+  line-height: 18px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.stepYears {
+  font-size: var(--ad-text-xs);
+  line-height: 16px;
+  color: var(--ad-muted);
+}
+.you {
+  background: var(--ad-orange);
+}
+.you .stepYears {
+  color: var(--ad-ink);
+}
+.goal {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.goal .stepYears {
+  color: var(--ad-rail-muted);
+}
+/* inverted route: blocks flip so the black field still reads as a path */
+.on .step {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+  border-color: var(--ad-paper);
+}
+.on .stepYears {
+  color: var(--ad-rail-muted);
+}
+.on .you {
+  background: var(--ad-orange);
+  color: var(--ad-ink);
+  border-color: var(--ad-orange);
+}
+.on .you .stepYears {
+  color: var(--ad-ink);
+}
+.on .goal {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+}
+.on .goal .stepYears {
+  color: var(--ad-muted);
+}
+
+/* gaps checklist */
+.gaps {
+  margin-top: var(--ad-space-3);
+  padding-top: var(--ad-space-2);
+  border-top: 1px solid currentColor;
+}
+.gaps h4 {
+  font-size: var(--ad-text-body);
+  line-height: 24px;
+  font-weight: 700;
+}
+.progress {
+  font-weight: 500;
+  font-size: var(--ad-text-sm);
+}
+.gaps ul {
+  list-style: none;
+  margin-top: var(--ad-space-1);
+}
+.check {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 32px;
+  padding: 6px 0;
+  line-height: 20px;
+  font-size: var(--ad-text-md);
+  cursor: pointer;
+  max-width: 75ch;
+}
+.check input {
+  position: absolute;
+  opacity: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+.box {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 0;
+  border: 1px solid currentColor;
+  background: transparent;
+}
+.check input:checked + .box {
+  background: currentColor;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cpath d='M5 10.5l3.5 3.5L15 6.5' fill='none' stroke='%23FF5A1F' stroke-width='2.5'/%3E%3C/svg%3E");
+}
+.check input:focus-visible + .box {
+  outline: 2px solid var(--ad-focus);
+  outline-offset: 2px;
+}
+.done {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  opacity: 0.8;
+}
+.noGaps {
+  margin-top: var(--ad-space-1);
+  line-height: 22px;
+}
+.empty,
+.more {
+  margin-top: var(--ad-space-2);
+  line-height: 22px;
+}
+.more {
+  font-size: var(--ad-text-sm);
+  color: var(--ad-muted);
+}
+
+/* ---- footer ---- */
+.next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ad-space-2);
+}
+.coverage {
+  font-size: var(--ad-text-sm);
+  line-height: 20px;
+  font-weight: 500;
+  max-width: 90ch;
+}
+
+@media (max-width: 720px) {
+  .route {
+    padding: var(--ad-space-2);
+  }
+  .routeSide {
+    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+  }
+  .path {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+  .stepWrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .trail {
+    padding: 6px 0 6px 16px;
+  }
+  .step {
+    width: 100%;
+  }
+}
