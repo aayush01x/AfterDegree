@@ -1,6 +1,7 @@
 # AfterDegree API contract (v0.1)
 
 > **Changelog**
+> - 2026-11-06 (drill context): drills inherit the origin screen's full filters; Drill result adds `context` (Appendix C, Context inheritance).
 > - 2026-11-06 (drill-down, orchestrator): every count can be drilled. Rows/items/routes may carry an optional `drill` token; `POST /api/drill` and `GET /api/people/{person_id}` added (Appendix C). Individuals are shown only as anonymous career trajectories (Crustdata Data Export Terms §3.1–3.2, §4).
 > - 2026-11-06 (engine): additive only. Section `data` shapes per kind and section ids per tool pinned to `web/src/lib/types.ts` (see Appendix A); optional `result.coverage` (0–1); optional `section.evidence_ids`; `evidence.source` may also be `"mock"` in mock mode; `reverse_gps` puts the parsed goal in `cohort.filters.goal = {role, city, country, company}`; `people-like-me` accepts `exp_band` as `[min,max]` or `"min,max"`; `GET /api/health` adds optional `mock: bool`; `GET /api/usage` shape defined; `GET /api/profiles/{id}` shape defined (Appendix B).
 
@@ -184,6 +185,16 @@ Body `{ "profile_id": "...", "drill": DrillToken }` → `{ "job_id" }` (job patt
   "warnings": [], "evidence": [ Evidence ] }
 ```
 Rules: `people` is empty and `listing_blocked_reason` = "Fewer than 5 people match, so we don't list individuals." when the slice has n < 5. At most 30 people per page (`?page=` later).
+
+### Context inheritance (binding)
+A drill always starts from the **exact cohort of the screen it was clicked on**: the origin `tool`, its full `params` (every filter the user applied: match level, experience band, country, company, role, school, goal, date window…) and every earlier `path` step. The engine applies all of them, then the new step. Example: Germany clicked on People Like Me = everyone like you in Germany; Germany clicked on Conversion Map scoped to "interns at SAP, data roles" = only those interns in Germany. Drilling never widens a filter silently; if a slice is widened for thin data it says so in `warnings`.
+
+The Drill result adds:
+```json
+"context": { "origin_tool": "conversion_map", "origin_label": "Conversion Map",
+  "filters": [ { "label": "Interns and working students", "value": "data roles" }, { "label": "Company", "value": "SAP" } ] }
+```
+The UI shows `context.filters` as a visible "Filtered by" chip row next to the breadcrumb, each chip removable (removing one re-runs the drill with that filter dropped, as a new token).
 
 ### PersonCard (anonymous)
 ```json

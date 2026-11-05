@@ -39,10 +39,18 @@ export interface PersonDetail extends PersonCard {
   route_stats?: { label: string; count: Count }[];
 }
 
+export interface DrillContext {
+  origin_tool: string;
+  origin_label: string;
+  filters: { label: string; value: string }[];
+}
+
 export interface DrillResult {
   tool: "drill";
   title: string;
   path: DrillStep[];
+  /** The origin screen's filters this drill inherits (shown as removable chips). */
+  context?: DrillContext;
   count?: Count;
   cohort?: Cohort | null;
   confidence?: "high" | "medium" | "low";
