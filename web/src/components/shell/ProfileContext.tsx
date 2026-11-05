@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { useProfileId } from "@/lib/profile-store";
+import { setProfileId, useProfileId } from "@/lib/profile-store";
 import type { Goals, StoredProfile } from "@/lib/types";
 
 export interface ProfileState {
@@ -32,9 +32,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [loaded, setLoaded] = useState<{ id: string; profile: StoredProfile | null; error: ApiError | null } | null>(null);
   const [nonce, setNonce] = useState(0);
+  const missingRef = useRef(false);
 
   useEffect(() => {
-    if (profileId === null) router.replace("/onboarding");
+    if (profileId === null) router.replace(missingRef.current ? "/onboarding?reason=profile-missing" : "/onboarding");
   }, [profileId, router]);
 
   useEffect(() => {
@@ -49,6 +50,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       })
       .catch((e: unknown) => {
         if (!alive) return;
+        // A stored id the engine doesn't know (e.g. left over from example-data mode or a reset
+        // engine database): forget it and start onboarding again instead of hanging.
+        if (e instanceof ApiError && e.status === 404) {
+          missingRef.current = true;
+          setProfileId(null);
+          return;
+        }
         setLoaded({ id: profileId, profile: null, error: e instanceof ApiError ? e : new ApiError(0, { code: "unknown", message: "We couldn't load your profile." }) });
       });
     return () => {

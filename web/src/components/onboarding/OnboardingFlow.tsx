@@ -75,6 +75,7 @@ function StepIndicator({ step }: { step: Step }) {
 function UrlStep({ initialError, onSubmit }: { initialError?: string; onSubmit: (url: string) => void }) {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | undefined>(initialError);
+  const profileMissing = useSearchParams().get("reason") === "profile-missing";
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const r = normaliseLinkedIn(value);
@@ -85,6 +86,11 @@ function UrlStep({ initialError, onSubmit }: { initialError?: string; onSubmit: 
     <div className={styles.intro}>
       <div className={styles.pitch}>
         <h1 className={styles.headline}>See where people like you ended up.</h1>
+        {profileMissing && (
+          <p className={styles.lede}>
+            <strong>Let&apos;s set you up again.</strong> We couldn&apos;t find your saved profile, so please paste your LinkedIn link once more.
+          </p>
+        )}
         <p className={styles.lede}>
           Paste your LinkedIn profile. We&apos;ll find people who started where you did and show where they are now, with the counts behind every
           number.
