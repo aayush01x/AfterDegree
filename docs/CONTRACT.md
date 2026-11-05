@@ -1,6 +1,7 @@
 # AfterDegree API contract (v0.1)
 
 > **Changelog**
+> - 2026-11-06 (drill-down, orchestrator): every count can be drilled. Rows/items/routes may carry an optional `drill` token; `POST /api/drill` and `GET /api/people/{person_id}` added (Appendix C). Individuals are shown only as anonymous career trajectories (Crustdata Data Export Terms §3.1–3.2, §4).
 > - 2026-11-06 (engine): additive only. Section `data` shapes per kind and section ids per tool pinned to `web/src/lib/types.ts` (see Appendix A); optional `result.coverage` (0–1); optional `section.evidence_ids`; `evidence.source` may also be `"mock"` in mock mode; `reverse_gps` puts the parsed goal in `cohort.filters.goal = {role, city, country, company}`; `people-like-me` accepts `exp_band` as `[min,max]` or `"min,max"`; `GET /api/health` adds optional `mock: bool`; `GET /api/usage` shape defined; `GET /api/profiles/{id}` shape defined (Appendix B).
 
 Single source of truth between the Python engine (`engine/`, FastAPI on `:8000`) and the Next.js app (`web/`, on `:3000`, proxying `/api/*` to the engine). All JSON. All numbers are computed by deterministic engine code from Crustdata responses; the LLM never produces a number.
@@ -159,3 +160,45 @@ Result envelope additions: `coverage?: number` (0–1; for people_like_me the sh
 - `GET /api/usage` → `{ session_started_at, live_calls, cached_calls, estimated_credits, reported_credits: number|null, by_endpoint: [{ endpoint, live_calls, cached_calls, results, estimated_credits }] }` (cache and mock calls cost 0).
 - Job errors use `error.code` values such as `bad_input`, `missing_key`, `upstream_auth`, `upstream_credits`, `upstream_forbidden`, `rate_limited`, `budget_exceeded`, `upstream_unavailable`, `internal`.
 
+
+
+## Appendix C: Drill-down (every count is clickable)
+
+### Drill token
+Any `distribution.items[]`, `ranked_table.rows[]`, `route_list.routes[]`, `routes.nodes[]`, or cohort group MAY carry:
+```json
+"drill": { "tool": "people_like_me", "params": { "...": "the original tool params" },
+           "path": [ { "dimension": "country", "value": "Germany", "label": "Germany" } ] }
+```
+`dimension` ∈ `country | city | company | role | school | degree | degree_country | seniority | years_band | route | route_step | posting_employer | skill | language | quarter`. The UI never builds filters itself; it sends the token back unchanged (plus an optional extra `path` step chosen in the drill panel).
+
+### `POST /api/drill`
+Body `{ "profile_id": "...", "drill": DrillToken }` → `{ "job_id" }` (job pattern as tools). `job.result` is a **Drill result**:
+```json
+{ "tool": "drill", "title": "People like you in Germany",
+  "path": [ { "dimension": "country", "value": "Germany", "label": "Germany" } ],
+  "count": Count, "cohort": Cohort, "confidence": "high|medium|low",
+  "sections": [ "Section (same kinds/shapes as Appendix A); their items/rows carry drill tokens with the path extended one level, e.g. country → city, company, role, years_band" ],
+  "people": [ PersonCard ], "people_total": 71, "people_note": "Showing 24 anonymised career paths of at least 71 people.",
+  "listing_blocked_reason": null,
+  "warnings": [], "evidence": [ Evidence ] }
+```
+Rules: `people` is empty and `listing_blocked_reason` = "Fewer than 5 people match, so we don't list individuals." when the slice has n < 5. At most 30 people per page (`?page=` later).
+
+### PersonCard (anonymous)
+```json
+{ "id": "pp_9f2c1a", "headline": "Data Engineer · SAP · Berlin",
+  "current": { "title": "Data Engineer", "company": "SAP", "city": "Berlin", "country": "Germany", "since_year": 2024 },
+  "match_reasons": ["Same college", "Same field", "Similar experience"],
+  "tags": ["Moved abroad 2022", "MS → working student → full-time"],
+  "steps": [ { "kind": "education|work|internship", "org": "VIT Vellore", "title": "BTech, Computer Science",
+               "city": "Vellore", "country": "India", "start_year": 2018, "end_year": 2022, "years": 4.0 } ] }
+```
+### `GET /api/people/{person_id}?profile_id=...`
+Returns PersonDetail = PersonCard + `skills` (top 8) + `route_stats` (e.g. how many people in the user's cohort took the same route, as Count). Ids are opaque, salted per server instance, and only resolvable for people previously returned to that profile.
+
+### Privacy rules (binding, per Crustdata Data Export Terms §3.1–3.2 and §4)
+- Never return a person's name, photo, profile URL, email, Crustdata person id, or exact dates (years only; durations rounded to 0.5 year).
+- Never list individuals for a slice with n < 5.
+- Cached person data expires within 7 days (well inside the 30-day opt-out deletion window).
+- Results are shown inside the app only; no export or bulk download of people.

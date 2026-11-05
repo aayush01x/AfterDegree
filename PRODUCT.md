@@ -45,7 +45,8 @@ The only tool that answers "how did people like me do?" from real career data. C
 
 - **Code decides, the LLM explains.** All metrics come from deterministic code over Crustdata results. The LLM only interprets free text (goals, titles), runs the onboarding conversation, and writes short summaries from facts it is given.
 - **Honest numbers.** Show counts as "at least N of M visible profiles", with coverage and data date. Small cohorts (under 10) are widened with a visible label or marked low confidence; never shown as a confident percentage.
-- **Aggregates only.** No other person's name, photo or profile link is ever shown. Only the signed-in user's own profile is displayed to them.
+- **Every count is clickable.** Any country, city, company, role, route or employer opens a drill-down: the next-level breakdown, then anonymous career trajectories of the people behind the count, then one person's full career timeline.
+- **Anonymous individuals only.** Following Crustdata's data terms (no publishing personal data outside the organisation, no people directories), other people appear only as anonymous career trajectories: no name, photo, profile link or exact dates (years only), and individuals are listed only when at least 5 people match. Only the signed-in user's own profile is shown with their name.
 - **Crustdata endpoints available on the key**: person search (30 RPM), person enrich (15 RPM), person and company autocomplete (300 RPM), company identify (30 RPM), company search (30 RPM), company enrich (15 RPM), job search (30 RPM), web search and web fetch (10 RPM). Not available: contact enrich, person identify, live and batch endpoints, watchers.
 - **Undecided**: authentication and accounts; sponsor-register coverage beyond the UK and Netherlands; pricing.
 
@@ -65,7 +66,7 @@ The only tool that answers "how did people like me do?" from real career data. C
 2. Show the evidence and how sure it is: counts, coverage, date, one click from every number.
 3. Unknown is not bad: thin data is labelled, never turned into a negative verdict.
 4. A next step, not a report: every screen ends with something the user can act on.
-5. Serve students, professionals and universities from one engine without exposing any individual.
+5. Serve students, professionals and universities from one engine; show real career paths without identifying anyone.
 
 ## Accessibility & Inclusion
 
