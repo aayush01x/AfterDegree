@@ -1,0 +1,40 @@
+.fill {
+  display: grid;
+  gap: var(--ad-space-1);
+}
+.cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--c, 14px));
+  gap: 2px;
+}
+.cell {
+  width: var(--c, 14px);
+  height: var(--c, 14px);
+  border: 1px solid var(--ad-hollow);
+  transition: background-color var(--ad-fast) linear;
+}
+.on {
+  background: var(--ad-ink);
+  border-color: var(--ad-ink);
+}
+.next {
+  animation: blink 800ms steps(1, end) infinite;
+}
+@keyframes blink {
+  50% {
+    background: var(--ad-orange);
+    border-color: var(--ad-orange);
+  }
+}
+.onOrange .cell {
+  border-color: rgba(17, 17, 17, 0.35);
+}
+.onOrange .next {
+  animation-name: blinkInk;
+}
+@keyframes blinkInk {
+  50% {
+    background: var(--ad-paper);
+    border-color: var(--ad-paper);
+  }
+}

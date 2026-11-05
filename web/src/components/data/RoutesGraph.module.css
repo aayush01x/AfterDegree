@@ -1,0 +1,87 @@
+.wrap {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+.canvas {
+  position: relative;
+}
+.edges {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.edge {
+  fill: none;
+  stroke: var(--ad-ink);
+  stroke-linejoin: miter;
+}
+.node {
+  position: absolute;
+  display: grid;
+  align-content: center;
+  padding: 4px 10px;
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-ink);
+  font-size: var(--ad-text-sm);
+  line-height: 16px;
+  font-weight: 600;
+  overflow: hidden;
+}
+.kind {
+  font-size: var(--ad-text-xs);
+  line-height: 14px;
+  font-weight: 500;
+  color: var(--ad-muted);
+  text-transform: capitalize;
+}
+.goal {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.goal .kind {
+  color: var(--ad-rail-muted);
+}
+.start {
+  background: var(--ad-orange);
+  border-color: var(--ad-orange);
+}
+.start .kind {
+  color: var(--ad-ink);
+}
+.count {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 0 4px;
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-ink);
+  font-size: var(--ad-text-xs);
+  line-height: 16px;
+  font-weight: 700;
+}
+.fallback {
+  display: none;
+}
+.fallback ol {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+}
+.fallback li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--ad-space-1);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ad-rule-soft);
+}
+.fallback strong {
+  font-weight: 700;
+}
+@media (max-width: 560px) {
+  .canvas {
+    display: none;
+  }
+  .fallback {
+    display: block;
+  }
+}

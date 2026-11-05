@@ -1,0 +1,217 @@
+/* ------------------------------------------------------------------
+   AfterDegree tokens. Every component reads these; nothing hard-codes
+   a colour, a font or a spacing step.
+   ------------------------------------------------------------------ */
+:root {
+  /* colour */
+  --ad-orange: #ff5a1f; /* the field behind the work */
+  --ad-ink: #111111; /* rail, type, rules, primary buttons */
+  --ad-paper: #ffffff; /* work panels */
+  --ad-rule: #111111; /* 1px structural rules */
+  --ad-rule-soft: #e4dfda; /* hairlines inside a white panel */
+  --ad-blue: #0057ff; /* evidence keys and focus, only ever on white */
+  --ad-grid: rgba(150, 182, 255, 0.55); /* faint construction grid on the field */
+  --ad-muted: #5a5550; /* secondary text on white (7:1) */
+  --ad-hollow: #8a8580; /* outline of "remainder" cells */
+  --ad-ink-hover: #2a2826; /* hover on the black rail */
+  --ad-rail-text: #ede9e5; /* nav text on black (16:1) */
+  --ad-rail-muted: #b8b2ac; /* rail labels on black (9:1) */
+  /* state colours: only where a state is being reported */
+  --ad-error: #b3261e; /* on white (6.4:1) */
+  --ad-error-paper: #fdf0ef;
+  --ad-ok: #0b6b3a; /* on white (6.9:1) */
+
+  /* geometry */
+  --ad-cell: 32px; /* the construction-grid unit */
+  --ad-space-1: 8px;
+  --ad-space-2: 16px;
+  --ad-space-3: 24px;
+  --ad-space-4: 32px;
+  --ad-space-5: 40px;
+  --ad-space-6: 48px;
+  --ad-space-7: 56px;
+  --ad-space-8: 64px;
+  --ad-rail-w: 224px; /* 7 cells */
+  --ad-hairline: 1px;
+
+  /* type: --font-display and --font-ui are set by next/font in layout.tsx */
+  --ad-text-xs: 12px; /* floor for functional text */
+  --ad-text-sm: 13px;
+  --ad-text-md: 14px;
+  --ad-text-body: 16px;
+  --ad-text-lg: 18px;
+  --ad-text-xl: 22px;
+  --ad-text-2xl: 28px;
+  --ad-text-3xl: 40px;
+
+  /* motion */
+  --ad-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ad-fast: 160ms;
+  --ad-assemble: 220ms; /* results assemble cell by cell */
+
+  /* surface-scoped focus colour: ink on the field, blue on white, white on black */
+  --ad-focus: var(--ad-ink);
+
+  --ad-grid-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cpath d='M0 .5H32M.5 0V32' fill='none' stroke='%2396B6FF' stroke-opacity='.55'/%3E%3C/svg%3E");
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-color: var(--ad-ink) var(--ad-orange);
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-ui), system-ui, sans-serif;
+  font-size: var(--ad-text-md);
+  line-height: 20px;
+  color: var(--ad-ink);
+  background-color: var(--ad-orange);
+  background-image: var(--ad-grid-image);
+  background-position: 0 0;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+img,
+svg {
+  display: block;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display), var(--font-ui), sans-serif;
+  font-weight: 600;
+  text-wrap: balance;
+  letter-spacing: -0.005em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+ul[role="list"],
+ol[role="list"] {
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ad-focus);
+  outline-offset: 2px;
+}
+
+/* Surfaces set their own focus colour. */
+.ad-surface-paper {
+  --ad-focus: var(--ad-blue);
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+}
+.ad-surface-ink {
+  --ad-focus: var(--ad-paper);
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--ad-space-2);
+  top: -64px;
+  z-index: 100;
+  padding: var(--ad-space-1) var(--ad-space-2);
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  border: 1px solid var(--ad-rule);
+  font-weight: 700;
+}
+.skip-link:focus {
+  top: var(--ad-space-2);
+}
+
+/* Cells assemble in reading order: each cell gets --i (its index) and --n. */
+@keyframes ad-cell-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* Each cell stays hidden for its share of the assemble time, then shows.
+   Duration (not delay) and no forward fill: a cell can never stay hidden. */
+.ad-assemble {
+  animation-name: ad-cell-in;
+  animation-duration: calc(var(--ad-assemble) * var(--i, 0) / var(--n, 1) + 1ms);
+  animation-timing-function: steps(1, end);
+  animation-fill-mode: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

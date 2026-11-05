@@ -1,0 +1,51 @@
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  column-gap: var(--ad-space-3);
+}
+.item {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: var(--ad-space-1);
+  row-gap: 4px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ad-rule-soft);
+}
+.mark {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--ad-ink);
+}
+.have {
+  background: var(--ad-ink);
+}
+.term {
+  font-weight: 600;
+}
+.count {
+  font-weight: 700;
+  text-align: right;
+}
+.count small {
+  font-size: var(--ad-text-xs);
+  font-weight: 500;
+  color: var(--ad-muted);
+  margin-left: 4px;
+}
+.bar {
+  grid-column: 2 / 4;
+}
+.legend {
+  display: flex;
+  gap: var(--ad-space-3);
+  margin-top: var(--ad-space-1);
+  font-size: var(--ad-text-sm);
+  color: var(--ad-muted);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

@@ -1,0 +1,73 @@
+.wrap {
+  width: 100%;
+  min-width: 0;
+}
+.svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.grid {
+  stroke: var(--ad-rule-soft);
+  stroke-width: 1;
+}
+.axis {
+  stroke: var(--ad-rule);
+  stroke-width: 1;
+}
+.tick {
+  fill: var(--ad-muted);
+  font-family: var(--font-ui), sans-serif;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.line0 {
+  stroke: var(--ad-ink);
+  stroke-width: 2;
+  fill: none;
+}
+.line1 {
+  stroke: var(--ad-ink);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+  fill: none;
+}
+.line2 {
+  stroke: var(--ad-orange);
+  stroke-width: 2;
+  fill: none;
+}
+.dot0 {
+  fill: var(--ad-ink);
+}
+.dot1 {
+  fill: var(--ad-paper);
+  stroke: var(--ad-ink);
+  stroke-width: 1.5;
+}
+.dot2 {
+  fill: var(--ad-orange);
+}
+.last {
+  fill: var(--ad-ink);
+  font-family: var(--font-display), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ad-space-1) var(--ad-space-3);
+  margin-bottom: var(--ad-space-1);
+  font-size: var(--ad-text-sm);
+  line-height: 18px;
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.key {
+  width: 24px;
+  height: 10px;
+}

@@ -1,0 +1,79 @@
+.list {
+  display: grid;
+}
+.row {
+  display: grid;
+  grid-template-columns: minmax(96px, 36%) 1fr 56px;
+  align-items: center;
+  gap: var(--ad-space-2);
+  min-height: 36px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ad-rule-soft);
+  font-size: var(--ad-text-md);
+  line-height: 18px;
+}
+.label {
+  font-weight: 600;
+}
+.value {
+  text-align: right;
+  font-weight: 700;
+}
+.share {
+  display: block;
+  font-size: var(--ad-text-xs);
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--ad-muted);
+}
+.target {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+  padding-left: 8px;
+  padding-right: 8px;
+  border-bottom-color: var(--ad-ink);
+}
+.target .share {
+  color: var(--ad-rail-muted);
+}
+.tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 4px;
+  background: var(--ad-orange);
+  color: var(--ad-ink);
+  font-size: var(--ad-text-xs);
+  line-height: 16px;
+  font-weight: 800;
+}
+.remainder {
+  color: var(--ad-muted);
+}
+.remainder .label,
+.remainder .value {
+  font-weight: 500;
+}
+.foot {
+  margin-top: var(--ad-space-1);
+  font-size: var(--ad-text-sm);
+  color: var(--ad-muted);
+}
+.compact .row {
+  grid-template-columns: minmax(120px, 50%) 1fr 40px;
+  gap: 12px;
+  min-height: 32px;
+  padding: 4px 0;
+}
+.compact .target {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.compact .label {
+  font-stretch: 94%;
+}
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 96px 1fr 48px;
+    gap: var(--ad-space-1);
+  }
+}

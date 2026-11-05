@@ -1,0 +1,78 @@
+.page {
+  display: grid;
+  gap: var(--ad-space-4);
+  max-width: 1376px;
+}
+.head {
+  display: grid;
+  gap: var(--ad-space-1);
+  max-width: 72ch;
+}
+.tag {
+  display: flex;
+  min-height: 24px;
+}
+.title {
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--ad-text-3xl);
+  line-height: 48px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.purpose {
+  font-size: var(--ad-text-lg);
+  line-height: 26px;
+  font-weight: 500;
+}
+.form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--ad-space-2) var(--ad-space-3);
+  align-items: end;
+}
+.formFields {
+  min-width: 0;
+}
+.actions {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 0;
+}
+.formHasHints .actions {
+  padding-bottom: 26px;
+}
+.empty {
+  display: grid;
+  gap: var(--ad-space-1);
+  max-width: 62ch;
+  font-size: var(--ad-text-body);
+  line-height: 24px;
+}
+.emptyCells {
+  display: flex;
+  gap: 2px;
+  margin-bottom: var(--ad-space-1);
+}
+.emptyCells i {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--ad-ink);
+}
+.emptyCells i:nth-child(3n + 1) {
+  background: var(--ad-ink);
+}
+.skeleton {
+  height: 96px;
+}
+@media (max-width: 720px) {
+  .form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .formHasHints .actions {
+    padding-bottom: 0;
+  }
+  .title {
+    font-size: var(--ad-text-2xl);
+    line-height: 36px;
+  }
+}

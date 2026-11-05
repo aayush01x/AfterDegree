@@ -1,0 +1,33 @@
+.box {
+  display: grid;
+  gap: 12px;
+}
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--ad-space-1) var(--ad-space-2);
+  align-items: baseline;
+}
+.step {
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--ad-text-lg);
+  line-height: 24px;
+  font-weight: 600;
+}
+.count {
+  font-size: var(--ad-text-sm);
+  font-weight: 600;
+  color: var(--ad-muted);
+}
+.onOrange .count {
+  color: var(--ad-ink);
+}
+.note {
+  font-size: var(--ad-text-sm);
+  color: var(--ad-muted);
+  max-width: 60ch;
+}
+.onOrange .note {
+  color: var(--ad-ink);
+}

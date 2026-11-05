@@ -1,0 +1,15 @@
+.svg {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  overflow: visible;
+}
+.ink {
+  fill: var(--ad-ink);
+}
+.paper {
+  fill: var(--ad-paper);
+}
+.orange {
+  fill: var(--ad-orange);
+}

@@ -1,0 +1,36 @@
+.box {
+  --ad-focus: var(--ad-blue);
+  display: grid;
+  gap: var(--ad-space-1);
+  padding: var(--ad-space-2) var(--ad-space-3);
+  background: var(--ad-paper);
+  border: 1px solid var(--ad-ink);
+  color: var(--ad-ink);
+}
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--ad-space-1);
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--ad-text-lg);
+  font-weight: 600;
+  line-height: 24px;
+}
+.mark {
+  width: 12px;
+  height: 12px;
+  background: var(--ad-error);
+  flex: none;
+}
+.message {
+  font-size: var(--ad-text-body);
+  line-height: 24px;
+  max-width: 65ch;
+}
+.hint {
+  color: var(--ad-muted);
+  max-width: 65ch;
+}
+.actions {
+  margin-top: var(--ad-space-1);
+}

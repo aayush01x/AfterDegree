@@ -1,0 +1,39 @@
+.chip {
+  display: inline-flex;
+  align-items: stretch;
+  min-height: 32px;
+  border: 1px solid var(--ad-ink);
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  font-size: var(--ad-text-md);
+  font-weight: 600;
+  line-height: 20px;
+}
+.label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+}
+button.label:hover {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.selected,
+.selected .remove {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.remove {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  border-left: 1px solid currentColor;
+}
+.remove:hover {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.selected .remove:hover {
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+}

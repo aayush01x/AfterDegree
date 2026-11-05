@@ -1,0 +1,19 @@
+.track {
+  display: block;
+  height: 12px;
+  min-width: 0;
+}
+.bar {
+  display: block;
+  height: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='12'%3E%3Crect width='3' height='12' fill='%23FF5A1F'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+}
+.hollow .bar {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='12'%3E%3Crect x='.5' y='.5' width='2' height='11' fill='none' stroke='%238A8580'/%3E%3C/svg%3E");
+}
+.bar {
+  width: calc(var(--w, 0) * 100%);
+  /* Snap to whole 4px cells so a bar never ends mid-cell. */
+  width: round(down, calc(var(--w, 0) * 100%), 4px);
+}
