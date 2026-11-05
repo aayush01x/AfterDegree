@@ -71,6 +71,8 @@ function Stack({
 
 /** The ratio as grid numerals: 1.2 is two numerals around one square dot. */
 function Ratio({ value }: { value: number }) {
+  // Real data puts newcomers well below one per opening (0.03 is typical): show it per 100 openings so it never rounds to 0.0.
+  if (value < 1) return <GridNumber value={Math.round(value * 100)} cell={28} gap={4} label={`${Math.round(value * 100)} entrants per 100 openings`} />;
   if (value >= 10) return <GridNumber value={value} cell={28} gap={4} label={`${Math.round(value)} entrants per opening`} />;
   const r = Math.round(value * 10) / 10;
   const whole = Math.floor(r);
@@ -132,7 +134,7 @@ export function View({ result }: { result: ResultEnvelope }) {
       <div className={styles.top}>
         <div className={styles.answer}>
           {exampleNote && <ExampleBadge force>{exampleNote}</ExampleBadge>}
-          <p className={styles.least}>New people like you for every opening</p>
+          <p className={styles.least}>{ratio < 1 ? "New people like you for every 100 openings" : "New people like you for every opening"}</p>
           <Ratio value={ratio} />
           <p className={styles.label}>{level ? LEVEL_WORD[level] : "Too early to say"}</p>
           <p className={styles.say}>
