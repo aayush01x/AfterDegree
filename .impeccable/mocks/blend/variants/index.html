@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AfterDegree colour variants</title>
+<style>
+:root{--bg:#f4f3f1;--ink:#1d1c1a;--muted:#6b6862;--rule:#d9d6d0}
+@media (prefers-color-scheme:dark){:root{--bg:#18191b;--ink:#ecebe8;--muted:#a19e98;--rule:#33353a}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+header{padding:24px 32px;border-bottom:1px solid var(--rule)}
+h1{margin:0 0 4px;font-size:22px}
+p{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:24px;padding:24px 32px}
+figure{margin:0;border:1px solid var(--rule);background:#fff}
+figure a{display:block}
+img{width:100%;height:auto;display:block}
+figcaption{padding:10px 12px;border-top:1px solid var(--rule);background:var(--bg)}
+figcaption b{display:block}
+figcaption span{color:var(--muted);font-size:13px}
+</style></head><body>
+<header><h1>Home: colour variants</h1><p>Same layout and content, different palettes. Click a thumbnail to open that variant full size.</p></header>
+<div class="grid">
+<figure><a href="../home.html"><img src="home-current.png" alt="Current palette"></a><figcaption><b>Current</b><span>Saturated orange field, black band, bright tiles</span></figcaption></figure>
+<figure><a href="home-soft-orange.html"><img src="home-soft-orange.png" alt="Soft Signal Orange"></a><figcaption><b>Soft Signal Orange</b><span>Peach field, orange only as the accent, softened tiles</span></figcaption></figure>
+<figure><a href="home-paper-clay.html"><img src="home-paper-clay.png" alt="Paper and Clay"></a><figcaption><b>Paper &amp; Clay</b><span>Warm stone paper, charcoal band, clay accent, earthy tiles</span></figcaption></figure>
+<figure><a href="home-blueprint.html"><img src="home-blueprint.png" alt="Blueprint Paper"></a><figcaption><b>Blueprint Paper</b><span>Pale grid paper, navy band, Crouwel blue accent, pastel tiles</span></figcaption></figure>
+<figure><a href="home-slate-sage.html"><img src="home-slate-sage.png" alt="Slate and Sage"></a><figcaption><b>Slate &amp; Sage</b><span>Grey-green field, slate band, sage accent, cool muted tiles</span></figcaption></figure>
+<figure><a href="home-night-ink.html"><img src="home-night-ink.png" alt="Night Ink"></a><figcaption><b>Night Ink</b><span>Dark blue-grey, soft amber accent, dusty tiles</span></figcaption></figure>
+</div></body></html>
