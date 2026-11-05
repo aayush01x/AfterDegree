@@ -1,5 +1,8 @@
 # AfterDegree API contract (v0.1)
 
+> **Changelog**
+> - 2026-11-06 (engine): additive only. Section `data` shapes per kind and section ids per tool pinned to `web/src/lib/types.ts` (see Appendix A); optional `result.coverage` (0–1); optional `section.evidence_ids`; `evidence.source` may also be `"mock"` in mock mode; `reverse_gps` puts the parsed goal in `cohort.filters.goal = {role, city, country, company}`; `people-like-me` accepts `exp_band` as `[min,max]` or `"min,max"`; `GET /api/health` adds optional `mock: bool`; `GET /api/usage` shape defined; `GET /api/profiles/{id}` shape defined (Appendix B).
+
 Single source of truth between the Python engine (`engine/`, FastAPI on `:8000`) and the Next.js app (`web/`, on `:3000`, proxying `/api/*` to the engine). All JSON. All numbers are computed by deterministic engine code from Crustdata responses; the LLM never produces a number.
 
 ## Conventions
@@ -118,3 +121,41 @@ For `persona = university`, tools accept `{ "institution": "...", "programs": [.
 
 - Never return another person's name, profile URL, photo or exact title+company+date combination that identifies them. Only aggregates with `n >= 5` per row; rows below are folded into "Other".
 - The user's own profile is returned only to that profile's session.
+
+## Appendix A: section data shapes and ids (engine v0.1, matches `web/src/lib/types.ts`)
+
+Every section is `{ id, kind, title, data, evidence_ids? }`. Optional fields may be absent. `Count` objects always carry `share`/`ci` (null when `n < 10`).
+
+| kind | `data` |
+|---|---|
+| `distribution` | `{ n, items: [{ label, count: int, share?: number\|null, target?: bool, remainder?: bool }], unit?: "people"\|"degrees"\|"postings"\|"conversions", caption? }`. `target` marks the user's target; `remainder` rows ("Still in India", "No further degree shown") render hollow. Groups under 5 fold into an "Other …" item. |
+| `ranked_table` | `{ n?, columns: [{ key, label, type: "text"\|"int"\|"count"\|"share"\|"years"\|"badges", bar?: bool }], rows: [{ id?, cells: {key: string\|number\|null\|Count\|string[]}, count?: Count, badges?: string[], you?: bool, rest?: bool }], default_sort?: { key, dir }, caption? }`. `rest: true` is the folded "Other …" row. |
+| `routes` | `{ nodes: [{ id, label, kind }], edges: [{ from, to, count }], caption? }` (edges with fewer than 5 people are dropped). |
+| `route_list` | `{ routes: [{ id, title?, steps: [{ label, kind?, years? }], people: Count, typical_years?, fit?: "fits_you"\|"stretch"\|"far", gaps: string[] }], caption? }` |
+| `timeseries` | `{ points?: [{ period, value }] }` or `{ series: [{ key, label, points }] }`, plus `unit?`, `caption?` |
+| `stat` | `{ label, value?, count?: Count, unit?, display?, level?: "low"\|"medium"\|"high", note? }` (the UI renders "of N {label}", so `label` never starts with "of") |
+| `text` | `{ text }` |
+| `keywords` | `{ n?, items: [{ term, count, share?, you_have? }], caption? }` |
+
+Section ids per tool (in order; extra sections may follow and render generically):
+
+| Tool | Sections `id:kind` |
+|---|---|
+| people_like_me | `cohort_size:stat`, `moved_abroad:stat`, `countries:distribution`, `roles:ranked_table` (cells `role, people`), `employers_target:ranked_table` (cells `employer, people`; employers in the user's target country), `further_degrees:distribution`, `degree_countries:distribution` |
+| internship_chances | `chance:stat`, `companies:ranked_table` (cells `company, interns, converted: Count`), `method:text` |
+| conversion_map | `companies:ranked_table` (cells `company, country, seen, converted, rate: Count`), `by_country:distribution` (unit `conversions`), optional `by_school_group:ranked_table` |
+| reverse_gps | `goal:text` ("Role: …. City: …. Country: …."), `routes:route_list`, `graph:routes`, `skills_gap:keywords` |
+| routes_to_position | `graph:routes`, `feeders:ranked_table` (cells `employer, people`), `titles:ranked_table` (`title, people`), `schools:ranked_table` (`school, people`), `years:distribution` |
+| job_postings | `open_90:stat`, `open_30:stat`, `open_prev:stat` (the 90 days before), `trend:timeseries`, `seniority:distribution`, `skills:keywords`, `languages:distribution`, `visa:stat`, `employers:ranked_table` (cells `employer, postings, hires, signal: string[]`) |
+| indian_friendly | `employers:ranked_table` (cells `employer, hires, recent, seniority: Count (reached senior or above), tenure: years, signals: string[]`), `method:text`; `cohort.filters.work_country` |
+| market_saturation | `ratio:stat` (`value` = entrants per opening; `level` low < 0.02 ≤ medium < 0.08 ≤ high), `trend:timeseries` (series `entrants`, `openings`), `read:text`, `cities:ranked_table` (cells `city, ratio, openings, entrants`; the chosen city has `you: true`), `entrants:stat`, `openings:stat` |
+
+Result envelope additions: `coverage?: number` (0–1; for people_like_me the share of the cohort with a known current country, elsewhere the share of visible matching records the breakdowns were read from). Cohort filters carry plain-text scope keys (`school`, `field`, `country`, `role`, `city`, `company`, `goal`, `work_country`, `institution`) next to `crustdata` (the exact filter tree sent).
+
+## Appendix B: other response shapes (engine v0.1)
+
+- `GET /api/profiles/{id}` → `{ profile_id, linkedin_url, person, derived, goals: Goals|null, completed: bool, created_at, evidence: Evidence[] }`.
+- `GET /api/health` → `{ crustdata, llm, mock: bool }`.
+- `GET /api/usage` → `{ session_started_at, live_calls, cached_calls, estimated_credits, reported_credits: number|null, by_endpoint: [{ endpoint, live_calls, cached_calls, results, estimated_credits }] }` (cache and mock calls cost 0).
+- Job errors use `error.code` values such as `bad_input`, `missing_key`, `upstream_auth`, `upstream_credits`, `upstream_forbidden`, `rate_limited`, `budget_exceeded`, `upstream_unavailable`, `internal`.
+

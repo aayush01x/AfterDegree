@@ -1,0 +1,18 @@
+{
+    "job_listings": [],
+    "next_cursor": null,
+    "total_count": 25748,
+    "aggregations": [
+        {
+            "type": "group_by",
+            "field": "company.basic_info.company_id",
+            "buckets": [
+                {"key": 3674630, "count": 836, "metadata": {"company_name": "Bending Spoons", "company_website_domain": "bndspn.com", "linkedin_id": "3175130"}},
+                {"key": 821755, "count": 794, "metadata": {"company_name": "Jobs via Dice", "company_website_domain": "dice.com", "linkedin_id": "104085107"}},
+                {"key": 899641, "count": 490, "metadata": {"company_name": "Lensa", "company_website_domain": "lensa.com", "linkedin_id": "5192530"}},
+                {"key": 2110301, "count": 438, "metadata": {"company_name": "Microsoft", "company_website_domain": "microsoft.com", "linkedin_id": "1035"}},
+                {"key": 2676775, "count": 379, "metadata": {"company_name": "Goliath Partners", "company_website_domain": "goliathpartners.com", "linkedin_id": "92699700"}}
+            ]
+        }
+    ]
+}

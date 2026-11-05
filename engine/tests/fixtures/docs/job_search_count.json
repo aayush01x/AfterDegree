@@ -1,0 +1,6 @@
+{
+    "job_listings": [],
+    "next_cursor": null,
+    "total_count": 4448237,
+    "aggregations": [{ "type": "count", "field": null, "value": 4448237 }]
+}

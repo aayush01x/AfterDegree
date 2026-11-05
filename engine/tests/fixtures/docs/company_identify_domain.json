@@ -1,0 +1,26 @@
+[
+    {
+        "matched_on": "serverobotics.com",
+        "match_type": "domain",
+        "matches": [
+            {
+                "confidence_score": 1.0,
+                "company_data": {
+                    "crustdata_company_id": 628895,
+                    "basic_info": {
+                        "crustdata_company_id": 628895,
+                        "name": "Serve Robotics",
+                        "primary_domain": "serverobotics.com",
+                        "all_domains": ["serverobotics.com"],
+                        "website": "https://www.serverobotics.com/",
+                        "professional_network_url": "https://www.linkedin.com/company/serverobotics",
+                        "professional_network_id": "72049930",
+                        "profile_name": "Serve Robotics",
+                        "employee_count_range": "51-200",
+                        "industries": ["Technology, Information and Internet", "Technology, Information and Media"]
+                    }
+                }
+            }
+        ]
+    }
+]

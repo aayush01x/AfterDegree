@@ -1,0 +1,1 @@
+{"error": {"type": "permission_error", "message": "Access denied to fields: research_profiles. To enable access, please book a call with us.", "metadata": [{"denied_fields": ["research_profiles"], "permitted_fields": ["basic_profile", "education", "experience"]}]}}

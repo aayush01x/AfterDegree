@@ -1,0 +1,41 @@
+{
+    "profiles": [
+        {
+            "crustdata_person_id": 1068035,
+            "basic_profile": {
+                "name": "Abhilash Chowdhary",
+                "headline": "Co-founder at Crustdata (YC F24) | Real-time B2B data for AI agents",
+                "location": {
+                    "raw": "San Francisco, California, United States",
+                    "city": "San Francisco",
+                    "state": "California",
+                    "country": "United States of America",
+                    "continent": "North America"
+                }
+            },
+            "social_handles": {
+                "professional_network_identifier": {
+                    "profile_url": "https://www.linkedin.com/in/abhilashchowdhary"
+                }
+            },
+            "experience": {
+                "employment_details": {
+                    "current": [{"name": "Crustdata (YC F24)", "title": "Co-Founder & CEO"}],
+                    "past": [
+                        {"name": "Serve Robotics", "title": "Engineering Manager, Motion Planning and Controls"},
+                        {"name": "Postmates by Uber", "title": "Robotics Lead, Motion Planning and Controls"}
+                    ]
+                }
+            },
+            "education": {
+                "schools": [
+                    {"school": "Virginia Tech", "degree": "Master’s Degree"},
+                    {"school": "IIIT Hyderabad", "degree": "Bachelor of Technology (B.Tech.)"},
+                    {"school": "Y Combinator", "degree": "F24 Batch"}
+                ]
+            }
+        }
+    ],
+    "next_cursor": "H4sIAG6-oWkC_xXMMQrDMAxA0a...",
+    "total_count": 8
+}

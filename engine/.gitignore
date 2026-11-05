@@ -1,0 +1,4 @@
+tests/fixtures/live/*.json
+.venv/
+__pycache__/
+.pytest_cache/
