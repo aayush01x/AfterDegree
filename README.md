@@ -16,6 +16,9 @@ the way down to one anonymous person's career path.
 Built for **ContextCon**, the Crustdata hackathon, on top of the Crustdata people,
 company and job APIs.
 
+**▶ [Watch the 2-minute demo](docs/AfterDegree-demo.mp4)**: onboarding with a real LinkedIn profile,
+every tool, drill-downs to company profiles and anonymous career paths, and the university lens.
+
 ![Your plan: the home page](docs/images/home.png)
 
 ---
@@ -36,6 +39,43 @@ company and job APIs.
 where its graduates went, programme by programme, and which programmes lead to which jobs.
 
 ![Colleges and programmes that lead to Software Engineer in the US](docs/images/colleges.png)
+
+---
+
+## Onboarding: about three minutes, start to finish
+
+There's no form to fill in. You paste one link and have a short conversation.
+
+**1. Paste your LinkedIn.** That's the only thing we ask for. AfterDegree uses Crustdata to read
+*your* public profile, and only yours, for your education, work history and skills.
+
+![Paste your LinkedIn profile](docs/images/onboarding-1-profile.png)
+
+**2. Check it's you.** You see what we understood: your college, degree and graduation year,
+your work and internships on a timeline, and your skills. Anything wrong or out of date can be
+fixed right there. We also work out what stage you're at. An IIT Kanpur EE student graduating
+in 2027 is treated as a current student, so clubs and college gigs don't count as "years of
+experience".
+
+![Check your profile](docs/images/onboarding-2-check.png)
+
+**3. A short chat about where you're headed.** A mentor-style assistant (DeepSeek via
+OpenRouter) asks what you want next: a master's abroad, a job abroad, a switch, or growing
+where you are. Then it asks which countries and roles, and anything to keep in mind, like visa
+sponsorship, budget or languages. You can type in your own words or tap a suggested reply.
+Everything it picks up appears live on the right under *What I've understood*, where you can
+edit it directly.
+
+![The goal chat](docs/images/onboarding-3-chat.png)
+
+**4. Confirm.** One screen sums up who you are and what you're aiming for. Press
+*Show me people like me* and you land on **Your plan**.
+
+Universities go through the same steps. Pick *University* in the chat, name your institution and
+the programmes you care about, and every tool switches to "your graduates".
+
+You can come back any time through **Edit your profile** in the sidebar to change your goals,
+or **Log out** to start over.
 
 ---
 
