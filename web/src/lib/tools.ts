@@ -1,4 +1,5 @@
 import type { Derived, Goals, ToolId } from "./types";
+import { MERGED, mergedFor, mergedHref } from "./pages";
 
 export interface ToolField {
   /** Dotted body path, e.g. "role" or "scope.school". */
@@ -175,6 +176,7 @@ export const toolBySlug = (slug: string) => TOOLS.find((t) => t.slug === slug);
 /** Build a /tools URL that pre-fills a tool's form from next-step params. */
 export function toolHref(id: ToolId, params: Record<string, unknown> = {}): string {
   const t = toolById(id);
+  const merged = mergedFor(id);
   const qs = new URLSearchParams();
   const flat = (obj: Record<string, unknown>, prefix = "") => {
     for (const [k, v] of Object.entries(obj)) {
@@ -184,6 +186,7 @@ export function toolHref(id: ToolId, params: Record<string, unknown> = {}): stri
     }
   };
   flat(params);
+  if (merged) return mergedHref(merged.page, merged.tab, Object.fromEntries(qs.entries()));
   const s = qs.toString();
   return `/tools/${t.slug}${s ? `?${s}` : ""}`;
 }
@@ -204,3 +207,15 @@ export function nestBody(values: Record<string, string>): Record<string, unknown
   }
   return out;
 }
+
+/** Rail entries: single tools, with merged pages standing in for the tools they hold. */
+export const NAV_ITEMS: { slug: string; short: string }[] = (() => {
+  const out: { slug: string; short: string }[] = [];
+  for (const t of TOOLS) {
+    const m = mergedFor(t.id);
+    if (!m) out.push({ slug: t.slug, short: t.short });
+    else if (!out.some((o) => o.slug === m.page.slug)) out.push({ slug: m.page.slug, short: m.page.short });
+  }
+  return out;
+})();
+export { MERGED };

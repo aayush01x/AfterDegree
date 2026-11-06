@@ -66,13 +66,13 @@ export function PersonStrip({ items, n, label, intro, keyLabel, cell = 12, class
   const total = items.reduce((s, i) => s + Math.max(0, i.count), 0);
   const per = total > MAX_CELLS ? Math.ceil(total / MAX_CELLS) : 1;
   const groups: Group[] = useMemo(() => {
-    let at = 0;
-    return order(items).map((item) => {
+    const out: Group[] = [];
+    for (const item of order(items)) {
       const cells = Math.max(1, Math.round(item.count / per));
-      const g = { item, cells, start: at, end: at + cells, color: placeField(item.label), hollow: !!item.remainder };
-      at += cells;
-      return g;
-    });
+      const start = out.length ? out[out.length - 1].end : 0;
+      out.push({ item, cells, start, end: start + cells, color: placeField(item.label), hollow: !!item.remainder });
+    }
+    return out;
   }, [items, per]);
   const cellsTotal = groups.length ? groups[groups.length - 1].end : 0;
 

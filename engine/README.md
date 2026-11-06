@@ -29,8 +29,11 @@ Read from the environment, then from `../.env`. Key values are never logged or p
 | `AFTERDEGREE_MOCK` | `0` | `1` serves deterministic example data (persona: Riya Menon) with no network. |
 | `AFTERDEGREE_MAX_CREDITS` | `25` | Hard estimated-credit budget per tool run. |
 | `AFTERDEGREE_MAX_LIVE_CALLS` | `60` | Hard live-call budget per tool run (cached calls are free). |
-| `AFTERDEGREE_SEARCH_SAMPLE_CAP` | `200` | Max profiles read per sample (also capped by the credit budget). |
-| `AFTERDEGREE_JOB_SAMPLE_CAP` | `100` | Max postings read per sample. |
+| `AFTERDEGREE_SEARCH_SAMPLE_CAP` | `60` | Max profiles read per sample (tools ask for 40–50; also capped by the credit budget). |
+| `AFTERDEGREE_JOB_SAMPLE_CAP` | `100` | Max postings read per sample (job postings reads 60). |
+| `AFTERDEGREE_COUNT_RESERVE` | `3` | Credits every profile sample leaves for the count-only queries after it. |
+| `AFTERDEGREE_DRILL_MAX_CREDITS` | `20` | Credit budget per drill-down. |
+| `AFTERDEGREE_DRILL_SAMPLE_CAP` | `20` | Anonymous career paths read per drill-down (max 30). |
 | `AFTERDEGREE_CACHE_TTL_DAYS` | `7` | Disk-cache lifetime. |
 | `AFTERDEGREE_CACHE_DIR` | `../.cache/crustdata` | Cache location (sha256 of endpoint + canonical JSON body). |
 | `AFTERDEGREE_DB_PATH` | `../.cache/afterdegree.sqlite3` | SQLite for profiles, jobs, evidence and the credit log. |
@@ -57,6 +60,13 @@ Read from the environment, then from `../.env`. Key values are never logged or p
   matching profiles; job counts and aggregations use free `limit: 0` queries.
 - `afterdegree/jobs.py`: in-process asyncio job runner, persisted to SQLite, SSE at
   `/api/jobs/{id}/events` (`progress`, then `done` or `error`).
+- `afterdegree/drill.py`: `POST /api/drill` and `GET /api/people/{id}` (CONTRACT Appendix C + D). Re-runs the
+  origin tool's cohort code with the token's params, applies each path step as a filter (refusing steps that can't be
+  searched for), counts the slice and every next-level row with count-only queries (exact), reads a capped sample of
+  the slice for anonymous career paths, and builds the company profile (enrich + postings + company-wide counts).
+- Counting rule: a number shown next to a total is an exact count-only total, or is labelled with `sample_n` and uses
+  the sample size as its denominator. Samples are small (40–50 profiles) and a request for fewer profiles is served
+  from a larger cached page of the same query (no new credits).
 - `afterdegree/mock.py`: a synthetic Crustdata backend (3,000 people, 6,000 postings) that
   interprets the same filter trees; powers mock mode and the tests.
 

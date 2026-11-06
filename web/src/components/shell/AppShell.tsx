@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
-import { TOOLS } from "@/lib/tools";
+import { NAV_ITEMS } from "@/lib/tools";
 import { firstName, initials } from "@/lib/format";
 import { Slash } from "@/components/ui/Slash";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -106,7 +106,7 @@ function Rail() {
           Tools
         </p>
         <ul className={styles.list} aria-labelledby="tools-label">
-          {TOOLS.map((t) => (
+          {NAV_ITEMS.map((t) => (
             <NavLink key={t.slug} href={`/tools/${t.slug}`} onNavigate={close}>
               {t.short}
             </NavLink>

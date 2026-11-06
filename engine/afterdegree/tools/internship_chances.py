@@ -15,6 +15,9 @@ from ..toolkit import ToolContext, section, stat_section, text_section
 from .common import company_value_from_key, pct, resolve_place, step, title_or, user_target_role
 
 TOOL = "internship_chances"
+SAMPLE_N = 50  # intern outcomes are read from whole histories; the cohort size is an exact count
+# Only work history is needed to see whether an internship converted (no education in the response: 0.33 vs 0.43 credits/profile).
+IC_FIELDS = ["experience.employment_details.current", "experience.employment_details.past"]
 MIN_INTERN_PROFILES = 25  # widen below this: not every intern profile has a finished, in-scope internship
 
 
@@ -120,7 +123,7 @@ async def run(ctx: ToolContext) -> Result:
     cohort = await build_cohort(ctx, "exact_school", extra=extra, noun="former interns or working students", min_n=MIN_INTERN_PROFILES)
 
     await ctx.step("Reading their career histories")
-    sample = await ctx.sample_people(cohort.filters(), note="Interns' profiles", reserve=0.5)
+    sample = await ctx.sample_people(cohort.filters(), max_results=SAMPLE_N, fields=IC_FIELDS, note="Interns' profiles", reserve=0.5)
     ev = [e for e in (sample.evidence_id,) if e]
 
     await ctx.step("Checking who went full-time at the same company")
@@ -134,20 +137,26 @@ async def run(ctx: ToolContext) -> Result:
     await ctx.step("Writing it up")
     target = " ".join(x for x in [f"at {company_name}" if company_name else None, f"in {country}" if country else None] if x)
     kept, rest = company_tallies(outcomes)
+    n_read = len(sample.people)
+    read_note = f"Counted in the {len(finished)} finished internships found in {n_read} of the {cohort.n:,} matching profiles (a sample)."
+    hero = stat_section(
+        "chance",
+        "Your chance",
+        "interns and working students later went full-time at the same company",
+        count=chance,
+        note=" ".join(x for x in (cohort.widened_reason, read_note) if x),
+    )
+    hero.data["sample_n"] = n_read
     sections = [
-        stat_section(
-            "chance",
-            "Your chance",
-            "interns and working students later went full-time at the same company",
-            count=chance,
-            note=cohort.widened_reason,
-        ),
+        hero,
         section("companies", "ranked_table", "Companies by conversion for people like you", {
             "n": len(finished),
             "columns": IC_COLUMNS,
             "rows": ic_rows(kept, rest, ev, company_name, ctx),
             "default_sort": {"key": "converted", "dir": "desc"},
-            "caption": ("Companies with fewer than 5 finished internships are grouped as Other companies." if rest else None),
+            "sample_n": n_read,
+            "caption": f"Finished internships in the {n_read} profiles read."
+            + (" Companies with fewer than 5 finished internships are grouped as Other companies." if rest else ""),
         }, ev),
         text_section(
             "method",

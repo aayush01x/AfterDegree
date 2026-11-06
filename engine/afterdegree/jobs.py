@@ -11,7 +11,7 @@ from typing import Any
 
 from .drill_tokens import attach_drill_tokens
 from .config import Settings
-from .crustdata import CrustdataClient, CrustdataError
+from .crustdata import CrustdataClient, CrustdataError, RunBudget
 from .db import Store
 from .toolkit import ToolContext, ToolInputError
 
@@ -66,6 +66,23 @@ class JobRunner:
         task.add_done_callback(self._tasks.discard)
         return job_id
 
+    def start_drill(self, profile: dict, token) -> str:
+        """POST /api/drill: a drill is a job like a tool run, with its own smaller credit budget."""
+        from .drill import run_drill
+
+        try:
+            purged = self.store.purge_expired_people() + self.store.purge_old_drill_jobs(min(self.settings.person_data_ttl_days, 7.0) * 86400)
+            if purged:
+                log.info("purged %d expired anonymised people / drill results", purged)
+        except Exception as exc:  # pragma: no cover
+            log.warning("purge failed: %s", exc)
+
+        async def run(ctx: ToolContext):
+            ctx.budget = RunBudget(self.settings.max_live_calls_per_run, self.settings.drill_max_credits)
+            return await run_drill(ctx, token)
+
+        return self.start("drill", run, profile, token.model_dump())
+
     async def _run(self, job_id: str, tool: str, run_fn, profile: dict, params: dict) -> None:
         async def progress(step: str, done: int, total: int) -> None:
             self._set(job_id, status="running", progress={"step": step, "done": done, "total": max(total, done)})
@@ -85,7 +102,8 @@ class JobRunner:
         try:
             result = await run_fn(ctx)
             payload = json.loads(result.model_dump_json(by_alias=True))
-            payload = attach_drill_tokens(tool, params, payload)
+            if tool != "drill":
+                payload = attach_drill_tokens(tool, params, payload)
             total = ctx.total_steps
             self._set(job_id, status="done", progress={"step": "Done", "done": total, "total": total}, result=payload)
         except ToolInputError as exc:

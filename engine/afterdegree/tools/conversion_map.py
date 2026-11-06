@@ -13,6 +13,7 @@ from .common import company_value_from_key, distribution_section, resolve_place,
 from .internship_chances import company_tallies, intern_element, role_filter_for
 
 TOOL = "conversion_map"
+SAMPLE_N = 40
 
 
 async def run(ctx: ToolContext) -> Result:
@@ -46,7 +47,7 @@ async def run(ctx: ToolContext) -> Result:
             cohort_model.filters["school"] = None
 
     await ctx.step("Reading their career histories")
-    sample = await ctx.sample_people(filters, note="Interns' profiles", reserve=0.5)
+    sample = await ctx.sample_people(filters, max_results=SAMPLE_N, note="Interns' profiles", reserve=0.5)
     ev = [e for e in (sample.evidence_id,) if e]
 
     await ctx.step("Counting conversions by company and country")
@@ -78,12 +79,16 @@ async def run(ctx: ToolContext) -> Result:
             ],
             "rows": rows,
             "default_sort": {"key": "rate", "dir": "desc"},
-            "caption": "Companies with fewer than 5 finished internships are grouped as Other companies." if rest else None,
+            "sample_n": len(sample.people),
+            "caption": f"Finished internships in the {len(sample.people)} profiles read (of {n:,} matching)."
+            + (" Companies with fewer than 5 finished internships are grouped as Other companies." if rest else ""),
         }, ev),
         distribution_section("by_country", "Conversions by country", conversions, sum(conversions.values()), ev,
                              unit="conversions", other_label="Other countries", target=country,
-                             caption="Internships that turned into a full-time job at the same company, by country of the internship.",
-                             drill=lambda label: None if label == "Country not listed" else ctx.drill("country", label)),
+                             caption=f"Internships that turned into a full-time job at the same company, by country of the internship, "
+                                     f"in the {len(sample.people)} profiles read.",
+                             drill=lambda label: None if label == "Country not listed" else ctx.drill("country", label),
+                             sample_n=len(sample.people)),
     ]
 
     # Extra (not in the contract table): conversion by school group, when the scope is not a single school.

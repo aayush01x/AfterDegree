@@ -100,7 +100,9 @@ export function ToolLayout({ tool, title, purpose, form, fields, defaults, build
     if (!ready || !formRef.current) return;
     if (lastAutoKey.current === searchKey) return;
     const first = lastAutoKey.current === null;
-    if (first && !autoRun && !searchKey) return;
+    // Arriving from the sidebar (no question in the URL) waits for the button; links that carry a
+    // question (next steps, drill-downs, edits) run it.
+    if (first && !searchKey) return;
     const allFilled = list.filter((f) => f.required).every((f) => values[f.name]?.trim());
     if (!allFilled) {
       lastAutoKey.current = searchKey;

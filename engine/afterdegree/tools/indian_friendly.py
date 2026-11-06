@@ -16,6 +16,8 @@ from .common import company_value, place_text, resolve_place, step, title_or
 
 TOOL = "indian_friendly"
 TOP_EMPLOYERS = 8
+SAMPLE_N = 40  # only picks which employers to count; every number in the table is an exact count
+SENIOR_LEVELS = [k for k, v in tx.SENIORITY_LEVEL_RANK.items() if v >= 2]
 EMPLOYER_FIELDS = [
     "basic_profile.location",
     "experience.employment_details.current",
@@ -61,8 +63,8 @@ async def run(ctx: ToolContext) -> Result:
     n, ev_n = await ctx.count_people(base, f"Indian-educated people working in {place}")
 
     await ctx.step("Reading where they work")
-    sample = await ctx.sample_people(base, note="Profiles of Indian-educated people there", fields=EMPLOYER_FIELDS,
-                                     reserve=TOP_EMPLOYERS * 2 * 0.25 + 1.0)
+    sample = await ctx.sample_people(base, max_results=SAMPLE_N, note="Profiles of Indian-educated people there", fields=EMPLOYER_FIELDS,
+                                     reserve=TOP_EMPLOYERS * 3 * 0.25 + 1.0)
     groups: dict[str, list[tuple[ParsedPerson, Role]]] = defaultdict(list)
     names: dict[str, str] = {}
     ids: dict[str, int | None] = {}
@@ -88,6 +90,10 @@ async def run(ctx: ToolContext) -> Result:
         recent, ev_r = await ctx.count_people_safe(
             F.and_(base, comp, F.cond(f"{F.CUR}.start_date", "=>", since24)) or {}, f"…who joined {names[key]} in the last 24 months"
         )
+        # Exact, like the total next to it (not a tally of the few sampled profiles).
+        senior, ev_s = await ctx.count_people_safe(
+            F.and_(base, comp, F.cond(f"{F.CUR}.seniority_level", "in", SENIOR_LEVELS)) or {}, f"…at senior level or above at {names[key]}"
+        )
         members = groups[key]
         tenures = [years_between(r.start, today) for _, r in members if r.start]
         first_at = []
@@ -98,9 +104,9 @@ async def run(ctx: ToolContext) -> Result:
         stats_rows.append({
             "key": key, "name": names[key], "id": cid, "total": total, "recent": recent,
             "seniority": _seniority_label([r for _, r in members]) if len(members) >= 5 else None,
-            "senior_k": sum(_is_senior(r) for _, r in members), "members": len(members),
+            "senior_k": senior, "members": len(members),
             "tenure": median(first_at or tenures) if len(members) >= 5 else None,
-            "ev": [e for e in (ev_t, ev_r, sample.evidence_id) if e],
+            "ev": [e for e in (ev_t, ev_r, ev_s, sample.evidence_id) if e],
         })
 
     await ctx.step("Checking sponsorship signals")
@@ -151,7 +157,7 @@ async def run(ctx: ToolContext) -> Result:
             folded += 1
             continue
         shown_total += row["total"]
-        senior = make_count(row["senior_k"], row["members"], row["ev"]).model_dump() if row["members"] else None
+        senior = make_count(row["senior_k"], row["total"], row["ev"]).model_dump() if (row["senior_k"] is not None and row["total"]) else None
         rows.append({
             "id": str(row["id"] or row["key"]),
             "cells": {
@@ -179,13 +185,14 @@ async def run(ctx: ToolContext) -> Result:
                 {"key": "hires", "label": "Indian-educated people there", "type": "int", "bar": True},
                 {"key": "recent", "label": "Joined in the last 24 months", "type": "int"},
                 {"key": "seniority", "label": "Reached senior or above", "type": "count"},
-                {"key": "tenure", "label": "Median stay", "type": "years"},
+                {"key": "tenure", "label": "Median stay (profiles read)", "type": "years"},
                 {"key": "signals", "label": "Sponsorship signals", "type": "badges"},
             ],
             "rows": rows,
             "default_sort": {"key": "hires", "dir": "desc"},
             "caption": (f"{folded} employers with fewer than 5 visible people are not listed. " if folded else "")
-            + "Seniority and median stay come from the profiles read; badges come from the employer's own postings"
+            + "Counts and seniority are exact totals of visible profiles; median stay comes from the "
+            + f"{len(sample.people)} profiles read; badges come from the employer's own postings"
             + (" and public web results" if country in SPONSOR_REGISTER_COUNTRIES else "") + ". They are signals, not guarantees.",
         }, ev_all or [ev_n]),
         text_section("method", "How I found these employers",

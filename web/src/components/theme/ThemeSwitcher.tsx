@@ -4,9 +4,9 @@ import { useEffect, useSyncExternalStore } from "react";
 import styles from "./ThemeSwitcher.module.css";
 
 export const THEMES = [
-  { id: "signal", label: "Current" },
   { id: "blueprint", label: "Blueprint Paper" },
   { id: "night", label: "Night Ink" },
+  { id: "signal", label: "Signal Orange" },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]["id"];
@@ -14,7 +14,7 @@ export const THEME_KEY = "afterdegree.theme";
 
 function readTheme(): ThemeId {
   const current = document.documentElement.dataset.palette;
-  return (THEMES.find((t) => t.id === current)?.id ?? "signal") as ThemeId;
+  return (THEMES.find((t) => t.id === current)?.id ?? "blueprint") as ThemeId;
 }
 
 /** Re-render when the palette attribute on <html> changes. */
@@ -26,7 +26,7 @@ function subscribe(cb: () => void) {
 
 /** Fixed theme picker at the top of every page; the choice is remembered on this device. */
 export function ThemeSwitcher() {
-  const theme = useSyncExternalStore(subscribe, readTheme, () => "signal" as ThemeId);
+  const theme = useSyncExternalStore(subscribe, readTheme, () => "blueprint" as ThemeId);
 
   // Restore the saved theme on load (writes the DOM attribute only; the store above re-reads it).
   useEffect(() => {

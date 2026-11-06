@@ -236,6 +236,11 @@ class Store:
     def purge_expired_people(self) -> int:
         return self._exec("DELETE FROM drill_people WHERE expires_at < ?", (time.time(),)).rowcount
 
+    def purge_old_drill_jobs(self, max_age_s: float) -> int:
+        """Drill results hold anonymised career paths: they never outlive the person-data TTL."""
+        cutoff = datetime.fromtimestamp(time.time() - max_age_s, UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        return self._exec("DELETE FROM jobs WHERE tool = 'drill' AND created_at < ?", (cutoff,)).rowcount
+
     # ---------- credit log ----------
 
     def log_call(

@@ -40,7 +40,7 @@ async def run(ctx: ToolContext) -> Result:
     n, _ = await ctx.count_people(target, "People in the position")
 
     await ctx.step("Reading how they entered")
-    sample = await ctx.sample_people(target, note="Profiles of people in the position", reserve=0.5)
+    sample = await ctx.sample_people(target, max_results=50, note="Profiles of people in the position", reserve=0.5)
     ev = [e for e in (sample.evidence_id,) if e]
 
     await ctx.step("Mapping feeder employers, titles and schools")
@@ -126,7 +126,7 @@ async def run(ctx: ToolContext) -> Result:
         distribution_section("years", "Years of experience at entry", ordered_years, sum(ordered_years.values()), ev, top=None,
                              unit="people", keep_order=True, other_label="Other",
                              caption=(f"Median {median(raw_years):.1f} years of experience at entry." if raw_years else None),
-                             drill=lambda label: ctx.drill("years_band", "entry:" + label, label), sample_n=len(sample.people)),
+                             sample_n=len(sample.people)),  # experience at entry is read from whole profiles: not drillable
     ]
 
     next_steps = [step(f"Plan your own route to {role_label} in {place}", "reverse_gps", role=role, city=city, country=country, company=company)]

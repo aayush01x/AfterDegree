@@ -15,6 +15,7 @@ from .common import company_value, distribution_section, job_title_or, pct, plac
 TOOL = "job_postings"
 TREND_MONTHS = 12
 HIRE_CHECKS = 5
+JOB_SAMPLE_N = 60  # skills, languages and visa wording are read from the most recent postings
 
 
 def language_bucket(kind: str, lang: str | None) -> str:
@@ -80,9 +81,12 @@ async def run(ctx: ToolContext) -> Result:
                 meta = b.get("metadata") or {}
                 employers.append({"id": b.get("key"), "name": meta.get("company_name") or str(b.get("key")), "postings": int(b.get("count") or 0)})
     seniority_ordered = {k: seniority[k] for k in tx.SENIORITY_ORDER if seniority.get(k)}
+    # The title aggregation covers the most common titles only: show the rest instead of implying full coverage.
+    unclassified = max(0, n90 - sum(seniority_ordered.values()))
 
     await ctx.step("Reading recent postings for skills, languages and visas")
-    jobs, total_sampled_pool, ev_jobs = await ctx.sample_jobs(F.and_(base, *F.job_date_range(d90)) or base, note="Recent postings")
+    jobs, total_sampled_pool, ev_jobs = await ctx.sample_jobs(F.and_(base, *F.job_date_range(d90)) or base, max_results=JOB_SAMPLE_N,
+                                                              note="Recent postings")
     ev_s = [e for e in (ev_jobs,) if e]
     skills: Counter = Counter()
     langs: Counter = Counter()
@@ -140,9 +144,12 @@ async def run(ctx: ToolContext) -> Result:
                      unit="postings", evidence_ids=[evprev]),
         section("trend", "timeseries", "Postings added per month", {"points": points, "unit": "postings",
                 "caption": "Postings stay in the index after they close, so these are postings added each month, not live vacancies."}),
-        distribution_section("seniority", "Seniority asked for", seniority_ordered, sum(seniority_ordered.values()), [ev_agg], top=None,
-                             unit="postings", keep_order=True, caption="From the job titles of every posting in the last 90 days.",
-                             drill=lambda label: ctx.drill("seniority", label)),
+        distribution_section("seniority", "Seniority asked for", seniority_ordered, n90 if unclassified else sum(seniority_ordered.values()),
+                             [ev_agg], top=None, unit="postings", keep_order=True,
+                             caption="Exact counts from the job titles of the postings in the last 90 days"
+                             + (f"; {unclassified:,} postings with less common titles aren't grouped." if unclassified else "."),
+                             remainders={"Less common titles": unclassified} if unclassified else None,
+                             drill=lambda label: None if label.startswith("Mid level") else ctx.drill("seniority", label)),
         section("skills", "keywords", "Skills in demand", {
             "items": [{"term": t, "count": c, "share": round(c / n_jobs, 3) if n_jobs >= 10 else None, "you_have": t in ctx.user_skills(),
                        "drill": ctx.drill("skill", t)}
@@ -150,10 +157,12 @@ async def run(ctx: ToolContext) -> Result:
             "n": n_jobs, "caption": f"Mentions in the {n_jobs} most recent postings.",
         }, ev_s),
         distribution_section("languages", "Language requirements", langs, n_jobs, ev_s, top=None, unit="postings",
-                             caption="Read from posting text: 'required' means the posting asks for the language, not just mentions it.",
-                             drill=lambda label: ctx.drill("language", label)),
+                             caption=f"Read from the text of the {n_jobs} most recent postings (of {n90:,}): 'required' means the posting "
+                             "asks for the language, not just mentions it.",
+                             drill=lambda label: None if label.startswith("English only") else ctx.drill("language", label), sample_n=n_jobs),
         stat_section("visa", "Visa sponsorship", "postings mention visa sponsorship or relocation support", count=visa_count,
-                     note=f"{visa.get('rules_out', 0)} of {n_jobs} postings read say they can't sponsor; the rest don't say."),
+                     note=f"Read from the {n_jobs} most recent postings (of {n90:,}). {visa.get('rules_out', 0)} of them say they can't "
+                     "sponsor; the rest don't say."),
         section("employers", "ranked_table", "Employers posting most, and whether postings led to hires", {
             "n": n90,
             "columns": [{"key": "employer", "label": "Employer", "type": "text"},
@@ -165,6 +174,9 @@ async def run(ctx: ToolContext) -> Result:
         }, [ev_agg]),
     ]
 
+    for sec in sections:
+        if sec.id in ("visa", "skills"):
+            sec.data["sample_n"] = n_jobs
     next_steps = [
         step(f"Check how crowded {role_label} roles in {place} are", "market_saturation", role=role, city=city, country=country),
         step(f"Trace routes to {role_label} in {place}", "reverse_gps", role=role, city=city, country=country),

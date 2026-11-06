@@ -14,7 +14,7 @@ from typing import Any
 
 from . import filters as F
 from .config import Settings
-from .crustdata import BadRequestError, BudgetExceeded, CallResult, CrustdataClient, RunBudget, person_search_unit_cost
+from .crustdata import BadRequestError, BudgetExceeded, CallResult, CrustdataClient, ForbiddenError, RunBudget, person_search_unit_cost
 from .db import Store
 from .profile import ParsedPerson, parse_person
 from .schemas import (
@@ -102,6 +102,7 @@ class ToolContext:
     # Drill tokens (CONTRACT Appendix C): the origin tool, and the path already taken when building a drill result.
     tool: str = ""
     base_path: list[dict] = field(default_factory=list)
+    skills_unavailable: bool = False
 
     def __post_init__(self) -> None:
         self.budget = RunBudget(self.settings.max_live_calls_per_run, self.settings.max_credits_per_run)
@@ -214,6 +215,14 @@ class ToolContext:
             self._budget_warning()
             return None, None
 
+    async def count_many(self, items: list[tuple[Any, dict, str]]) -> dict[Any, tuple[int | None, str | None]]:
+        """Exact counts for several filter trees (count-only queries, run concurrently; the rate limiter paces them).
+        Returns key -> (count or None when the budget stopped it, evidence id)."""
+        import asyncio
+
+        found = await asyncio.gather(*(self.count_people_safe(f, note) for _key, f, note in items))
+        return {key: res for (key, _f, _n), res in zip(items, found)}
+
     async def sample_people(
         self,
         filters: dict,
@@ -228,6 +237,8 @@ class ToolContext:
         probe_body = {"filters": filters, "fields": fields, "limit": 1}
         unit = person_search_unit_cost(probe_body)
         reserve = self.settings.sample_credit_reserve if reserve is None else reserve
+        # Count-only queries that run after a sample must never be starved by it (they carry the exact totals).
+        reserve = max(reserve, self.settings.count_credit_reserve)
         affordable = int(math.floor(max(0.0, self.budget.remaining_credits - reserve) / unit)) if unit > 0 else cap
         want = max(0, min(cap, affordable))
         if want <= 0:
@@ -251,6 +262,13 @@ class ToolContext:
                     # Some accounts reject sub-path `fields`; fall back to whole sections once.
                     if fields is not PERSON_SAMPLE_FIELDS_FALLBACK and "field" in (exc.detail or "").lower() and not calls:
                         fields = PERSON_SAMPLE_FIELDS_FALLBACK
+                        continue
+                    raise
+                except ForbiddenError:
+                    # `skills` in the response is enabled per account; read the profiles without it.
+                    if not calls and any(f.startswith("skills") for f in fields):
+                        fields = [f for f in fields if not f.startswith("skills")]
+                        self.skills_unavailable = True
                         continue
                     raise
                 calls.append(call)

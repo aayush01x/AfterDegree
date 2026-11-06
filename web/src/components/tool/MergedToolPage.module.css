@@ -1,0 +1,80 @@
+/* Two views of one question: a segmented bar of paper tabs on the field */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-top: var(--ad-space-3);
+  border: 1px solid var(--ad-rule);
+  background: var(--ad-paper);
+  width: fit-content;
+  max-width: 100%;
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 var(--ad-space-3);
+  border: 0;
+  border-right: 1px solid var(--ad-rule);
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  font: inherit;
+  font-size: var(--ad-text-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab:last-child {
+  border-right: 0;
+}
+.tab:hover {
+  background: var(--ad-paper-sunk);
+}
+.tab[aria-selected="true"] {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--ad-focus-paper);
+  outline-offset: 2px;
+}
+.tabLabel {
+  white-space: nowrap;
+}
+/* small square: filled = ready, outlined + pulsing = running */
+.tabState {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+}
+.tabState[data-state="ready"] {
+  background: currentColor;
+}
+.tabState[data-state="error"] {
+  border-color: var(--ad-error);
+  background: var(--ad-error);
+}
+.tabState[data-state="running"] {
+  animation: pulse 900ms ease-in-out infinite alternate;
+}
+@keyframes pulse {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tabState[data-state="running"] {
+    animation: none;
+  }
+}
+.blurb {
+  margin: var(--ad-space-1) 0 var(--ad-space-2);
+  max-width: 72ch;
+  color: var(--ad-on-field);
+  font-size: var(--ad-text-sm);
+  line-height: 22px;
+  font-weight: 500;
+}

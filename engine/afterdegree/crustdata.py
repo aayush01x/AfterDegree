@@ -230,7 +230,63 @@ class DiskCache:
                     pass
         return removed
 
+    # -- sample reuse: a person-search page can be served from a larger cached page of the same query
+
+    _index: dict[str, list[tuple[int, frozenset, str]]] | None = None
+
+    @staticmethod
+    def _sample_sig(body: Any) -> str | None:
+        if not isinstance(body, dict) or body.get("cursor") or int(body.get("limit") or 0) <= 1:
+            return None
+        return canonical_json({"filters": body.get("filters"), "sorts": body.get("sorts")})
+
+    def _ensure_index(self) -> dict[str, list[tuple[int, frozenset, str]]]:
+        if self._index is None:
+            index: dict[str, list[tuple[int, frozenset, str]]] = {}
+            if self.dir.exists():
+                for path in self.dir.glob("*/*.json"):
+                    try:
+                        entry = json.loads(path.read_text(encoding="utf-8"))
+                    except (OSError, json.JSONDecodeError):
+                        continue
+                    if entry.get("endpoint") != "/person/search":
+                        continue
+                    sig = self._sample_sig(entry.get("body"))
+                    if sig:
+                        index.setdefault(sig, []).append((int(entry["body"].get("limit") or 0), frozenset(entry["body"].get("fields") or []),
+                                                          path.stem))
+            self._index = index
+        return self._index
+
+    def superset_page(self, endpoint: str, body: dict) -> tuple[dict, str] | None:
+        """A cached first page of the same person search (same filters and sort, at least these fields) holding at least
+        `limit` profiles, or every match. Returns (response cut to `limit`, cache key)."""
+        sig = self._sample_sig(body) if endpoint == "/person/search" else None
+        if not sig:
+            return None
+        want = int(body.get("limit") or 0)
+        need = frozenset(body.get("fields") or [])
+        for limit, fields, key in sorted(self._ensure_index().get(sig, []), key=lambda t: t[0]):
+            if not (need <= fields) or not fields:
+                continue
+            entry = self.get(key)
+            if entry is None:
+                continue
+            resp = entry.get("response") or {}
+            profiles = resp.get("profiles") or []
+            total = int(resp.get("total_count") or 0)
+            if len(profiles) >= want or (total and len(profiles) >= total):
+                out = {**resp, "profiles": profiles[:want]}
+                if len(profiles) > want:
+                    out["next_cursor"] = None  # the larger page's cursor doesn't continue a shorter one
+                return {**entry, "response": out}, key
+        return None
+
     def set(self, key: str, endpoint: str, body: Any, response: Any, fetched_at: str) -> None:
+        if endpoint == "/person/search" and self._index is not None:
+            sig = self._sample_sig(body)
+            if sig:
+                self._index.setdefault(sig, []).append((int(body.get("limit") or 0), frozenset(body.get("fields") or []), key))
         path = self._path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
         entry = {"endpoint": endpoint, "body": body, "response": response, "fetched_at": fetched_at, "stored_at": self.clock()}
@@ -586,6 +642,14 @@ class CrustdataClient:
                     budget.cached_calls += 1
                 self._log(endpoint, "cache", 200, count_results(endpoint, entry["response"]), 0.0, None, run_id, key)
                 return CallResult(endpoint, body, entry["response"], "cache", entry.get("fetched_at") or _now_iso(), 0.0, key)
+            reused = self.cache.superset_page(endpoint, body)
+            if reused is not None:  # already paid for: a larger sample of the same query
+                entry, src_key = reused
+                if budget is not None:
+                    budget.cached_calls += 1
+                self._log(endpoint, "cache", 200, count_results(endpoint, entry["response"]), 0.0, None, run_id, src_key)
+                return CallResult(endpoint, body, entry["response"], "cache", entry.get("fetched_at") or _now_iso(), 0.0, src_key,
+                                  meta={"reused_from": src_key})
 
         if not self.has_key:
             raise MissingKeyError(

@@ -110,8 +110,9 @@ function GoalEditor({ initial, evidence }: { initial: GoalParts; evidence: React
       as="section"
       className={styles.goalCard}
     >
-      <Form action="/tools/reverse-gps" className={styles.goalForm}>
-        <input type="hidden" name="goal_text" value={goalText(parts)} />
+      <Form action="/tools/career-routes" className={styles.goalForm}>
+        <input type="hidden" name="tab" value="path" />
+        {PART_ORDER.map((k) => (parts[k] ? <input key={k} type="hidden" name={k} value={parts[k]} /> : null))}
         <ul className={styles.chips} role="list">
           {PART_ORDER.map((k) => {
             const v = parts[k];
@@ -304,7 +305,6 @@ export function View({ result }: { result: ResultEnvelope }) {
   const allThin = routes.length > 0 && routes.every((r) => typeof r.people !== "number" && r.people.n < 10);
   const isThin = result.confidence === "low" || Boolean(cohort?.widened) || allThin;
   const widenPart: PartKey | null = goal.city ? "city" : goal.company ? "company" : null;
-  const widenedText = widenPart ? goalText({ ...goal, [widenPart]: undefined }) : "";
 
   const kw = kwSection?.data as KeywordsData | undefined;
   const lacking = kw ? { ...kw, items: kw.items.filter((i) => !i.you_have) } : undefined;
@@ -365,7 +365,7 @@ export function View({ result }: { result: ResultEnvelope }) {
           <div className={styles.notice}>
             <Notes lines={notes} />
             {widenPart && isThin && (
-              <ButtonLink href={toolHref("reverse_gps", { goal_text: widenedText })} variant="secondary" size="sm">
+              <ButtonLink href={toolHref("reverse_gps", { ...goal, [widenPart!]: undefined })} variant="secondary" size="sm">
                 Try it without the {PART_LABEL[widenPart].toLowerCase()}
               </ButtonLink>
             )}

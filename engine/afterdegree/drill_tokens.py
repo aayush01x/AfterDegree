@@ -9,7 +9,16 @@ from __future__ import annotations
 
 from typing import Any
 
-_SKIP_LABELS = ("other", "elsewhere", "at other", "still in india")
+_SKIP_LABELS = ("other", "elsewhere", "at other", "still in india", "country not", "no ", "first job", "less common")
+# Sections whose items are read from whole profiles and can't be expressed as a search filter: no token.
+_NOT_DRILLABLE = {("routes_to_position", "years")}
+# Single groups that can't be searched for (absence of a language ask, titles stating no seniority).
+_NOT_DRILLABLE_LABELS = {("job_postings", "seniority", "mid level"), ("job_postings", "languages", "english only")}
+
+
+def _label_blocked(tool: str, section_id: str, label: str) -> bool:
+    low = label.strip().lower()
+    return any(t == tool and s == section_id and low.startswith(p) for t, s, p in _NOT_DRILLABLE_LABELS)
 
 
 def _dimension(section_id: str) -> str | None:
@@ -53,6 +62,8 @@ def _token(tool: str, params: dict, dimension: str, value: str, label: str) -> d
 def attach_drill_tokens(tool: str, params: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
     clean = {k: v for k, v in (params or {}).items() if k != "profile_id"}
     for section in result.get("sections") or []:
+        if (tool, section.get("id")) in _NOT_DRILLABLE:
+            continue
         dim = _dimension(str(section.get("id") or ""))
         data = section.get("data") or {}
         kind = section.get("kind")
@@ -61,7 +72,7 @@ def attach_drill_tokens(tool: str, params: dict[str, Any], result: dict[str, Any
         if kind == "distribution":
             for item in data.get("items") or []:
                 label = str(item.get("label") or "")
-                if "drill" in item or item.get("remainder") or _skip(label):
+                if "drill" in item or item.get("remainder") or _skip(label) or _label_blocked(tool, str(section.get("id")), label):
                     continue
                 item["drill"] = _token(tool, clean, dim, label, label)
         elif kind == "ranked_table":

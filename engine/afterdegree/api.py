@@ -23,7 +23,9 @@ from .jobs import JobRunner
 from .llm import LLM
 from .onboarding import Onboarding, home_next_steps
 from .profile import extract_person_data, normalise_linkedin_url, normalise_profile
+from .people import PERSON_ID_RE
 from .schemas import (
+    DrillRequest,
     Evidence,
     Goals,
     Health,
@@ -35,6 +37,7 @@ from .schemas import (
     OnboardingCompleteResponse,
     OnboardingProfileRequest,
     OnboardingProfileResponse,
+    PersonDetail,
     StoredProfile,
     Usage,
     UsageEndpoint,
@@ -78,6 +81,8 @@ def create_app(
         st.started_at = utcnow_iso()
         st.store = store or Store(settings.db_path)
         interrupted = st.store.fail_interrupted_jobs()
+        st.store.purge_expired_people()
+        st.store.purge_old_drill_jobs(min(settings.person_data_ttl_days, 7.0) * 86400)
         if interrupted:
             log.info("marked %d interrupted jobs as failed", interrupted)
         transport = crustdata_transport
@@ -244,6 +249,25 @@ def create_app(
 
     for tool_name, (run_fn, body_model, slug) in TOOLS.items():
         register_tool(tool_name, run_fn, body_model, slug)
+
+    # ------------------------------------------------------------ drill-down (CONTRACT Appendix C + D)
+
+    @app.post("/api/drill", response_model=JobCreated)
+    async def drill(body: DrillRequest, request: Request):
+        prof = load_profile(request, body.profile_id)
+        job_id = request.app.state.runner.start_drill(prof, body.drill)
+        return JobCreated(job_id=job_id)
+
+    @app.get("/api/people/{person_id}", response_model=PersonDetail)
+    async def person_detail(person_id: str, request: Request, profile_id: str = ""):
+        if not profile_id:
+            raise APIError(400, "bad_input", "I need to know whose drill-down this career path came from.", "Add ?profile_id=… to the request.")
+        load_profile(request, profile_id)
+        body = _store(request).get_drill_person(person_id, profile_id) if PERSON_ID_RE.match(person_id) else None
+        if body is None:
+            raise APIError(404, "person_not_found", "This career path is no longer available.",
+                           "Paths are kept for 7 days and only for the profile that opened them. Open the group again to see current paths.")
+        return JSONResponse(content=PersonDetail.model_validate(body).model_dump(mode="json"))
 
     # ------------------------------------------------------------ jobs & evidence
 

@@ -157,6 +157,7 @@ class DistributionItem(_Model):
     target: bool = False
     remainder: bool = False
     drill: DrillToken | None = None
+    preview: list[dict[str, Any]] | None = None
 
 
 class DistributionData(_Model):
@@ -186,6 +187,7 @@ class TableRow(_Model):
     rest: bool = False
     drill: DrillToken | None = None
     posting_url: str | None = None
+    preview: list[dict[str, Any]] | None = None
 
 
 class SortSpec(_Model):
@@ -290,6 +292,7 @@ class KeywordItem(_Model):
 
 class KeywordsData(_Model):
     n: int | None = None
+    sample_n: int | None = None
     items: list[KeywordItem]
     caption: str | None = None
 
@@ -569,11 +572,20 @@ class RouteStat(_Model):
     count: Count
 
 
+class RouteSkill(_Model):
+    term: str
+    count: int
+    n: int
+
+
 class PersonDetail(PersonCard):
     skills: list[str] = Field(default_factory=list)
     route_stats: list[RouteStat] = Field(default_factory=list)
     position: dict[str, int] | None = None
     why: list[dict[str, str]] = Field(default_factory=list)
+    same_route: list[PersonCard] = Field(default_factory=list)
+    route_skills: list[RouteSkill] = Field(default_factory=list)
+    route_typical_years: float | None = None
     data_date: str | None = None
 
 
@@ -581,6 +593,7 @@ class DrillContextFilter(_Model):
     label: str
     value: str
     key: str | None = None
+    param: str | None = None
     drill: DrillToken | None = None
 
 

@@ -105,7 +105,8 @@ async def run(ctx: ToolContext) -> Result:
 
     await ctx.step("Reading how they got there")
     use_like = (n_like or 0) >= 10
-    sample = await ctx.sample_people(like_filters if use_like else target, note="Profiles of people in the goal position", reserve=2.5)
+    sample = await ctx.sample_people(like_filters if use_like else target, max_results=40, note="Profiles of people in the goal position",
+                                     reserve=2.5)
     ev = [e for e in (sample.evidence_id,) if e]
     if not use_like:
         ctx.warn("Too few Indian-educated people were visible in this exact position, so the routes include people from any background.")
@@ -166,7 +167,7 @@ async def run(ctx: ToolContext) -> Result:
     skills_section = None
     job_filters = F.and_(job_title_or(role), F.job_country(country) if country else None, F.job_city(city) if city else None)
     if job_filters:
-        jobs, total_jobs, ev_jobs = await ctx.sample_jobs(job_filters, max_results=60, note="Postings for the goal role")
+        jobs, total_jobs, ev_jobs = await ctx.sample_jobs(job_filters, max_results=40, note="Postings for the goal role")
         skill_counts: Counter = Counter()
         for j in jobs:
             for s in tx.skills_in_text((j.get("content") or {}).get("description")):

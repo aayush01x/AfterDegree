@@ -5,7 +5,7 @@ import "./globals.css";
 import { ThemeSwitcher, THEME_KEY } from "@/components/theme/ThemeSwitcher";
 
 /** The active colour palette (a token block in palettes.css). Swap palettes here. */
-const PALETTE = "signal";
+const PALETTE = "blueprint";
 
 /* Display: square, grid-constructed face with angled cuts. */
 const display = Chakra_Petch({

@@ -59,10 +59,12 @@ class Settings:
     max_live_calls_per_run: int = 60
     max_credits_per_run: float = 25.0
     # Profiles/postings sampled per query (capped further by the credit budget).
-    search_sample_cap: int = 200
+    search_sample_cap: int = 60  # tools ask for less (30–50); exact totals come from count-only queries
     job_sample_cap: int = 100
     # Credits kept back from a sample so later counting calls in the same run can still run.
     sample_credit_reserve: float = 3.0
+    # Minimum credits any profile sample leaves for the count-only queries that follow it (exact totals).
+    count_credit_reserve: float = 3.0
 
     # Upstream behaviour.
     http_timeout_s: float = 45.0
@@ -72,8 +74,11 @@ class Settings:
     llm_timeout_s: float = 60.0
 
     # Drill-down runs (POST /api/drill): their own, smaller budget.
-    drill_max_credits: float = 15.0
-    drill_sample_cap: int = 30
+    drill_max_credits: float = 20.0
+    # Anonymised career paths read per drill (max 30, per CONTRACT Appendix C).
+    drill_sample_cap: int = 20
+    # Postings read for a company profile (language mix, open roles).
+    drill_job_sample: int = 40
     # Person data (raw Crustdata responses and anonymised drill people) never lives longer than this.
     person_data_ttl_days: float = 7.0
 
@@ -134,6 +139,7 @@ def load_settings(env_file: Path | None = None, **overrides) -> Settings:
         "AFTERDEGREE_MAX_RETRIES": ("max_retries", int),
         "AFTERDEGREE_DRILL_MAX_CREDITS": ("drill_max_credits", float),
         "AFTERDEGREE_DRILL_SAMPLE_CAP": ("drill_sample_cap", int),
+        "AFTERDEGREE_COUNT_RESERVE": ("count_credit_reserve", float),
     }
     for env_name, (attr, cast) in numeric.items():
         raw = get(env_name)
