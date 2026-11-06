@@ -4,11 +4,11 @@
   min-width: 0;
 }
 
-/* who counts: definition on the left, the two chip groups on the right */
-.cohort {
+/* change who counts: the two chip groups side by side on a white strip */
+.adjust {
   --ad-focus: var(--ad-focus-paper);
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--ad-space-3) var(--ad-space-5);
   padding: var(--ad-space-3);
   background: var(--ad-paper);
@@ -17,31 +17,7 @@
   font-size: var(--ad-text-md);
   line-height: 20px;
 }
-.cohortText {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ad-space-1);
-  min-width: 0;
-}
-.cohortHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px var(--ad-space-1);
-}
-.cohortHead h2 {
-  font-size: var(--ad-text-lg);
-  line-height: 24px;
-  font-weight: 700;
-}
-.muted {
-  color: var(--ad-muted);
-}
-.adjust {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ad-space-2);
+.group {
   min-width: 0;
 }
 .groupLabel {
@@ -103,7 +79,7 @@
 }
 
 @media (max-width: 1100px) {
-  .cohort {
+  .adjust {
     grid-template-columns: minmax(0, 1fr);
   }
   .pair {

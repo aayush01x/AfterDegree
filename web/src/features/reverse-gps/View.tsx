@@ -4,7 +4,7 @@ import Form from "next/form";
 import { useMemo, useState, type ReactNode } from "react";
 import type { Count } from "@/lib/types";
 import { drillOf, pressable } from "@/components/tool/drill";
-import { HeroNumber, Notes, ResultFoot, SectionHead, ToolHero } from "@/components/tool/ToolHero";
+import { CohortCard, HeroNumber, Notes, ResultFoot, SectionHead, ToolHero } from "@/components/tool/ToolHero";
 import { useDrill } from "@/components/drill/useDrill";
 import { EvidenceKey } from "@/components/data/EvidenceKey";
 import { KeywordList } from "@/components/data/KeywordList";
@@ -314,11 +314,13 @@ export function View({ result }: { result: ResultEnvelope }) {
 
   const bestToken = (bestItem ? drillOf(bestItem) : null) ?? null;
   const bestK = bestItem ? peopleK(bestItem) : 0;
+  /* route counts are over the profiles the engine read, not the whole cohort */
+  const readN = bestItem && typeof bestItem.people !== "number" ? bestItem.people.n : null;
   const bestTitle = bestItem?.title ?? "the best-fit route";
   const notes = [
     ...(isThin
       ? [
-          `${cohort?.widened_reason ?? "Only a few people match this goal, so the routes below can swing a lot."} That is not a bad sign for you. It means the data is thin, so read the routes as hints for where to look, not as a ranking.`,
+          `Only a few people match this goal, so the routes below can swing a lot. That is not a bad sign for you. It means the data is thin, so read the routes as hints for where to look, not as a ranking.`,
         ]
       : []),
     ...realWarnings,
@@ -334,8 +336,8 @@ export function View({ result }: { result: ResultEnvelope }) {
           lead="At least"
           numeral={<HeroNumber value={bestK} label={`${bestK} people`} />}
           say={
-            cohort
-              ? `of the ${fmtInt(cohort.n_visible)} people in ${place || "this role"} took the route that fits you best.`
+            readN !== null
+              ? `of the ${fmtInt(readN)} people in ${place || "this role"} whose careers we read took the route that fits you best.`
               : "people took the route that fits you best."
           }
           note={result.summary}
@@ -354,6 +356,7 @@ export function View({ result }: { result: ResultEnvelope }) {
               )}
             </>
           }
+          aside={cohort ? <CohortCard result={result} title="Who we looked at" /> : undefined}
         />
       )}
       <div className={styles.context}>
@@ -377,15 +380,17 @@ export function View({ result }: { result: ResultEnvelope }) {
           <TileRow
             band
             title={routeSection?.title ?? "Routes that fit you"}
-            note={`${routes.length} ${routes.length === 1 ? "route" : "routes"} · people who took each, of ${cohort ? fmtInt(cohort.n_visible) : "those we saw"}`}
+            note={`${routes.length} ${routes.length === 1 ? "route" : "routes"} · people who took each, of ${readN !== null ? fmtInt(readN) : "those we read"}`}
             label="Routes to your goal"
           >
             {routes.map((r, i) => {
               const steps = r.steps.slice(1).map((st) => st.label);
+              /* the goal is the same on every route, so the tile names the way there */
+              const via = steps.slice(0, -1).join(" → ");
               return (
                 <RouteTile
                   key={r.id}
-                  title={steps.length > 0 && steps.length <= 3 ? steps.join(" → ") : (r.title ?? (steps.join(" → ") || `Route ${i + 1}`))}
+                  title={r.title ?? (via || steps.join(" → ") || `Route ${i + 1}`)}
                   steps={steps}
                   people={peopleK(r)}
                   years={r.typical_years}

@@ -4,7 +4,7 @@ import Form from "next/form";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import type { DrillToken } from "@/lib/drill-types";
 import { drillOf, pressable } from "@/components/tool/drill";
-import { HeroNumber, Notes, ResultFoot, ToolHero } from "@/components/tool/ToolHero";
+import { CohortCard, HeroNumber, Notes, ResultFoot, ToolHero } from "@/components/tool/ToolHero";
 import { useDrill } from "@/components/drill/useDrill";
 import { EvidenceKey } from "@/components/data/EvidenceKey";
 import { Panel } from "@/components/data/Panel";
@@ -108,7 +108,7 @@ function Cells({ count, start, total, label }: { count: Count; start: number; to
 function detailFor(r: Rung): string {
   const { count: c } = r;
   const where = r.country && r.country !== "Various" ? ` (${r.country})` : "";
-  const base = `${r.name}${where}: ${c.display} interns and working students went full-time.`;
+  const base = `${r.name}${where}: ${c.k} of ${c.n} interns and working students went full-time.`;
   if (c.ci && c.share !== null) {
     return `${base} That is about ${fmtPct(c.share)}, and the true figure is likely between ${fmtPct(c.ci[0])} and ${fmtPct(c.ci[1])}.`;
   }
@@ -286,7 +286,7 @@ export function View({ result }: { result: ResultEnvelope }) {
   const notes = [
     ...(isThin
       ? [
-          `${cohort?.widened_reason ?? "We found only a few interns and working students that match, so these figures can swing a lot."} That is not a bad sign for you. It only means the data is thin, so read the squares as hints, not as a verdict.`,
+          `We found only a few interns and working students that match, so these figures can swing a lot. That is not a bad sign for you. It only means the data is thin, so read the squares as hints, not as a verdict.`,
         ]
       : []),
     ...realWarnings,
@@ -329,31 +329,18 @@ export function View({ result }: { result: ResultEnvelope }) {
               </ButtonLink>
             )
           }
+          aside={cohort ? <CohortCard result={result} title="Who is counted" /> : undefined}
         />
       )}
 
-      {/* 2. Who is counted, and a warm note when the data is thin */}
-      {(cohort || notes.length > 0) && (
-        <div className={styles.context}>
-          {cohort && (
-            <aside className={styles.cohortCard} aria-label="Who is counted">
-              <div className={styles.cardHead}>
-                <h2>Who is counted</h2>
-                {evNode}
-              </div>
-              <p>{cohort.definition}.</p>
-              {oc && <p className={styles.muted}>{oc.display} went full-time at the same company.</p>}
-            </aside>
-          )}
-          {notes.length > 0 && (
-            <div className={styles.notice}>
-              <Notes lines={notes} />
-              {isThin && widenDrop && (
-                <ButtonLink href={toolHref("conversion_map", { scope: widened })} variant="secondary" size="sm">
-                  Look again across {widenWord[widenDrop]}
-                </ButtonLink>
-              )}
-            </div>
+      {/* 2. A warm note when the data is thin */}
+      {notes.length > 0 && (
+        <div className={styles.notice}>
+          <Notes lines={notes} />
+          {isThin && widenDrop && (
+            <ButtonLink href={toolHref("conversion_map", { scope: widened })} variant="secondary" size="sm">
+              Look again across {widenWord[widenDrop]}
+            </ButtonLink>
           )}
         </div>
       )}

@@ -7,7 +7,7 @@ import { toolHref } from "@/lib/tools";
 import { fmtInt, fmtPct } from "@/lib/format";
 import { isCount } from "@/lib/count";
 import { drillOf, pressable } from "@/components/tool/drill";
-import { HeroNumber, Notes, ResultFoot, ToolHero } from "@/components/tool/ToolHero";
+import { CohortCard, HeroNumber, Notes, ResultFoot, ToolHero } from "@/components/tool/ToolHero";
 import { useDrill } from "@/components/drill/useDrill";
 import { Panel } from "@/components/data/Panel";
 import { SectionView, coverageOf } from "@/components/data/ResultView";
@@ -18,12 +18,6 @@ import { PosterTile } from "@/components/tiles/PosterTile";
 import { TileRow } from "@/components/tiles/TileRow";
 import { ButtonLink } from "@/components/ui/Button";
 import styles from "./View.module.css";
-
-const CONF = {
-  high: "Plenty of people match, so the pattern is reliable.",
-  medium: "Enough people to see a pattern; treat exact figures loosely.",
-  low: "Few people match, so read these as stories, not odds.",
-} as const;
 
 type Of<K extends SectionKind> = Extract<Section, { kind: K }>;
 function find<K extends SectionKind>(sections: Section[], id: string, kind: K): Of<K> | undefined {
@@ -93,7 +87,6 @@ export function View({ result }: { result: ResultEnvelope }) {
   const lo = chance?.ci ? fmtPct(chance.ci[0]) : null;
   const hi = chance?.ci ? fmtPct(chance.ci[1]) : null;
   const notes = [
-    ...(cohort?.widened && cohort.widened_reason ? [cohort.widened_reason] : []),
     ...(thin
       ? [
           `We found only ${chance ? fmtInt(chance.n) : "a few"} people like you here. With so few, one more or one less would change the answer, so we show the counts and no percentage. This says nothing bad about your chances. It says we cannot see enough yet.`,
@@ -139,32 +132,17 @@ export function View({ result }: { result: ResultEnvelope }) {
               </ButtonLink>
             )
           }
+          aside={<CohortCard result={result} n={chance.n} />}
         />
       )}
 
-      {(chance || notes.length > 0) && (
-        <div className={styles.context}>
-          {chance && (
-            <aside className={styles.cohort} aria-label="Who we looked at">
-              <div className={styles.cohortHead}>
-                <h2>Who we looked at</h2>
-                {evidence}
-              </div>
-              {cohort && <p>{cohort.definition}.</p>}
-              <p className={styles.muted}>
-                {fmtInt(chance.k)} of {fmtInt(chance.n)} went full-time at the same company. How sure: {result.confidence}. {CONF[result.confidence]}
-              </p>
-            </aside>
-          )}
-          {notes.length > 0 && (
-            <div className={styles.notice}>
-              <Notes lines={notes} />
-              {thin && widenHref && (
-                <ButtonLink variant="secondary" size="sm" href={widenHref}>
-                  Look at any role in {country}
-                </ButtonLink>
-              )}
-            </div>
+      {notes.length > 0 && (
+        <div className={styles.notice}>
+          <Notes lines={notes} />
+          {thin && widenHref && (
+            <ButtonLink variant="secondary" size="sm" href={widenHref}>
+              Look at any role in {country}
+            </ButtonLink>
           )}
         </div>
       )}
@@ -223,7 +201,7 @@ export function View({ result }: { result: ResultEnvelope }) {
         </Panel>
       )}
 
-      {companies && (
+      {companies && named.length > 0 && (
         <Panel title={companies.title} caption={companies.data.caption} evidence={evidence}>
           <RankedTable data={companies.data as RankedTableData} />
         </Panel>
@@ -278,7 +256,7 @@ function CellGrid({
   }
   const starts = groups.map((_, i) => groups.slice(0, i).reduce((sum, x) => sum + x.seen, 0));
   return (
-    <ul className={styles.groups} role="list">
+    <ul className={[styles.groups, groups.length === 1 && styles.single].filter(Boolean).join(" ")} role="list">
       {groups.map((g, gi) => {
         const on = focus === g.key;
         const label = `${g.company}: ${g.converted} of ${g.seen} went full-time`;
