@@ -612,6 +612,9 @@ export function buildResult(tool: ToolId, ctx: Ctx): ResultEnvelope {
       return reverseGps(ctx);
     case "routes_to_position":
       return routesToPosition(ctx);
+    case "college_paths":
+      // Example mode only: replaced by a dedicated fixture once the engine's section shape is final.
+      return { ...routesToPosition(ctx), tool: "college_paths" } as ResultEnvelope;
     case "job_postings":
       return jobPostings(ctx);
     case "indian_friendly":
@@ -637,6 +640,7 @@ export const JOB_STEPS: Record<ToolId, string[]> = {
   conversion_map: ["Finding internships in scope", "Matching companies", "Counting conversions", "Ranking", "Writing it up"],
   reverse_gps: ["Reading your goal", "Finding people in that position", "Tracing their routes backward", "Matching routes to your start", "Finding the gaps", "Writing it up"],
   routes_to_position: ["Finding people in the position", "Tracing previous roles", "Grouping feeders", "Writing it up"],
+  college_paths: ["Finding people in your goal", "Reading where they studied", "Counting each university", "Checking each college's outcome rate", "Writing it up"],
   job_postings: ["Searching postings", "Reading requirements", "Checking languages and visas", "Matching hires to postings", "Writing it up"],
   indian_friendly: ["Finding Indian-educated people abroad", "Grouping by employer", "Checking postings for sponsorship", "Writing it up"],
   market_saturation: ["Counting new entrants", "Counting openings", "Comparing quarters", "Comparing cities", "Writing it up"],

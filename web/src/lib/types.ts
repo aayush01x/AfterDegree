@@ -195,6 +195,7 @@ export type ToolId =
   | "conversion_map"
   | "reverse_gps"
   | "routes_to_position"
+  | "college_paths"
   | "job_postings"
   | "indian_friendly"
   | "market_saturation";

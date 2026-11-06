@@ -72,6 +72,15 @@ export const MERGED: MergedPage[] = [
         requires: ["role"],
         toParams: (v) => compact({ role: v.role, company: v.company, city: v.city, country: v.country }),
       },
+      {
+        key: "colleges",
+        tool: "college_paths",
+        label: "Colleges & programmes",
+        blurb: "Which universities and programmes took people like you to this goal, how often each one did, and how your own college compares.",
+        blurbUniversity: "Which of your programmes lead to this position, and how often.",
+        requires: ["role"],
+        toParams: (v) => compact({ role: v.role, company: v.company, city: v.city, country: v.country }),
+      },
     ],
   },
   {

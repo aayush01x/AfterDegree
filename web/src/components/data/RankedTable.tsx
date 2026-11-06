@@ -1,5 +1,6 @@
 "use client";
 
+import { Drillable, drillOf } from "./Drillable";
 import { useMemo, useState } from "react";
 import type { CellValue, Count, RankedColumn, RankedRow, RankedTableData } from "@/lib/types";
 import { isCount } from "@/lib/count";
@@ -147,7 +148,13 @@ export function RankedTable({ data, caption, sortable = true, maxRows }: RankedT
         </thead>
         <tbody>
           {visible.map((r, ri) => (
-            <tr key={r.id ?? ri} className={[r.you && styles.you, r.rest && styles.rest].filter(Boolean).join(" ")}>
+            <Drillable
+              as="tr"
+              key={r.id ?? ri}
+              token={r.rest ? null : (drillOf(r) ?? null)}
+              label={String(r.cells[cols[0]?.key] ?? "")}
+              className={[r.you && styles.you, r.rest && styles.rest].filter(Boolean).join(" ") || undefined}
+            >
               {cols.map((c, ci) => {
                 const v = r.cells[c.key];
                 const Cell = ci === 0 ? "th" : "td";
@@ -174,7 +181,7 @@ export function RankedTable({ data, caption, sortable = true, maxRows }: RankedT
                   </Cell>
                 );
               })}
-            </tr>
+            </Drillable>
           ))}
         </tbody>
       </table>

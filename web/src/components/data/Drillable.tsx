@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, ReactNode } from "react";
+import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 import type { DrillToken } from "@/lib/drill-types";
 import { useDrill } from "@/components/drill/useDrill";
 import styles from "./Drillable.module.css";
@@ -24,6 +24,7 @@ export interface DrillableProps {
   activeClassName?: string;
   /** Accessible description of what opens, e.g. "See the 71 people in Germany". */
   actionLabel?: string;
+  style?: CSSProperties;
   children: ReactNode;
 }
 
@@ -32,10 +33,15 @@ export interface DrillableProps {
  * it is a keyboard-operable button that inverts on hover/focus; otherwise it
  * renders plainly.
  */
-export function Drillable({ token, label, as: Tag = "div", className, activeClassName, actionLabel, children }: DrillableProps) {
+export function Drillable({ token, label, as: Tag = "div", className, activeClassName, actionLabel, style, children }: DrillableProps) {
   const drill = useDrill();
   const live = !!token && drill.enabled;
-  if (!live) return <Tag className={className}>{children}</Tag>;
+  if (!live)
+    return (
+      <Tag className={className} style={style}>
+        {children}
+      </Tag>
+    );
   const open = () => drill.open(token!, label);
   const onKey = (e: KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -46,6 +52,7 @@ export function Drillable({ token, label, as: Tag = "div", className, activeClas
   return (
     <Tag
       className={[className, styles.drill, activeClassName].filter(Boolean).join(" ")}
+      style={style}
       role="button"
       tabIndex={0}
       aria-label={actionLabel ?? `${label}: see who this is`}

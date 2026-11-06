@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RoutesData } from "@/lib/types";
 import { fmtInt } from "@/lib/format";
+import { Drillable, drillOf } from "./Drillable";
+import { useDrill } from "@/components/drill/useDrill";
 import styles from "./RoutesGraph.module.css";
 
 const MIN_NODE_H = 56;
@@ -16,6 +18,7 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
   const [width, setWidth] = useState(720);
   /** Edge under the pointer: it stays dark, the rest fade, so one route can be traced. */
   const [active, setActive] = useState<string | null>(null);
+  const drill = useDrill();
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -26,7 +29,7 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
 
   const nodes = useMemo(() => data.nodes ?? [], [data.nodes]);
   const edges = useMemo(() => data.edges ?? [], [data.edges]);
-  const label = (id: string) => nodes.find((n) => n.id === id)?.label ?? id;
+  const label = useCallback((id: string) => nodes.find((n) => n.id === id)?.label ?? id, [nodes]);
 
   const layout = useMemo(() => {
     const depth: Record<string, number> = {};
@@ -124,8 +127,15 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
           {routed.map(({ e, key, d }) => {
             const w = 1.5 + (e.count / maxCount) * 3.5;
             const state = active === null ? "" : active === key ? styles.on : styles.dim;
+            const tok = drill.enabled ? drillOf(e) : undefined;
             return (
-              <g key={key} className={state} onMouseEnter={() => setActive(key)} onMouseLeave={() => setActive(null)}>
+              <g
+                key={key}
+                className={[state, tok && styles.clickable].filter(Boolean).join(" ") || undefined}
+                onMouseEnter={() => setActive(key)}
+                onMouseLeave={() => setActive(null)}
+                onClick={tok ? () => drill.open(tok, `${label(e.from)} → ${label(e.to)}`) : undefined}
+              >
                 <path className={styles.halo} d={d} strokeWidth={w + 5} />
                 <path className={styles.edge} d={d} strokeWidth={w} />
                 <path className={styles.hit} d={d} strokeWidth={14} />
@@ -137,10 +147,17 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
           const p = pos[n.id];
           if (!p) return null;
           return (
-            <div key={n.id} className={[styles.node, styles[n.kind]].filter(Boolean).join(" ")} style={{ left: p.x, top: p.y, width: nodeW, height: NODE_H }}>
+            <Drillable
+              key={n.id}
+              token={drillOf(n) ?? null}
+              label={n.label}
+              actionLabel={`${n.label}: see the people whose path includes this step`}
+              className={[styles.node, styles[n.kind]].filter(Boolean).join(" ")}
+              style={{ left: p.x, top: p.y, width: nodeW, height: NODE_H }}
+            >
               {n.label}
               <span className={styles.kind}>{n.kind}</span>
-            </div>
+            </Drillable>
           );
         })}
         {routed.map(({ e, key, x2, y2 }) => (
@@ -148,7 +165,9 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
             key={`c-${key}`}
             className={[styles.count, active === null ? "" : active === key ? styles.on : styles.dim].join(" ")}
             style={{ left: x2 - 4, top: y2 }}
-            title={`${fmtInt(e.count)} people: ${label(e.from)} → ${label(e.to)}`}
+            title={`${fmtInt(e.count)} people: ${label(e.from)} → ${label(e.to)}${drill.enabled && drillOf(e) ? ". Press to see them." : ""}`}
+            onClick={drill.enabled && drillOf(e) ? () => drill.open(drillOf(e)!, `${label(e.from)} → ${label(e.to)}`) : undefined}
+            data-clickable={drill.enabled && drillOf(e) ? "" : undefined}
             onMouseEnter={() => setActive(key)}
             onMouseLeave={() => setActive(null)}
           >

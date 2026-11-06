@@ -118,3 +118,13 @@
     display: block;
   }
 }
+
+.clickable {
+  cursor: pointer;
+}
+.clickable .hit {
+  cursor: pointer;
+}
+.count[data-clickable] {
+  cursor: pointer;
+}

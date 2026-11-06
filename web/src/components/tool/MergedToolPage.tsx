@@ -27,7 +27,8 @@ export function MergedToolPage({ page, features }: { page: MergedPage; features:
   const search = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const jobs = [useJob(), useJob()];
+  // One job per tab (hooks must be called unconditionally, so a fixed maximum of three tabs).
+  const jobs = [useJob(), useJob(), useJob()];
   const lastRun = useRef<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 

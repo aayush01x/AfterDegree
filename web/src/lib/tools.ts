@@ -127,6 +127,19 @@ export const TOOLS: ToolDef[] = [
     ],
   },
   {
+    id: "college_paths",
+    slug: "college-paths",
+    short: "Colleges & Programmes",
+    title: "Colleges and programmes that lead there",
+    purpose: "Which universities and programmes took Indian-educated people to your goal, and how often each one did.",
+    purposeUniversity: "Which of your programmes lead to this position, and how often.",
+    endpoint: "/tools/college-paths",
+    fields: [
+      { name: "role", label: "Role", kind: "text", required: true, placeholder: "e.g. Data Engineer", fromGoals: firstRole },
+      { name: "country", label: "Country", kind: "text", placeholder: "e.g. Germany", fromGoals: firstCountry },
+    ],
+  },
+  {
     id: "job_postings",
     slug: "job-postings",
     short: "Job Postings",
