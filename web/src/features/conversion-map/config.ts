@@ -10,6 +10,7 @@ const fields: ToolField[] = [
     kind: "text",
     placeholder: "e.g. Computer Science",
     help: "We look at interns and working students from this field.",
+    fromProfile: (d) => shortField(d.undergrad_field) || undefined,
   },
   {
     name: "scope.country",
@@ -35,12 +36,12 @@ const fields: ToolField[] = [
   },
 ];
 
-export type ConversionValues = Record<string, string>;
-
 function shortField(f: string | null | undefined): string {
   if (!f) return "";
   return /computer science/i.test(f) ? "Computer Science" : f;
 }
+
+export type ConversionValues = Record<string, string>;
 
 /** Values derived from the stored profile and goals. Broad on purpose: college stays blank. */
 export function defaultsFrom(goals?: Goals | null, derived?: Derived | null): ConversionValues {
@@ -79,7 +80,7 @@ export const config: FeatureConfig & {
   minRowSize: number;
 } = {
   fields,
-  defaults: { "scope.field": "Computer Science" },
+  defaults: {},
   runLabel: "Show the map",
   autoRun: true,
   defaultsFrom,

@@ -215,12 +215,40 @@ def _parse_school(raw: dict) -> School:
     return School(
         school=name,
         degree=degree,
-        field=raw.get("field_of_study") or raw.get("field"),
+        field=raw.get("field_of_study") or raw.get("field") or field_from_degree(degree),
         start_year=int(start_year) if start_year else None,
         end_year=int(end_year) if end_year else None,
         country=country,
         level=tx.degree_level(degree),
     )
+
+
+_DEGREE_WORDS_RE = re.compile(
+    r"^(bachelor|master|doctor|b\.?\s?tech|m\.?\s?tech|b\.?\s?e\b|m\.?\s?e\b|b\.?\s?sc|m\.?\s?sc|bs\b|ms\b|ba\b|ma\b|mba|phd|"
+    r"dual degree|integrated|honou?rs?|minor|degree|diploma|be\b|me\b)", re.I)
+
+
+def field_from_degree(degree: str | None) -> str | None:
+    """'Bachelor of Technology - BTech, Electrical Engineering' -> 'Electrical Engineering';
+    'Master of Science in Computer Science' -> 'Computer Science'. None when no field is named."""
+    if not degree:
+        return None
+    text = degree.strip()
+    if "," in text:
+        tail = text.rsplit(",", 1)[1].strip()
+        if tail and not _DEGREE_WORDS_RE.match(tail):
+            return tail
+    m = re.search(r"\bin\s+([A-Z][A-Za-z&/ ]{2,})$", text) or re.search(r"\bof\s+([A-Z][A-Za-z&/ ]{2,})$", text)
+    if m and not _DEGREE_WORDS_RE.match(m.group(1)) and m.group(1).lower() not in {"technology", "science", "engineering", "arts", "commerce"}:
+        return m.group(1).strip()
+    return None
+
+
+def still_studying(ug: "School | None", today: date) -> bool:
+    """True while the user's first degree hasn't finished (graduation assumed mid-year)."""
+    if not ug or not ug.end_year:
+        return False
+    return ug.end_year > today.year or (ug.end_year == today.year and today.month < 7)
 
 
 def parse_person(data: dict) -> ParsedPerson:
@@ -276,15 +304,17 @@ def further_degrees(p: ParsedPerson) -> list[School]:
     return out
 
 
-def years_of_experience(roles: list[Role], today: date) -> float:
-    """Union of non-intern role intervals, in years."""
+def years_of_experience(roles: list[Role], today: date, since: date | None = None) -> float:
+    """Union of non-intern role intervals, in years. With `since` (the first degree's graduation),
+    school and college-era roles (clubs, part-time gigs) don't count as work experience."""
     intervals = []
     for r in roles:
         if r.is_intern or not r.start:
             continue
+        start = max(r.start, since) if since else r.start
         end = r.end or today
-        if end > r.start:
-            intervals.append((r.start, end))
+        if end > start:
+            intervals.append((start, end))
     intervals.sort()
     total = 0.0
     cur_s = cur_e = None
@@ -300,10 +330,12 @@ def years_of_experience(roles: list[Role], today: date) -> float:
     return round(total, 1)
 
 
-def guess_persona(p: ParsedPerson, years_exp: float) -> str:
+def guess_persona(p: ParsedPerson, years_exp: float, today: date | None = None) -> str:
     cur = p.primary_current()
     if cur and cur.company and UNIVERSITY_EMPLOYER_RE.search(cur.company) and UNIVERSITY_ROLE_RE.search(cur.title or ""):
         return "university"
+    if today and still_studying(p.undergrad(), today):
+        return "student_abroad"
     if years_exp <= 4.5:
         return "student_abroad"
     return "professional"
@@ -367,7 +399,8 @@ def normalise_profile(person_data: dict, today: date | None = None) -> tuple[Per
         skills=p.skills,
     )
     ug = p.undergrad()
-    yexp = years_of_experience(p.roles, today)
+    since = date(ug.end_year, 7, 1) if ug and ug.end_year else None
+    yexp = 0.0 if still_studying(ug, today) else years_of_experience(p.roles, today, since)
     cur = p.primary_current()
     field_label = ug.field if ug else None
     derived = Derived(
@@ -377,6 +410,33 @@ def normalise_profile(person_data: dict, today: date | None = None) -> tuple[Per
         years_experience=yexp,
         current_company=cur.company if cur else None,
         current_title=(cur.title if cur else None) or bp.get("current_title"),
-        persona_guess=guess_persona(p, yexp),  # type: ignore[arg-type]
+        persona_guess=guess_persona(p, yexp, today),  # type: ignore[arg-type]
     )
     return person, derived
+
+
+def person_data_from_stored(person: dict) -> dict:
+    """Rebuild a minimal enrich-shaped record from a stored contract Person, so profiles saved
+    by an older parser can be re-derived without spending credits."""
+    loc = (person.get("location") or {})
+    cur, past = [], []
+    for e in person.get("experience") or []:
+        raw = {
+            "name": e.get("company"), "crustdata_company_id": e.get("company_id"), "title": e.get("title"),
+            "start_date": e.get("start_date"), "end_date": e.get("end_date"),
+            "seniority_level": e.get("seniority"), "function_category": e.get("function"),
+        }
+        (cur if not e.get("end_date") else past).append(raw)
+    schools = [
+        {"school": s.get("school"), "degree": s.get("degree"), "field_of_study": s.get("field"),
+         "start_year": s.get("start_year"), "end_year": s.get("end_year"),
+         **({"location": {"country": s["school_country"]}} if s.get("school_country") else {})}
+        for s in person.get("education") or []
+    ]
+    return {
+        "basic_profile": {"name": person.get("name"), "headline": person.get("headline"),
+                          "location": {"city": loc.get("city"), "country": loc.get("country")}},
+        "experience": {"employment_details": {"current": cur, "past": past}},
+        "education": {"schools": schools},
+        "skills": {"professional_network_skills": person.get("skills") or []},
+    }

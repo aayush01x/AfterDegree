@@ -133,41 +133,43 @@ export function drillMockActive(): boolean {
   }
 }
 
-/** Set once the engine answers 404 to POST /drill: it has no drill endpoint yet, so drill-downs
- * fall back to the labelled example fixtures instead of failing. */
-const FALLBACK_KEY = "afterdegree.drill-fallback";
-let drillEndpointMissing = (() => {
+/** Drop state left by the old "example data" fallback, which showed another person's (fixture)
+ * results in live mode. Live drill-downs now only ever come from the engine. */
+(() => {
   try {
-    return typeof window !== "undefined" && window.sessionStorage.getItem(FALLBACK_KEY) === "1";
+    if (typeof window === "undefined" || IS_MOCK) return;
+    window.sessionStorage.removeItem("afterdegree.drill-fallback");
+    for (let i = window.sessionStorage.length - 1; i >= 0; i--) {
+      const k = window.sessionStorage.key(i);
+      if (k && k.startsWith("afterdegree.drill.") && !k.startsWith("afterdegree.drill.v2.")) window.sessionStorage.removeItem(k);
+    }
   } catch {
-    return false;
+    /* storage blocked */
   }
 })();
 
-/** True when drill-downs are showing the built-in example data (mock mode or no engine endpoint). */
+/** True when drill-downs are showing the built-in example data (mock mode or `?drillmock=1` in dev). */
 export function drillUsesExamples(): boolean {
-  return drillMockActive() || drillEndpointMissing;
+  return drillMockActive();
 }
 
 async function drillRequest<T>(method: Method, path: string, body?: unknown): Promise<T> {
-  if (!drillMockActive() && !drillEndpointMissing && method === "POST" && path === "/drill") {
-    try {
-      return await liveRequest<T>(method, path, body);
-    } catch (e) {
-      if (!(e instanceof ApiError && (e.status === 404 || e.status === 405))) throw e;
-      drillEndpointMissing = true;
-      try {
-        window.sessionStorage.setItem(FALLBACK_KEY, "1");
-      } catch {
-        /* storage blocked: fallback lasts for this page only */
-      }
-    }
-  }
-  if (drillMockActive() || drillEndpointMissing) {
+  if (drillMockActive()) {
     const { mockRequest } = await import("@/mocks/server");
     const { status, body: out } = await mockRequest(method, path, body);
     if (status >= 400) throw new ApiError(status, (out as { error: ApiErrorBody }).error);
     return out as T;
   }
-  return liveRequest<T>(method, path, body);
+  try {
+    return await liveRequest<T>(method, path, body);
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 404 || e.status === 405) && (path === "/drill" || path.startsWith("/people/"))) {
+      throw new ApiError(e.status, {
+        code: "drill_unavailable",
+        message: "This drill-down isn't available from the engine yet.",
+        hint: "Your numbers on the previous page are real; restart the engine to pick up drill-downs, then try again.",
+      });
+    }
+    throw e;
+  }
 }

@@ -8,6 +8,7 @@ import type { FeatureConfig } from "../types";
  * (`exp_band: [1, 3]` flattened by toHref) lands on the same option.
  */
 export const BANDS = [
+  { value: "", label: "Any amount of work" },
   { value: "0,1", label: "Under 1 year of work" },
   { value: "1,3", label: "1 to 3 years of work" },
   { value: "3,5", label: "3 to 5 years of work" },
@@ -29,6 +30,7 @@ export const MATCH_LEVELS_UNIVERSITY: { value: MatchLevel; label: string }[] = [
 
 /** Short band labels for the chips; the university lens counts years since graduation. */
 export const BANDS_SHORT = [
+  { value: "", label: "Any experience" },
   { value: "0,1", label: "Under 1 year" },
   { value: "1,3", label: "1 to 3 years" },
   { value: "3,5", label: "3 to 5 years" },
@@ -66,14 +68,15 @@ export const fields: ToolField[] = [
     name: "exp_band",
     label: "Years of work experience",
     kind: "select",
-    help: "People with about as much work behind them as you.",
+    help: "People with about as much work behind them as you. Students: leave it at any, to see where recent graduates went.",
     options: BANDS,
+    fromProfile: (d, g) => (g?.persona === "student_abroad" || !d.years_experience ? "" : bandFor(d.years_experience)),
   },
 ];
 
 /** Preset band containing the user's years of experience, as "min,max". */
 export function bandFor(years: number | null | undefined): string {
-  if (years === null || years === undefined) return "1,3";
+  if (years === null || years === undefined) return "";
   if (years < 1) return "0,1";
   if (years < 3) return "1,3";
   if (years < 5) return "3,5";
@@ -87,7 +90,7 @@ export function defaultsFrom(derived?: Derived | null): Record<string, string> {
 
 export interface PeopleLikeMeParams {
   match: MatchLevel;
-  exp_band: [number, number];
+  exp_band?: [number, number];
 }
 
 export function validate(values: Record<string, string>): Record<string, string> {
@@ -103,13 +106,15 @@ export function validate(values: Record<string, string>): Record<string, string>
 
 /** Contract body: exp_band as [min, max]. Use this to convert the form's "min,max" value. */
 export function toParams(values: Record<string, string>): PeopleLikeMeParams {
-  const [lo, hi] = (values.exp_band || "1,3").split(",").map(Number);
-  return { match: (values.match as MatchLevel) || "exact_school", exp_band: [lo, hi] };
+  const match = (values.match as MatchLevel) || "exact_school";
+  if (!values.exp_band) return { match };
+  const [lo, hi] = values.exp_band.split(",").map(Number);
+  return { match, exp_band: [lo, hi] };
 }
 
 export const config: FeatureConfig = {
   fields,
-  defaults: { match: "exact_school", exp_band: "1,3" },
+  defaults: { match: "exact_school", exp_band: "" },
   runLabel: "Show me where they are now",
   autoRun: true,
 };

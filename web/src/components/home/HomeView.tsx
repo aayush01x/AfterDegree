@@ -38,11 +38,10 @@ const MATCH_OPTIONS = [
   { value: "field_only", label: "Same field, any college" },
 ];
 const BAND_OPTIONS = [
-  { value: "1-3", label: "1 to 3 years of work" },
-  { value: "0-1", label: "Under a year of work" },
-  { value: "2-3", label: "2 to 3 years of work" },
-  { value: "3-6", label: "3 to 6 years of work" },
   { value: "any", label: "Any amount of work" },
+  { value: "0-1", label: "Under a year of work" },
+  { value: "1-3", label: "1 to 3 years of work" },
+  { value: "3-6", label: "3 to 6 years of work" },
 ];
 const OTHER = /^(other|others|other countries|elsewhere)$/i;
 
@@ -96,7 +95,7 @@ export function HomeView() {
     const fd = new FormData(e.currentTarget);
     const band = String(fd.get("band"));
     const p: Params = { match: String(fd.get("match")) as MatchLevel };
-    if (band !== "any" && band !== "1-3") p.exp_band = band.split("-").map(Number) as [number, number];
+    if (band !== "any") p.exp_band = band.split("-").map(Number) as [number, number];
     apply(p);
   };
 
@@ -198,7 +197,7 @@ export function HomeView() {
             {adjusting && (
               <form id="adjust-cohort" className={styles.adjustForm} onSubmit={onAdjust}>
                 <Select name="match" label="College" options={MATCH_OPTIONS} defaultValue={params.match} />
-                <Select name="band" label="Experience" options={BAND_OPTIONS} defaultValue={params.exp_band ? params.exp_band.join("-") : "1-3"} />
+                <Select name="band" label="Experience" options={BAND_OPTIONS} defaultValue={params.exp_band ? params.exp_band.join("-") : "any"} />
                 <div className={styles.adjustActions}>
                   <Button type="submit" size="sm">
                     Recount

@@ -39,7 +39,8 @@ export interface ToolLayoutProps {
 /** Shared frame for every tool: title, purpose, parameter form, run, progress, result. */
 export function ToolLayout({ tool, title, purpose, form, fields, defaults, buildParams, toParams, resultView, runLabel = "Run", autoRun = true }: ToolLayoutProps) {
   const def = toolBySlug(tool);
-  const { profileId, goals, university, loading: profileLoading } = useProfile();
+  const { profileId, profile, goals, university, loading: profileLoading } = useProfile();
+  const derived = profile?.derived ?? null;
   const search = useSearchParams();
   const job = useJob();
   const formRef = useRef<HTMLFormElement>(null);
@@ -51,10 +52,15 @@ export function ToolLayout({ tool, title, purpose, form, fields, defaults, build
   const values = useMemo(() => {
     const v: Record<string, string> = {};
     for (const f of list) {
-      v[f.name] = search.get(f.name) ?? (goals && f.fromGoals?.(goals)) ?? defaults?.[f.name] ?? "";
+      v[f.name] =
+        search.get(f.name) ??
+        ((goals && f.fromGoals?.(goals)) || undefined) ??
+        ((derived && f.fromProfile?.(derived, goals)) || undefined) ??
+        defaults?.[f.name] ??
+        "";
     }
     return v;
-  }, [list, search, goals, defaults]);
+  }, [list, search, goals, derived, defaults]);
 
   const submit = (formEl: HTMLFormElement) => {
     if (!def || !profileId) return;

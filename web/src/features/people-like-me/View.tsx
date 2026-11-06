@@ -138,16 +138,15 @@ export function View({ result }: { result: ResultEnvelope }) {
   ];
 
   const go = (match: string, b: string) => {
-    const [lo, hi] = (b || "1,3").split(",").map(Number);
-    router.push(toolHref("people_like_me", { match, exp_band: [lo, hi] }));
+    router.push(toolHref("people_like_me", { match, exp_band: b ? b.split(",").map(Number) : undefined }));
   };
 
   const wider = useMemo(() => {
     if (!cohort) return null;
-    const b = band ?? [1, 3];
+    const b = band;
     const nextMatch = NEXT_MATCH[cohort.match_level];
-    const widerBand: [number, number] = [Math.max(0, b[0] - (b[0] > 0 ? 1 : 0)), b[1] + 2];
-    return { match: nextMatch, band: nextMatch === cohort.match_level ? widerBand : b };
+    const widerBand: [number, number] | undefined = b ? [Math.max(0, b[0] - (b[0] > 0 ? 1 : 0)), b[1] + 2] : undefined;
+    return { match: nextMatch, band: nextMatch === cohort.match_level ? widerBand : (b ?? undefined) };
   }, [cohort, band]);
 
   /* hero: how many are abroad, in grid-built cells */
@@ -238,7 +237,7 @@ export function View({ result }: { result: ResultEnvelope }) {
             <p className={styles.groupLabel}>{lens.matchLabel}</p>
             <div className={styles.chips}>
               {lens.matches.map((m) => (
-                <Chip key={m.value} selected={cohort.match_level === m.value} onClick={() => go(m.value, bandValue(band) || "1,3")}>
+                <Chip key={m.value} selected={cohort.match_level === m.value} onClick={() => go(m.value, bandValue(band))}>
                   {m.label}
                 </Chip>
               ))}

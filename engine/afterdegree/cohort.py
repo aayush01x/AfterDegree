@@ -50,10 +50,17 @@ class BuiltCohort:
 
 
 def year_window(ctx: ToolContext) -> tuple[int, int] | None:
+    """Graduation years of "people like you". A current student is compared with the most recent
+    classes that have already graduated (they show what happens next); a graduate with classes
+    around their own year."""
     y = ctx.derived.get("undergrad_end_year")
     if not y:
         return None
-    return int(y) - 2, min(int(y) + 2, ctx.today.year)
+    y = int(y)
+    last_done = ctx.today.year if ctx.today.month >= 7 else ctx.today.year - 1
+    if y > last_done:
+        return last_done - 3, last_done
+    return y - 2, min(y + 2, last_done)
 
 
 def _exp_text(exp_band: list[float] | None) -> str:

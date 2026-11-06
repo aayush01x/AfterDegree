@@ -51,7 +51,9 @@
 }
 .count {
   position: absolute;
-  transform: translate(-50%, -50%);
+  transform: translate(-100%, -50%);
+  z-index: 1;
+  color: var(--ad-ink);
   padding: 0 4px;
   background: var(--ad-paper);
   border: 1px solid var(--ad-ink);

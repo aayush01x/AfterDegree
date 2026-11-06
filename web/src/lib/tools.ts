@@ -1,4 +1,4 @@
-import type { Goals, ToolId } from "./types";
+import type { Derived, Goals, ToolId } from "./types";
 
 export interface ToolField {
   /** Dotted body path, e.g. "role" or "scope.school". */
@@ -11,6 +11,8 @@ export interface ToolField {
   options?: { value: string; label: string }[];
   /** Prefill from the stored goals. */
   fromGoals?: (g: Goals) => string | undefined;
+  /** Prefill from the user's own parsed profile (used when goals don't say). */
+  fromProfile?: (d: Derived, g: Goals | null) => string | undefined;
 }
 
 export interface ToolDef {

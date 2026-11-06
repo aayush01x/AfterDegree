@@ -9,7 +9,7 @@ import type { JobPhase } from "@/hooks/useJob";
 import { tokenKey } from "./token";
 
 const POLL_MS = 600;
-const CACHE_PREFIX = "afterdegree.drill.";
+const CACHE_PREFIX = "afterdegree.drill.v2.";
 
 export interface DrillState {
   phase: JobPhase;

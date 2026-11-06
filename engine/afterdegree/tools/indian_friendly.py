@@ -205,7 +205,8 @@ async def run(ctx: ToolContext) -> Result:
     if rows:
         first = rows[0]["cells"]["employer"]
         next_steps.append(step(f"See your Internship-to-Job chances at {first}", "internship_chances", company=first, country=country))
-        next_steps.append(step(f"See how people got into roles at {first}", "routes_to_position", role=role or "Software Engineer", company=first, country=country))
+        if role:
+            next_steps.append(step(f"See how people got into {role_label} roles at {first}", "routes_to_position", role=role, company=first, country=country))
     if role:
         next_steps.append(step(f"Read current {role_label} postings in {country}", "job_postings", role=role, country=country, city=city))
     next_steps.append(step(f"See your Internship-to-Job chances in {country}", "internship_chances", country=country))

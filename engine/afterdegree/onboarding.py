@@ -150,11 +150,15 @@ class Onboarding:
                 sugg = ["A master's abroad", "A job abroad", "Switching roles", "Growing where I am"]
         elif answered == 2:
             reply = "Which countries or cities are you considering? It's fine to name a few, or say you're not sure yet."
-            sugg = ["Germany", "Netherlands", "United Kingdom", "Not sure yet"]
+            sugg = ["United States", "Germany", "United Kingdom", "Not sure yet"]
         elif answered == 3:
             reply = "Which roles interest you most? For example the job title you'd like in three years."
             fam = tx.title_family(derived.get("current_title")) if derived.get("current_title") else None
-            sugg = list(dict.fromkeys(s for s in [fam, "Data Engineer", "Software Engineer", "Data Scientist"] if s and s != "Intern / Working Student"))[:4]
+            field = (derived.get("undergrad_field") or "").lower()
+            by_field = (["Hardware Engineer", "Embedded Engineer", "Software Engineer"] if "electric" in field or "electronic" in field
+                        else ["Mechanical Engineer", "Product Manager", "Data Analyst"] if "mechanic" in field
+                        else ["Software Engineer", "Data Scientist", "Data Engineer"])
+            sugg = list(dict.fromkeys(s for s in [fam, *by_field] if s and s != "Intern / Working Student"))[:4]
         elif answered == 4:
             reply = "Last one: anything I should keep in mind, like budget, timeline, or languages you speak?"
             sugg = ["Budget under 30 lakh", "I speak some German", "Nothing else"]
