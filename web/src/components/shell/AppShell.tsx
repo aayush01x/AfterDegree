@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
 import { TOOLS } from "@/lib/tools";
 import { firstName, initials } from "@/lib/format";
@@ -9,6 +9,7 @@ import { Slash } from "@/components/ui/Slash";
 import { ToastProvider } from "@/components/ui/Toast";
 import { BrandMark } from "./BrandMark";
 import { ProfileProvider, useProfile } from "./ProfileContext";
+import { setProfileId } from "@/lib/profile-store";
 import styles from "./AppShell.module.css";
 
 const PERSONA_LABEL = {
@@ -48,6 +49,17 @@ function ActiveAwareLink({ href, children, onNavigate }: { href: string; childre
 
 function UserChip() {
   const { profile, goals } = useProfile();
+  const router = useRouter();
+  /** Forget this device's profile and drill state, then start onboarding again. */
+  const logOut = () => {
+    try {
+      window.sessionStorage.clear();
+    } catch {
+      /* storage blocked */
+    }
+    setProfileId(null);
+    router.replace("/onboarding");
+  };
   if (!profile) return null;
   const name = profile.person.name;
   const persona = goals?.persona ?? profile.derived.persona_guess;
@@ -59,7 +71,12 @@ function UserChip() {
       <span className={styles.meText}>
         <strong>{persona === "university" && goals?.institution ? goals.institution.replace("Vellore Institute of Technology", "VIT") : name}</strong>
         <span className={styles.persona}>{persona === "university" ? `${firstName(name)} · University` : PERSONA_LABEL[persona]}</span>
-        <Link href="/onboarding?edit=1">Edit your profile</Link>
+        <span className={styles.meLinks}>
+          <Link href="/onboarding?edit=1">Edit your profile</Link>
+          <button type="button" className={styles.logout} onClick={logOut}>
+            Log out
+          </button>
+        </span>
       </span>
     </div>
   );

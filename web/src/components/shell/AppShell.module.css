@@ -185,3 +185,27 @@
     padding: var(--ad-space-3) var(--ad-space-2) var(--ad-space-4);
   }
 }
+
+.meLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+.logout {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.logout:hover {
+  text-decoration-thickness: 2px;
+}
+.logout:focus-visible {
+  outline: 2px solid var(--ad-rail-text);
+  outline-offset: 2px;
+}
