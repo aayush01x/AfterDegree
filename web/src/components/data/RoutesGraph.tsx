@@ -14,6 +14,8 @@ const PORT_H = 22;
 export function RoutesGraph({ data }: { data: RoutesData }) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(720);
+  /** Edge under the pointer: it stays dark, the rest fade, so one route can be traced. */
+  const [active, setActive] = useState<string | null>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -47,8 +49,16 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
     1,
     ...nodes.map((n) => Math.max(edges.filter((e) => e.to === n.id).length, edges.filter((e) => e.from === n.id).length)),
   );
-  const NODE_H = Math.max(MIN_NODE_H, busiest * PORT_H + 12);
-  const height = layout.maxRows * (NODE_H + GAP_Y) - GAP_Y;
+  // Tall enough for the longest label (about 7.5px per character at this size, 16px lines) plus the kind line.
+  const textLines = Math.max(1, ...nodes.map((n) => Math.ceil((n.label.length * 7.5) / Math.max(60, nodeW - 20))));
+  const NODE_H = Math.max(MIN_NODE_H, busiest * PORT_H + 12, textLines * 16 + 14 + 14);
+  const rowsHeight = layout.maxRows * (NODE_H + GAP_Y) - GAP_Y;
+  // Edges that skip a column run in a channel under the boxes instead of behind them.
+  const skips = edges
+    .filter((e) => (layout.depth[e.to] ?? 0) - (layout.depth[e.from] ?? 0) > 1)
+    .sort((a, b) => layout.depth[a.to] - layout.depth[a.from] - (layout.depth[b.to] - layout.depth[b.from]));
+  const CHANNEL_GAP = 14;
+  const height = rowsHeight + (skips.length ? 10 + skips.length * CHANNEL_GAP : 0);
   const pos: Record<string, { x: number; y: number }> = {};
   layout.cols.forEach((col, ci) => {
     const offset = ((layout.maxRows - col.length) * (NODE_H + GAP_Y)) / 2;
@@ -56,17 +66,15 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
   });
   const maxCount = Math.max(1, ...edges.map((e) => e.count));
 
-  // Every edge gets its own exit port on the source, entry port on the target and vertical lane in
-  // the gutter, so lines and count badges never sit on top of each other.
+  // Every edge gets its own exit port on the source and entry port on the target, and is drawn as
+  // its own curve, so you can follow each connection and its count badge sits at its own entry.
   const routed = useMemo(() => {
     const ins: Record<string, typeof edges> = {};
     const outs: Record<string, typeof edges> = {};
-    const byCol: Record<number, typeof edges> = {};
     for (const e of edges) {
       if (!pos[e.from] || !pos[e.to]) continue;
       (ins[e.to] ??= []).push(e);
       (outs[e.from] ??= []).push(e);
-      (byCol[layout.depth[e.to]] ??= []).push(e);
     }
     const yOf = (id: string) => pos[id].y;
     const order = (list: typeof edges, key: (e: (typeof edges)[number]) => number) => [...list].sort((a, b) => key(a) - key(b));
@@ -76,16 +84,34 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
     };
     const sortedIns = Object.fromEntries(Object.entries(ins).map(([k, l]) => [k, order(l, (e) => yOf(e.from))]));
     const sortedOuts = Object.fromEntries(Object.entries(outs).map(([k, l]) => [k, order(l, (e) => yOf(e.to))]));
-    const lanes = Object.fromEntries(Object.entries(byCol).map(([k, l]) => [k, order(l, (e) => yOf(e.from) * 1000 + yOf(e.to))]));
     return edges.flatMap((e) => {
       const a = pos[e.from];
       const b = pos[e.to];
       if (!a || !b) return [];
-      const lane = lanes[layout.depth[e.to]];
-      const gutter = colW - nodeW;
-      const li = lane.indexOf(e);
-      const mx = b.x - gutter + gutter * 0.2 + (gutter * 0.45 * (li + 1)) / (lane.length + 1);
-      return [{ e, x1: a.x + nodeW, y1: port(sortedOuts[e.from], e, a.y), mx, x2: b.x, y2: port(sortedIns[e.to], e, b.y) }];
+      const x1 = a.x + nodeW;
+      const y1 = port(sortedOuts[e.from], e, a.y);
+      const x2 = b.x;
+      const y2 = port(sortedIns[e.to], e, b.y);
+      // Short straight stubs at both ends, an S-curve across the gap between them.
+      const stub = Math.min(10, (x2 - x1) / 6);
+      const sx = x1 + stub;
+      const ex = x2 - stub - 6;
+      const si = skips.indexOf(e);
+      let d: string;
+      if (si >= 0) {
+        // Down into the channel in the gap after the source, along under the boxes, up in the gap before the target.
+        const yc = rowsHeight + 10 + si * CHANNEL_GAP;
+        const gap = colW - nodeW;
+        const downEnd = x1 + gap - stub;
+        const upStart = x2 - gap + stub;
+        const db = (downEnd - sx) / 2;
+        const ub = (ex - upStart) / 2;
+        d = `M${x1} ${y1}H${sx}C${sx + db} ${y1} ${downEnd - db} ${yc} ${downEnd} ${yc}H${upStart}C${upStart + ub} ${yc} ${ex - ub} ${y2} ${ex} ${y2}H${x2}`;
+      } else {
+        const bend = (ex - sx) / 2;
+        d = `M${x1} ${y1}H${sx}C${sx + bend} ${y1} ${ex - bend} ${y2} ${ex} ${y2}H${x2}`;
+      }
+      return [{ e, key: `${e.from}-${e.to}`, d, x2, y2 }];
     });
     // pos/colW/nodeW are recomputed every render from width; edges/layout drive the routing
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,9 +121,17 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
     <div ref={ref} className={styles.wrap}>
       <div className={styles.canvas} style={{ height }} aria-hidden="true">
         <svg className={styles.edges} width={width} height={height}>
-          {routed.map(({ e, x1, y1, mx, x2, y2 }) => (
-            <path key={`${e.from}-${e.to}`} className={styles.edge} d={`M${x1} ${y1}H${mx}V${y2}H${x2}`} strokeWidth={1 + (e.count / maxCount) * 5} />
-          ))}
+          {routed.map(({ e, key, d }) => {
+            const w = 1.5 + (e.count / maxCount) * 3.5;
+            const state = active === null ? "" : active === key ? styles.on : styles.dim;
+            return (
+              <g key={key} className={state} onMouseEnter={() => setActive(key)} onMouseLeave={() => setActive(null)}>
+                <path className={styles.halo} d={d} strokeWidth={w + 5} />
+                <path className={styles.edge} d={d} strokeWidth={w} />
+                <path className={styles.hit} d={d} strokeWidth={14} />
+              </g>
+            );
+          })}
         </svg>
         {nodes.map((n) => {
           const p = pos[n.id];
@@ -109,8 +143,15 @@ export function RoutesGraph({ data }: { data: RoutesData }) {
             </div>
           );
         })}
-        {routed.map(({ e, x2, y2 }) => (
-          <span key={`c-${e.from}-${e.to}`} className={styles.count} style={{ left: x2 - 4, top: y2 }}>
+        {routed.map(({ e, key, x2, y2 }) => (
+          <span
+            key={`c-${key}`}
+            className={[styles.count, active === null ? "" : active === key ? styles.on : styles.dim].join(" ")}
+            style={{ left: x2 - 4, top: y2 }}
+            title={`${fmtInt(e.count)} people: ${label(e.from)} → ${label(e.to)}`}
+            onMouseEnter={() => setActive(key)}
+            onMouseLeave={() => setActive(null)}
+          >
             {fmtInt(e.count)}
           </span>
         ))}

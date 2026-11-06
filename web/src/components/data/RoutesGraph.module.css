@@ -10,11 +10,40 @@
   position: absolute;
   inset: 0;
   overflow: visible;
+  pointer-events: none;
+}
+.edges g {
+  pointer-events: auto;
 }
 .edge {
   fill: none;
   stroke: var(--ad-ink);
-  stroke-linejoin: miter;
+  stroke-linecap: butt;
+  transition: opacity 120ms ease;
+}
+/* A paper-coloured band under each line, so crossing curves stay visibly separate. */
+.halo {
+  fill: none;
+  stroke: var(--ad-paper);
+}
+.hit {
+  fill: none;
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: default;
+}
+.dim .edge,
+.count.dim {
+  opacity: 0.18;
+}
+.on .edge {
+  stroke: var(--ad-accent);
+}
+.count.on {
+  background: var(--ad-accent);
+  border-color: var(--ad-accent);
+  color: var(--ad-accent-ink);
+  z-index: 2;
 }
 .node {
   position: absolute;
@@ -54,6 +83,8 @@
   transform: translate(-100%, -50%);
   z-index: 1;
   color: var(--ad-ink);
+  cursor: default;
+  transition: opacity 120ms ease;
   padding: 0 4px;
   background: var(--ad-paper);
   border: 1px solid var(--ad-ink);
