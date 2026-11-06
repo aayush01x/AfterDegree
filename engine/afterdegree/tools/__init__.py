@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from . import (
+    college_paths,
     conversion_map,
     indian_friendly,
     internship_chances,
@@ -13,6 +14,7 @@ from . import (
     routes_to_position,
 )
 from ..schemas import (
+    CollegePathsBody,
     ConversionMapBody,
     IndianFriendlyBody,
     InternshipChancesBody,
@@ -32,4 +34,5 @@ TOOLS = {
     "job_postings": (job_postings.run, JobPostingsBody, "job-postings"),
     "indian_friendly": (indian_friendly.run, IndianFriendlyBody, "indian-friendly"),
     "market_saturation": (market_saturation.run, MarketSaturationBody, "market-saturation"),
+    "college_paths": (college_paths.run, CollegePathsBody, "college-paths"),
 }

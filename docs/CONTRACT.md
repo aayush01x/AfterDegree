@@ -1,6 +1,8 @@
 # AfterDegree API contract (v0.1)
 
 > **Changelog**
+> - 2026-11-06 (engine, exact route drills): Reverse Career GPS `route`, `route_step` and new `route_edge` drills are exact; `routes.edges[]` may carry `drill`; Drill result adds `route`. See "Appendix F". Additive.
+> - 2026-11-06 (engine, College Paths): new tool `college_paths` (`POST /api/tools/college-paths`), see "Appendix E" at the end. Additive.
 > - 2026-11-06 (engine, drill implemented): additive only. See "Appendix C/D: engine notes" at the end (exact counts, `sample_n`, refused steps, company `scope`/`sample_n`, PersonDetail extras, `context.filters[].param`/`drill`).
 > - 2026-11-06 (company profile): a drill whose last step is `company` returns a full `company` block (Appendix D).
 > - 2026-11-06 (drill context): drills inherit the origin screen's full filters; Drill result adds `context` (Appendix C, Context inheritance).
@@ -260,3 +262,34 @@ Plus sections (Appendix A shapes, rows drillable): `feeder_employers` (where peo
 - **`context.filters[]`** items carry `param` (dotted origin param) and, when removable, `drill` (the same token with that param dropped).
 - **Company block** adds `scope: {company_wide: [...], your_filters: [...], profiles_read: [...]}`, `sample_n` (career paths read), `evidence_id` (company enrich), `retention.n`, and `hiring.language.sample_n` (the language mix is read from up to 40 recent postings). `hiring.by_location` = exact posting counts for the cities in those postings. `internship_conversion` = people in the inherited context who interned at the company and now work there beyond a traineeship, out of all who interned there. `median_days_open` and `retention.left_within_1y` are null (not derivable). Unknown facts are null and listed in one warning.
 - **PersonDetail** extras: `position`, `why`, `same_route` (cards), `route_skills` and `route_typical_years` (only when 5+ paths share the route), `data_date`. `route_stats` counts are over the career paths read for the slice. Person ids are `pp_` + 16 hex (HMAC of profile and person with a secret stored in SQLite); unknown, expired or other-profile ids return 404 `person_not_found`. Stored paths and drill results expire within 7 days.
+
+
+## Appendix E: College Paths (`college_paths`, engine v0.1, additive)
+
+`POST /api/tools/college-paths` with `{ profile_id, role (required), country?, city?, company?, level?: "masters" (default) | "any_further", field?: "Computer Science", institution?, programs? }` → job; `result.tool = "college_paths"`.
+
+The goal group G = Indian-educated people (a school in India or a well-known Indian institution) whose current title matches `role`, in `city` (else `country`), at `company`. Every number is an exact count-only total; a sample of about 40 profiles (education only) is read only to choose which universities, programmes and colleges to count. A further degree, a university and a college are each matched on their own education entry (combined with G through `all_of`). "Recent graduates" = degree end year within the last 8 years.
+
+| id | kind | data |
+|---|---|---|
+| `goal_size` | `stat` | `value`/`display` = n(G) |
+| `further_degree` | `distribution` | `unit: "people"`, `n` = n(G); items "A master's from abroad" (or "A further degree from abroad"), "…, not abroad or place not listed", and the remainder "No master's shown" (`remainder: true`; groups under 5 fold into it) |
+| `universities` | `ranked_table` | columns `university` (text), `country` (text), `in_goal` (int, bar: people in G with that degree from that university, any year), `graduates` (int: its Indian-educated recent graduates with that degree), `rate` (count: of `graduates`, how many are in G now); row `count` = in_goal of n(G); `drill` = `{dimension: "school", value: "uni:<school>"}`; optional `rest` row "Other universities abroad"; `note` when empty |
+| `programmes` | `ranked_table` | columns `programme` (text), `people` (int, bar); row `count` of n(G); `drill` = `{dimension: "degree", value: "programme:<field label>"}`; optional `rest` row "Other fields" |
+| `indian_colleges` | `ranked_table` | (no institution) columns `college`, `graduates` (recent graduates), `in_goal`, `rate` (count); the user's own college is always a row with `you: true`, `id: "you"`, `badges: ["Your college"]`, listed first; `drill` = `{dimension: "school", value: "college:<school>"}` when in_goal ≥ 5 |
+| `your_programmes` | `ranked_table` | (university lens, instead of `indian_colleges`) columns `programme`, `graduates`, `in_goal`, `rate`; `drill` value `"yourprog:<programme>"` |
+| `method` | `text` | how it was counted |
+
+`cohort.filters` carries `role, city, country, company, level, field, goal: {role, city, country, company}` and `crustdata`. Drilling a row opens exactly that row's people (the drill's `count.k` equals the row's `in_goal`/`people`), with anonymous career paths; `context.origin_tool = "college_paths"`.
+
+
+## Appendix F: exact route drill-downs (Reverse Career GPS, engine v0.1, additive)
+
+Tokens (origin `reverse_gps`, one path step, params = the tool's params):
+- route card (`routes.routes[i].drill`): `{dimension: "route", value: "<step 1> → <step 2> → … → <goal>", label: "<route title>"}`
+- graph edge (`graph.edges[i].drill`, new): `{dimension: "route_edge", value: "<from label> → <to label>", label: "<from> → <to>"}`
+- graph node (`graph.nodes[i].drill`): `{dimension: "route_step", value: "<step label>", label: "<step label>"}`
+
+The engine re-reads the tool's own sample of the goal position (a cache hit, so ~0 credits), recomputes each person's route exactly as the tool does, and keeps the people whose route equals the signature (`route`), contains the step A immediately followed by B (`route_edge`), or contains the step (`route_step`). `count` = `{k: matched, n: career paths traced}`: identical to the route card's `people` Count and to the edge's `count`. `people` lists all matched people (anonymous) when `k ≥ 5`, else `listing_blocked_reason`. A `route` drill adds a `superset:stat` section (people whose profile shows all the steps, found by search, some with extra steps).
+
+Drill result adds `route`: `{ kind: "route"|"edge"|"step", exact: true, steps: [{label, kind: "start"|"degree"|"role"|"goal"}], title: string|null, k, traced, sample_n, target }`.

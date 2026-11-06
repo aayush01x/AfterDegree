@@ -14,6 +14,8 @@ EXPECTED_SECTIONS = {
     "indian_friendly": [("employers", "ranked_table"), ("method", "text")],
     "market_saturation": [("ratio", "stat"), ("trend", "timeseries"), ("read", "text"), ("cities", "ranked_table"),
                           ("entrants", "stat"), ("openings", "stat")],
+    "college_paths": [("goal_size", "stat"), ("further_degree", "distribution"), ("universities", "ranked_table"),
+                      ("programmes", "ranked_table"), ("indian_colleges", "ranked_table"), ("method", "text")],
 }
 
 

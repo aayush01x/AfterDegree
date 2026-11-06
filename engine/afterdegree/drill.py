@@ -50,6 +50,7 @@ ORIGIN_LABEL = {
     "job_postings": "Job Postings",
     "indian_friendly": "Indian-Friendly",
     "market_saturation": "Market Saturation",
+    "college_paths": "College Paths",
 }
 MATCH_LABEL = {"exact_school": "same college and field", "school_tier": "similar colleges, same field",
                "field_only": "same field, any college"}
@@ -108,6 +109,9 @@ class Scope:
     company: tuple[str | None, int | None] | None = None  # current employer from a path step
     window: tuple[date, date | None] | None = None  # current role start window (market saturation)
     extra: list[dict] = field(default_factory=list)
+    # Conditions on a separate education entry (a further degree, a school): combined through `all_of`, because a plain `and`
+    # on education conditions would force them onto the same school entry as the cohort's own education filter.
+    edu_extra: list[dict] = field(default_factory=list)
     intern_origin: bool = False
     # postings side (job_postings origin, or a company's hiring facts)
     job_base: list[dict] = field(default_factory=list)
@@ -137,9 +141,17 @@ class Scope:
                 parts.append(F.cond(f"{F.CUR}.start_date", "<", iso(self.window[1])))
         parts += self.extra
         parts += list(more)
+        if not self.edu_extra:
+            if self.built is not None:
+                return self.built.filters(*parts)
+            return F.and_(*self.base, *parts) or F.india_educated()
+        # Separate education entries go in one `all_of` with the cohort's own education group (nested arrays only).
         if self.built is not None:
-            return self.built.filters(*parts)
-        return F.and_(*self.base, *parts) or F.india_educated()
+            edu_own, others = [self.built.plan.edu], [*self.built.plan.extra, *parts]
+        else:
+            edu_own = [b for b in self.base if _is_education(b)]
+            others = [b for b in self.base if not _is_education(b)] + parts
+        return F.and_(F.all_of(*[e for e in edu_own if e], *self.edu_extra), *others) or {}
 
     def job_filters(self, *more: dict | None) -> dict:
         parts: list[dict | None] = [*self.job_base, self.job_origin_place, self.job_company]
@@ -276,6 +288,27 @@ async def build_origin(ctx: ToolContext, tool: str, p: dict) -> Scope:
         sc.facets |= {"country"} | ({"city"} if city else set()) | ({"role"} if role else set())
         return sc
 
+    if tool == "college_paths":
+        role = (p.get("role") or "").strip()
+        if not role:
+            raise ToolInputError("Which role should I look at?", hint="Add a role, for example Software Engineer.")
+        city, country = resolve_place(p.get("city"), p.get("country"))
+        company = (p.get("company") or "").strip() or None
+        cid = None
+        if company:
+            cid, company = await ctx.identify_company(company)
+        base = [title_or(F.CUR, role)]
+        if company:
+            base.append(F.company_condition(F.CUR, company, cid))
+        institution = p.get("institution") or (ctx.goals.get("institution") if ctx.is_university else None)
+        if not institution:
+            base.append(F.india_educated())
+        place_p, _ = _place(city, country)
+        sc = Scope(tool, "people in your goal role" if institution else "Indian-educated people in your goal role", base=base,
+                   origin_place=place_p, origin_city=city, origin_country=country, role_label=tx.display_role(role), place_label=city or country)
+        sc.facets |= {"role"} | ({"company"} if company else set()) | ({"city"} if city else set())
+        return sc
+
     if tool == "market_saturation":
         from .tools.market_saturation import QUARTERS, quarter_starts
 
@@ -378,7 +411,7 @@ def route_step_condition(label: str) -> tuple[dict | None, str | None]:
     if (m := re.match(r"^Internship / working student in (.+)$", label)):
         return F.and_(F.intern_title_condition(F.EMP), F.cond(f"{F.EMP}.location", "[.]", m.group(1))), None
     if (m := re.match(r"^Earlier job in (.+)$", label)):
-        return F.cond(f"{F.PAST}.location", "[.]", m.group(1)), None
+        return F.cond(f"{F.EMP}.location", "[.]", m.group(1)), None  # `past.location` isn't searchable
     if label in ("Moved up inside the same company", "Converted an internship there"):
         return None, f"the step '{label}' can't be searched directly, so it isn't applied to the count"
     return None, None
@@ -394,9 +427,24 @@ def _company_ref(value: str) -> tuple[str | None, int | None, bool]:
     return v or None, None, feeder
 
 
-def apply_step(ctx: ToolContext, sc: Scope, step: dict) -> None:
+def _is_education(cond: dict) -> bool:
+    from .crustdata import _filter_fields
+
+    fields = _filter_fields(cond)
+    return bool(fields) and all(f.startswith("education.") for f in fields)
+
+
+def _add(sc: Scope, cond: dict | None) -> None:
+    if cond:
+        (sc.edu_extra if _is_education(cond) else sc.extra).append(cond)
+
+
+def apply_step(ctx: ToolContext, sc: Scope, step: dict, override: dict | None = None) -> None:
     dim, value, label = step["dimension"], str(step["value"]), step.get("label") or str(step["value"])
     sc.facets.add(dim)
+    if override is not None:  # an exact condition resolved ahead (e.g. a College Paths row)
+        _add(sc, override)
+        return
     if dim == "country":
         country = tx.canonical_country(value) or value
         if sc.origin_country and sc.origin_country != country:
@@ -442,18 +490,18 @@ def apply_step(ctx: ToolContext, sc: Scope, step: dict) -> None:
             sc.notes.append(f"'{label}' groups several titles, so this counts every current title containing it.")
         return
     if dim == "school":
-        sc.extra.append(school_condition(value))
+        _add(sc, school_condition(value))
         return
     if dim == "degree":
         level = DEGREE_LABELS.get(value)
         if not level:
             raise _unsupported(label, "it isn't a degree level I can search for.")
-        sc.extra.append(F.phrase_any(f"{F.EDU}.degree", LEVEL_PHRASES[level]))  # type: ignore[arg-type]
+        _add(sc, F.phrase_any(f"{F.EDU}.degree", LEVEL_PHRASES[level]))  # type: ignore[arg-type]
         return
     if dim == "degree_country":
         if value.lower().startswith(("country not", "other", "no ")):
             raise _unsupported(label, "the country isn't listed on these profiles.")
-        sc.extra.append(further_degree_in(tx.canonical_country(value) or value))
+        _add(sc, further_degree_in(tx.canonical_country(value) or value))
         return
     if dim == "years_band":
         if value.startswith("entry:"):
@@ -518,7 +566,7 @@ def apply_step(ctx: ToolContext, sc: Scope, step: dict) -> None:
         for st in steps:
             cond, note = route_step_condition(st)
             if cond:
-                sc.extra.append(cond)
+                _add(sc, cond)
                 applied += 1
             elif note:
                 sc.notes.append(f"For this route, {note}.")
@@ -594,6 +642,14 @@ def context_for(token: DrillToken, sc: Scope) -> dict:
         if sc.origin_city or not p.get("city"):
             chip("City", p.get("city"), "city")
         chip("Country", p.get("country"), "country", removable=False)
+    elif t == "college_paths":
+        chip("Role", p.get("role"), "role", removable=False)
+        chip("Company", p.get("company"), "company")
+        chip("City", p.get("city"), "city")
+        chip("Country", p.get("country"), "country")
+        chip("Degree", {"masters": "a master's", "any_further": "any further degree"}.get(p.get("level") or "masters"), "level",
+             removable=bool(p.get("level") and p.get("level") != "masters"))
+        chip("Field", p.get("field"), "field")
     elif t == "indian_friendly":
         chip("Country", p.get("country"), "country", removable=False)
         chip("Role", p.get("role"), "role")
@@ -923,6 +979,8 @@ def title_for(sc: Scope, path: list[dict], jobs: bool) -> str:
     if jobs:
         return {"skill": f"Postings that mention {label}", "language": f"Postings: {label}", "seniority": f"Postings asking for {label}",
                 "quarter": f"Postings added in {label}", "city": f"Postings in {label}", "country": f"Postings in {label}"}.get(dim, f"Postings: {label}")
+    if dim == "degree" and str(last["value"]).startswith("programme:"):
+        return f"{_cap(noun)} who studied {label} abroad"
     return {"role": f"{_cap(noun)} working as {label}", "school": f"{_cap(noun)} from {label}", "degree": f"{_cap(noun)} with a {label}",
             "degree_country": f"{_cap(noun)} who studied in {label}", "years_band": f"{_cap(noun)} with {label} of work",
             "route": f"{_cap(noun)} on this route", "route_step": f"{_cap(noun)} whose path includes: {label}",
@@ -966,6 +1024,8 @@ async def run_drill(ctx: ToolContext, token: DrillToken) -> DrillResult:
     ctx.tool = token.tool
     ctx.base_path = path
     ctx.total_steps = 5
+    if token.tool == "reverse_gps" and len(path) == 1 and path[0]["dimension"] in ("route", "route_edge", "route_step"):
+        return await _route_slice(ctx, token, path)
     await ctx.step("Reading the cohort you came from")
     for st in path:  # company names → Crustdata company ids (identify is free), so every count matches on the id
         v = str(st["value"])
@@ -975,13 +1035,22 @@ async def run_drill(ctx: ToolContext, token: DrillToken) -> DrillResult:
                 st["value"], st["label"] = str(cid), st.get("label") or cname
     origin = await build_origin(ctx, token.tool, token.params)
     context = context_for(token, origin)
+    overrides: dict[int, dict] = {}
+    if token.tool == "college_paths":
+        from .tools.college_paths import step_condition
+
+        for i, st in enumerate(path):
+            if st["dimension"] in ("school", "degree"):
+                cond = await step_condition(ctx, str(st["value"]), token.params)
+                if cond is not None:
+                    overrides[i] = cond
     await ctx.step("Applying your filters")
     parent = copy.deepcopy(origin)
-    for st in path[:-1]:
-        apply_step(ctx, parent, st)
+    for i, st in enumerate(path[:-1]):
+        apply_step(ctx, parent, st, overrides.get(i))
     sc = copy.deepcopy(parent)
     if path:
-        apply_step(ctx, sc, path[-1])
+        apply_step(ctx, sc, path[-1], overrides.get(len(path) - 1))
         if parent.origin_place is not None and sc.origin_place is None:
             # A sibling place chosen on the origin screen (e.g. a comparable city): compare it with the whole country.
             parent.origin_place = F.person_country(parent.origin_country) if parent.origin_country else None
@@ -1181,6 +1250,76 @@ async def _jobs_slice(ctx: ToolContext, token: DrillToken, sc: Scope, parent: Sc
         next_steps=next_steps_for(sc, employers[0][0] if employers else None, sc.role_label), warnings=ctx.warnings, evidence=ctx.evidence,
     )
     return _finish(ctx, result, [])
+
+
+async def _route_slice(ctx: ToolContext, token: DrillToken, path: list[dict]) -> DrillResult:
+    """Exact route drill-down (Reverse Career GPS): the tool's own sample of the goal position (a cache hit), each person's
+    route recomputed exactly as the tool does, and only the people whose route matches."""
+    from .crustdata import RunBudget
+    from .tools.reverse_gps import ROUTE_SEP, goal_population, route_title, step_kind, trace_routes
+
+    ctx.budget = RunBudget(ctx.settings.max_live_calls_per_run, ctx.settings.max_credits_per_run)  # same sample size as the tool
+    await ctx.step("Reading the career paths behind this route")
+    goal = await _goal(ctx)
+    if not goal.role:
+        raise ToolInputError("I couldn't find a role in that goal.", hint='Try something like "Data engineer in Munich".')
+    gp = await goal_population(ctx, goal.role, goal.city, goal.country, goal.company)
+    sample, traces = await trace_routes(ctx, gp)
+    last = path[-1]
+    dim, value = last["dimension"], str(last["value"])
+    want = [x.strip() for x in value.split(ROUTE_SEP)]
+    if dim == "route":
+        match = lambda steps: list(steps) == want  # noqa: E731
+        kind, shown = "route", want
+        title = "People who took exactly this route"
+    elif dim == "route_edge":
+        if len(want) != 2:
+            raise _unsupported(last.get("label") or value, "it isn't a single step-to-step link.")
+        a, b = want
+        match = lambda steps: (a, b) in set(zip(steps, steps[1:]))  # noqa: E731
+        kind, shown = "edge", want
+        title = f"People who went from {a} to {b}"
+    else:
+        match = lambda steps: value in steps  # noqa: E731
+        kind, shown = "step", [value]
+        title = f"People whose route includes: {value}"
+    matched = [pp for pp, steps, _y in traces if match(steps)]
+    k, traced, sample_n = len(matched), len(traces), len(sample.people)
+    if not gp["use_like"]:
+        ctx.warn("Too few Indian-educated people were visible in this exact position, so the routes include people from any background.")
+    sections: list[dict] = []
+    if dim == "route":  # secondary context: everyone whose profile shows all these steps (a search, so extra steps allowed)
+        sc = Scope("reverse_gps", "people in your goal position", base=[gp["like_filters"] if gp["use_like"] else gp["target"]])
+        try:
+            apply_step(ctx, sc, last)
+            n_sup, ev_sup = await ctx.count_people_safe(sc.people_filters(), "People whose profile shows every step of this route")
+        except (ToolInputError, CrustdataError) as exc:  # secondary context only: never fail the exact drill over it
+            log.info("route superset count skipped: %s", exc)
+            n_sup, ev_sup = None, None
+        if n_sup is not None:
+            sections.append(section("superset", "stat", "With extra steps too",
+                                    {"label": "people in the goal position show all these steps (some with extra steps in between)",
+                                     "value": n_sup, "display": f"{n_sup:,}", "unit": "people"}, [ev_sup] if ev_sup else []).model_dump())
+    blocked = k < MIN_ROW_COUNT
+    cards, details = ([], []) if blocked else build_people(ctx, matched, "this route", ctx.data_date())
+    route = {"kind": kind, "exact": True, "steps": [{"label": x, "kind": step_kind(x, gp["target_label"])} for x in shown],
+             "title": route_title(shown) if dim == "route" else None, "k": k, "traced": traced, "sample_n": sample_n,
+             "target": gp["target_label"]}
+    result = DrillResult(
+        title=title, path=token.path, context=context_for(token, Scope("reverse_gps", "")),  # type: ignore[arg-type]
+        count=make_count(k, traced, [sample.evidence_id] if sample.evidence_id else []),
+        count_label=f"career paths traced from the {sample_n} profiles read", cohort=None,
+        confidence="medium" if k >= 10 else "low",
+        sections=sections, people=cards,  # type: ignore[arg-type]
+        people_total=k,
+        people_note=None if blocked else f"All {k} people in the profiles read whose route matches exactly, anonymised.",
+        listing_blocked_reason=BLOCKED if blocked else None, route=route, summary=None,
+        coverage=round(traced / gp["n_like" if gp["use_like"] else "n_all"], 3) if (gp["n_like" if gp["use_like"] else "n_all"] or 0) else None,
+        coverage_note=f"Exact match over the {traced} career paths traced from {sample_n} profiles read, the same ones the route page counts.",
+        data_date=ctx.data_date(), next_steps=next_steps_for(Scope("reverse_gps", "", origin_country=goal.country), None, goal.role),
+        warnings=ctx.warnings, evidence=ctx.evidence,
+    )
+    return _finish(ctx, result, details)
 
 
 def _days_ago(raw: Any, today: date) -> str | None:

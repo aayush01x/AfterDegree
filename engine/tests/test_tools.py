@@ -21,6 +21,7 @@ HAPPY = {
     "job_postings": {"role": "Data Engineer", "country": "Germany"},
     "indian_friendly": {"country": "Germany"},
     "market_saturation": {"role": "Data Engineer", "city": "Berlin", "country": "Germany"},
+    "college_paths": {"role": "Data Engineer", "country": "Germany"},
 }
 
 

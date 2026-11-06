@@ -133,6 +133,13 @@ export async function mockRequest(method: string, path: string, body?: unknown):
   }
 
   let m: RegExpExecArray | null;
+  if (method === "GET" && (m = /^\/profiles\/([^/]+)\/runs$/.exec(path))) {
+    return { status: 200, body: { profile_id: m[1], runs: [], recent: [] } };
+  }
+  if (method === "GET" && (m = /^\/profiles\/([^/]+)\/snapshot$/.exec(path))) {
+    return err(404, "not_found", "The snapshot isn't available in example-data mode.");
+  }
+
   if (method === "GET" && (m = /^\/profiles\/([^/]+)$/.exec(path))) {
     await wait(150);
     const p = getStored(m[1]) ?? fallbackProfile(m[1]);

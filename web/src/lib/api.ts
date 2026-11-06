@@ -13,6 +13,7 @@ import type {
 } from "./types";
 import { toolById } from "./tools";
 import type { DrillResultFull, DrillToken, PersonDetailFull } from "./drill-types";
+import type { RunsResponse, SnapshotResponse } from "./home-types";
 
 /** "mock" serves fixtures in the browser; "live" calls /api/* (proxied to the engine). */
 export const API_MODE: "mock" | "live" =
@@ -88,6 +89,10 @@ export const api = {
   complete: (profile_id: string, goals: Goals) =>
     request<CompleteResponse>("POST", "/onboarding/complete", { profile_id, goals }),
   getProfile: (profile_id: string) => request<StoredProfile>("GET", `/profiles/${profile_id}`),
+  /** Latest finished run per tool, with one headline each (database only, free). */
+  runs: (profile_id: string) => request<RunsResponse>("GET", `/profiles/${profile_id}/runs`),
+  /** Three fresh count-only numbers for the goal (cached by the engine). */
+  snapshot: (profile_id: string) => request<SnapshotResponse>("GET", `/profiles/${profile_id}/snapshot`),
   startTool: (tool: ToolId, profile_id: string, params: Record<string, unknown>) =>
     request<{ job_id: string }>("POST", toolById(tool).endpoint, { profile_id, ...params }),
   getJob: (job_id: string) => request<Job>("GET", `/jobs/${job_id}`),

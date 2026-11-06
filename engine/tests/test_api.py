@@ -32,6 +32,7 @@ SLUGS = {
     "job_postings": "job-postings",
     "indian_friendly": "indian-friendly",
     "market_saturation": "market-saturation",
+    "college_paths": "college-paths",
 }
 
 

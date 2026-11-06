@@ -76,18 +76,8 @@ def route_signature(steps: list[str]) -> str:
     return ROUTE_SEP.join(steps)
 
 
-async def run(ctx: ToolContext) -> Result:
-    ctx.tool = TOOL
-    ctx.total_steps = 6
-    await ctx.step("Reading your goal")
-    goal, how = await parse_goal(ctx)
-    if not goal.role:
-        raise ToolInputError("I couldn't find a role in that goal.", hint='Try something like "Data engineer in Munich".')
-    role, city, country, company = goal.role, goal.city, goal.country, goal.company
-    role_label = tx.display_role(role)
-    place = place_text(city, country)
-
-    await ctx.step("Finding people in that position today")
+async def goal_population(ctx: ToolContext, role: str, city: str | None, country: str | None, company: str | None) -> dict:
+    """The goal position's people (shared with the exact route drill-down, so its sample is the same cached query)."""
     company_id = None
     if company:
         company_id, company = await ctx.identify_company(company)
@@ -102,29 +92,60 @@ async def run(ctx: ToolContext) -> Result:
     n_all, _ = await ctx.count_people(target, "People in the goal position")
     like_filters = F.and_(target, F.india_educated()) or {}
     n_like, _ = await ctx.count_people_safe(like_filters, "People in the goal position who studied in India")
+    place = place_text(city, country)
+    return {"role": role, "city": city, "country": country, "company": company, "company_id": company_id, "target": target,
+            "like_filters": like_filters, "n_all": n_all, "n_like": n_like, "use_like": (n_like or 0) >= 10,
+            "target_label": f"{tx.display_role(role)} in {place}" + (f" at {company}" if company else "")}
+
+
+SAMPLE_N = 40
+
+
+async def trace_routes(ctx: ToolContext, gp: dict):
+    """Read the goal population's sample and each person's exact route (step labels) and years to the goal."""
+    sample = await ctx.sample_people(gp["like_filters"] if gp["use_like"] else gp["target"], max_results=SAMPLE_N,
+                                     note="Profiles of people in the goal position", reserve=2.5)
+    traces = []
+    for pp in sample.people:
+        tr = find_target_role(pp, gp["role"], gp["company"], gp["company_id"])
+        if tr is None:
+            continue
+        traces.append((pp, route_steps(pp, tr, gp["target_label"], ctx.today), years_to_target(pp, tr)))
+    return sample, traces
+
+
+async def run(ctx: ToolContext) -> Result:
+    ctx.tool = TOOL
+    ctx.total_steps = 6
+    await ctx.step("Reading your goal")
+    goal, how = await parse_goal(ctx)
+    if not goal.role:
+        raise ToolInputError("I couldn't find a role in that goal.", hint='Try something like "Data engineer in Munich".')
+    role, city, country, company = goal.role, goal.city, goal.country, goal.company
+    role_label = tx.display_role(role)
+    place = place_text(city, country)
+
+    await ctx.step("Finding people in that position today")
+    gp = await goal_population(ctx, role, city, country, company)
+    company, target, like_filters = gp["company"], gp["target"], gp["like_filters"]
+    n_all, n_like, use_like = gp["n_all"], gp["n_like"], gp["use_like"]
 
     await ctx.step("Reading how they got there")
-    use_like = (n_like or 0) >= 10
-    sample = await ctx.sample_people(like_filters if use_like else target, max_results=40, note="Profiles of people in the goal position",
-                                     reserve=2.5)
+    sample, traces = await trace_routes(ctx, gp)
     ev = [e for e in (sample.evidence_id,) if e]
     if not use_like:
         ctx.warn("Too few Indian-educated people were visible in this exact position, so the routes include people from any background.")
 
     await ctx.step("Grouping their routes")
     done = user_steps(ctx.profile, ctx.today)
-    target_label = f"{role_label} in {place}" + (f" at {company}" if company else "")
+    target_label = gp["target_label"]
     routes: dict[tuple, list[float | None]] = defaultdict(list)
     edges: Counter = Counter()
-    for pp in sample.people:
-        tr = find_target_role(pp, role, company, company_id)
-        if tr is None:
-            continue
-        steps = route_steps(pp, tr, target_label, ctx.today)
-        routes[tuple(steps)].append(years_to_target(pp, tr))
-        for a, b in zip(steps, steps[1:]):
+    for _pp, steps, yrs in traces:
+        routes[tuple(steps)].append(yrs)
+        for a, b in set(zip(steps, steps[1:])):  # people, not occurrences (the edge drill counts people)
             edges[(a, b)] += 1
-    traced = sum(len(v) for v in routes.values())
+    traced = len(traces)
 
     route_items = []
     small = 0
@@ -161,7 +182,7 @@ async def run(ctx: ToolContext) -> Result:
                 nodes[label] = {"id": f"n{len(nodes) + 1}", "label": label, "kind": kind}
                 if kind != "goal":
                     nodes[label]["drill"] = ctx.drill("route_step", label)
-        edge_list.append({"from": nodes[a]["id"], "to": nodes[b]["id"], "count": c})
+        edge_list.append({"from": nodes[a]["id"], "to": nodes[b]["id"], "count": c, "drill": ctx.drill("route_edge", a + ROUTE_SEP + b, f"{a} → {b}")})
 
     await ctx.step("Checking which skills the role asks for")
     skills_section = None

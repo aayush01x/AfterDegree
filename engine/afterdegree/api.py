@@ -44,6 +44,7 @@ from .schemas import (
 )
 from .toolkit import MOCK_TODAY
 from .tools import TOOLS
+from .home import register_home_routes
 
 log = logging.getLogger("afterdegree.api")
 
@@ -249,6 +250,9 @@ def create_app(
 
     for tool_name, (run_fn, body_model, slug) in TOOLS.items():
         register_tool(tool_name, run_fn, body_model, slug)
+
+    # Home ("Your plan"): latest runs per tool and a small cached snapshot (afterdegree/home.py)
+    register_home_routes(app, load_profile)
 
     # ------------------------------------------------------------ drill-down (CONTRACT Appendix C + D)
 

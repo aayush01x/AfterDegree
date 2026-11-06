@@ -112,3 +112,40 @@ async def test_smaller_sample_is_served_from_a_larger_cached_one(make_ctx, crust
     second = await ctx.sample_people(f, max_results=30)
     assert [p.person_id for p in second.people] == [p.person_id for p in first.people][:30]
     assert ctx.budget.live_calls == live_before and len(fake.calls) == calls_before
+
+
+# ------------------------------------------------------------------ College Paths
+
+
+async def test_college_paths_counts_are_exact(make_ctx, crustdata, fake):
+    from afterdegree.tools.college_paths import further_element, goal_filters
+
+    ctx = mocked_ctx(make_ctx, "college_paths", HAPPY["college_paths"])
+    r = await TOOLS["college_paths"][0](ctx)
+    sec = {s.id: s.data for s in r.sections}
+    goal = r.cohort.filters["crustdata"]
+    n_g = sum(1 for p in fake.people if matches(p, goal, "person"))
+    assert sec["goal_size"]["value"] == n_g
+    fd = sec["further_degree"]
+    assert fd["n"] == n_g and sum(i["count"] for i in fd["items"]) == n_g
+    unis = [row for row in sec["universities"]["rows"] if not row.get("rest")]
+    assert unis
+    for row in unis:
+        assert row["cells"]["in_goal"] >= 5 and row["count"]["n"] == n_g
+        assert row["drill"]["path"][-1]["value"].startswith("uni:")
+        rate = row["cells"]["rate"]
+        assert rate is None or rate["k"] <= rate["n"] == row["cells"]["graduates"]
+    assert goal == goal_filters("Data Engineer", None, "Germany", None)
+    # a university row's count equals a direct count of people in the goal with a master's there (separate school entry)
+    top = unis[0]
+    uni = top["drill"]["path"][-1]["value"][4:]
+    variants = await ctx.school_variants(uni)
+    from afterdegree.tools.college_paths import goal_parts, with_entry
+
+    f = with_entry(goal_parts("Data Engineer", None, "Germany", None), further_element("masters", None, variants))
+    assert top["cells"]["in_goal"] == sum(1 for p in fake.people if matches(p, f, "person"))
+    you = [row for row in sec["indian_colleges"]["rows"] if row.get("you")]
+    assert len(you) == 1 and you[0]["badges"] == ["Your college"]
+    progs = [row for row in sec["programmes"]["rows"] if not row.get("rest")]
+    assert progs and all(p["cells"]["people"] >= 5 for p in progs)
+    assert ctx.budget.credits <= 25

@@ -42,6 +42,12 @@ function Pick({ kicker, row, nameKey, figure }: { kicker: string; row: RankedRow
   );
 }
 
+/** "Indian-educated people who are Software Engineer in United States today." → "Indian-educated people work as …" */
+function heroSay(definition: string | undefined, goal: string): string {
+  const m = definition?.match(/who are (.+?)(?: today)?\.?$/i);
+  return m ? `Indian-educated people work as ${m[1]} today.` : `Indian-educated people are in ${goal} today.`;
+}
+
 export function View({ result }: FeatureViewProps) {
   const size = byId(result, "goal_size", "stat");
   const further = byId(result, "further_degree", "distribution");
@@ -65,7 +71,7 @@ export function View({ result }: FeatureViewProps) {
       <ToolHero
         lead="At least"
         numeral={<HeroNumber value={n} label={`${fmtInt(n)} people`} />}
-        say={`Indian-educated people ${size?.data.label ? size.data.label.toLowerCase() : `are in ${goalWords}`}.`}
+        say={heroSay(result.cohort?.definition, goalWords)}
         note={size?.data.note}
         actions={
           first && (

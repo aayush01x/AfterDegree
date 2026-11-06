@@ -21,6 +21,7 @@ ToolName = Literal[
     "job_postings",
     "indian_friendly",
     "market_saturation",
+    "college_paths",
 ]
 
 
@@ -122,7 +123,7 @@ class JobCreated(_Model):
 
 DrillDimension = Literal[
     "country", "city", "company", "role", "school", "degree", "degree_country", "seniority", "years_band",
-    "route", "route_step", "posting_employer", "skill", "language", "quarter",
+    "route", "route_step", "route_edge", "posting_employer", "skill", "language", "quarter",
 ]
 
 
@@ -217,6 +218,7 @@ class RouteEdge(_Model):
     from_: str = Field(alias="from")
     to: str
     count: int
+    drill: DrillToken | None = None
 
 
 class RoutesData(_Model):
@@ -530,6 +532,15 @@ class IndianFriendlyBody(_ToolBody):
     city: str | None = None
 
 
+class CollegePathsBody(_ToolBody):
+    role: str
+    country: str | None = None
+    city: str | None = None
+    company: str | None = None
+    level: Literal["masters", "any_further"] = "masters"
+    field: str | None = None
+
+
 class MarketSaturationBody(_ToolBody):
     role: str
     city: str | None = None
@@ -624,6 +635,7 @@ class DrillResult(_Model):
     people_note: str | None = None
     listing_blocked_reason: str | None = None
     company: dict[str, Any] | None = None
+    route: dict[str, Any] | None = None
     summary: str | None = None
     coverage: float | None = None
     coverage_note: str | None = None

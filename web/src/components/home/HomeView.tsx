@@ -1,489 +1,524 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { useJob } from "@/hooks/useJob";
-import type { DrillToken } from "@/lib/drill-types";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { api, ApiError } from "@/lib/api";
+import type { Headline, RunsResponse, RunSummary, SnapshotResponse, SnapshotTile } from "@/lib/home-types";
 import { firstName, fmtInt, formatDate } from "@/lib/format";
-import { toolHref } from "@/lib/tools";
-import type { DistributionItem, MatchLevel, RankedRow, ResultEnvelope, Section } from "@/lib/types";
-import { CompanyMark } from "@/components/art/CompanyMark";
-import { PlaceArt } from "@/components/art/PlaceArt";
+import { mergedFor } from "@/lib/pages";
+import { TOOLS, toolHref } from "@/lib/tools";
+import type { Goals, StoredProfile, ToolId } from "@/lib/types";
 import { CellDigits } from "@/components/data/CellDigits";
-import { drillOf } from "@/components/data/Drillable";
-import { EmptyState } from "@/components/data/EmptyState";
-import { EvidenceKey, evidenceText } from "@/components/data/EvidenceKey";
-import { GridNumber } from "@/components/data/GridNumber";
-import { JobProgress } from "@/components/data/JobProgress";
-import { PersonStrip } from "@/components/data/PersonStrip";
-import { coverageOf } from "@/components/data/ResultView";
-import { LinkTile } from "@/components/tiles/LinkTile";
-import { PosterTile } from "@/components/tiles/PosterTile";
-import { RouteTile } from "@/components/tiles/RouteTile";
+import { GridFill } from "@/components/data/GridFill";
 import { TileRow } from "@/components/tiles/TileRow";
-import { Button, ButtonLink } from "@/components/ui/Button";
-import { ExampleBadge } from "@/components/ui/ExampleBadge";
+import { ButtonLink } from "@/components/ui/Button";
+import { Chevron } from "@/components/ui/Chevron";
 import { InlineError } from "@/components/ui/InlineError";
-import { Select } from "@/components/ui/Select";
+import { Tag } from "@/components/ui/Tag";
 import { useProfile } from "@/components/shell/ProfileContext";
-import { useDrill } from "@/components/drill/useDrill";
-import { aimText, backgroundLine } from "./profileLine";
+import { shortDegree } from "./profileLine";
 import styles from "./HomeView.module.css";
 
-type Params = { match: MatchLevel; exp_band?: [number, number] };
-type Of<K extends Section["kind"]> = Extract<Section, { kind: K }>;
+/* ---------------- words ---------------- */
 
-const MATCH_OPTIONS = [
-  { value: "exact_school", label: "Same college and field" },
-  { value: "school_tier", label: "Similar colleges, same field" },
-  { value: "field_only", label: "Same field, any college" },
-];
-const BAND_OPTIONS = [
-  { value: "any", label: "Any amount of work" },
-  { value: "0-1", label: "Under a year of work" },
-  { value: "1-3", label: "1 to 3 years of work" },
-  { value: "3-6", label: "3 to 6 years of work" },
-];
-const OTHER = /^(other|others|other countries|elsewhere)$/i;
+const THE = /^(united states|united kingdom|netherlands|united arab emirates|czech republic|philippines)$/i;
+const placeName = (p: string) => (THE.test(p) ? `the ${p}` : p);
 
-function sec<K extends Section["kind"]>(r: ResultEnvelope | null, id: string, kind: K): Of<K> | undefined {
-  return r?.sections.find((s) => s.id === id && s.kind === kind) as Of<K> | undefined;
+function compactSchool(s: string | null | undefined): string {
+  if (!s) return "";
+  const m = /^(Indian Institute of Technology|National Institute of Technology|Indian Institute of Information Technology|Birla Institute of Technology and Science)[,\s-]*(.*)$/i.exec(s.trim());
+  if (m) {
+    const abbr = /information/i.test(m[1]) ? "IIIT" : /national/i.test(m[1]) ? "NIT" : /birla/i.test(m[1]) ? "BITS" : "IIT";
+    return `${abbr} ${m[2]}`.trim();
+  }
+  return s.replace(/^Vellore Institute of Technology,?\s*/i, "VIT ").replace(/\s+/g, " ").trim();
 }
 
-const rowLabel = (row: RankedRow, key: string) => String(row.cells[key] ?? "");
-const rowCount = (row: RankedRow) => {
-  const v = row.cells.people;
-  return typeof v === "number" ? v : (row.count?.k ?? 0);
+/** "BTech Electrical Engineering, IIT Kanpur ’27" */
+function fromLine(p: StoredProfile): string {
+  const d = p.derived;
+  const ed = p.person.education.find((e) => e.school === d.undergrad_school) ?? p.person.education[0];
+  const degree = shortDegree(ed?.degree) || "Graduate";
+  const field = d.undergrad_field ?? ed?.field ?? "";
+  const school = compactSchool(d.undergrad_school ?? ed?.school);
+  const yr = d.undergrad_end_year ? ` ’${String(d.undergrad_end_year).slice(2)}` : "";
+  return `${degree}${field ? ` ${field}` : ""}${school ? `, ${school}` : ""}${yr}`;
+}
+
+/** "Software Engineer in the United States" (or what's missing). */
+function toLine(g: Goals | null): string {
+  if (!g) return "your next step";
+  const role = g.target_roles[0];
+  const place = g.target_cities[0] ?? g.target_countries[0];
+  const where = place ? ` in ${placeName(place)}` : "";
+  switch (g.intent) {
+    case "masters_abroad":
+      return `Master’s, then ${role ?? "a job"}${where}`;
+    case "switch_role":
+      return `Switch to ${role ?? "a new role"}${where}`;
+    case "grow_in_place":
+      return `Grow as ${role ?? "what you do"}${where}`;
+    default:
+      return `${role ?? "A job"}${where}`;
+  }
+}
+
+function ago(iso: string): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  const m = Math.round((Date.now() - t) / 60000);
+  if (m < 2) return "just now";
+  if (m < 60) return `${m} minutes ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} ${h === 1 ? "hour" : "hours"} ago`;
+  const d = Math.round(h / 24);
+  return d < 7 ? `${d} ${d === 1 ? "day" : "days"} ago` : formatDate(iso);
+}
+
+const known = (tool: string): tool is ToolId => TOOLS.some((t) => t.id === tool);
+const toolName = (id: ToolId) => {
+  const m = mergedFor(id);
+  return m ? `${m.page.short} · ${m.tab.label}` : TOOLS.find((t) => t.id === id)!.short;
 };
-type Noted = { note?: string | null; sample_n?: number | null };
 
-/** "People like you": the cohort drawn one cell per person, then rows of destinations, companies and routes. */
+/** Params that point a tool at the user's goal, for tools not checked yet. */
+function goalParams(tool: ToolId, g: Goals | null, university: boolean): Record<string, unknown> {
+  const role = g?.target_roles[0];
+  const country = g?.target_countries[0];
+  const city = g?.target_cities[0];
+  switch (tool) {
+    case "people_like_me":
+      return university && g?.institution ? { institution: g.institution } : { match: "exact_school" };
+    case "conversion_map":
+      return { scope: { country, role } };
+    case "internship_chances":
+    case "indian_friendly":
+      return { country, role, city };
+    default:
+      return { role, city, country };
+  }
+}
+
+const NEEDS_ROLE: ToolId[] = ["reverse_gps", "routes_to_position", "job_postings", "market_saturation"];
+const TILE_ORDER: ToolId[] = [
+  "people_like_me",
+  "reverse_gps",
+  "routes_to_position",
+  "internship_chances",
+  "conversion_map",
+  "indian_friendly",
+  "job_postings",
+  "market_saturation",
+];
+
+interface Step {
+  tools: ToolId[];
+  title: string;
+  titleUni: string;
+  why: string;
+  whyUni: string;
+}
+const STEPS: Step[] = [
+  {
+    tools: ["people_like_me"],
+    title: "See where people like you went",
+    titleUni: "See where your graduates went",
+    why: "Countries, roles and employers of people with your background.",
+    whyUni: "Countries, roles and employers of your graduates.",
+  },
+  {
+    tools: ["reverse_gps", "routes_to_position"],
+    title: "Pick a route",
+    titleUni: "See the routes they took",
+    why: "The steps people took to reach your goal, from where you are today.",
+    whyUni: "The steps your graduates took into a position.",
+  },
+  {
+    tools: ["internship_chances", "conversion_map"],
+    title: "Check your internship odds",
+    titleUni: "Check internship conversion",
+    why: "How often internships turned into full-time jobs, and where.",
+    whyUni: "How often your graduates’ internships became full-time jobs.",
+  },
+  {
+    tools: ["indian_friendly"],
+    title: "Shortlist employers",
+    titleUni: "Find employers that hire your graduates",
+    why: "Employers abroad with a record of hiring Indian-educated people.",
+    whyUni: "Employers abroad with a record of hiring Indian-educated graduates.",
+  },
+  {
+    tools: ["job_postings"],
+    title: "Read real postings",
+    titleUni: "Read real postings",
+    why: "What current postings for your role ask for: skills, languages, visas.",
+    whyUni: "What postings in your graduates’ target markets ask for.",
+  },
+  {
+    tools: ["market_saturation"],
+    title: "Check the competition",
+    titleUni: "Check the competition",
+    why: "How many people like you are entering against the openings.",
+    whyUni: "How many graduates like yours are entering against the openings.",
+  },
+];
+
+/* ---------------- view ---------------- */
+
+/** "Your plan": the goal, a few fresh numbers, the headline of every check, the path and recent runs. */
 export function HomeView() {
-  const { profile, goals, profileId, university, loading: profileLoading, error: profileError, refresh } = useProfile();
-  const job = useJob();
-  const [params, setParams] = useState<Params>({ match: "exact_school" });
-  const [adjusting, setAdjusting] = useState(false);
-  const [focus, setFocus] = useState<string | null>(null);
-  const started = useRef<string | null>(null);
-
-  const run = useCallback(
-    (p: Params) => {
-      if (!profileId) return;
-      const body: Record<string, unknown> = { ...p };
-      if (university && goals) Object.assign(body, { institution: goals.institution, programs: goals.programs });
-      void job.run("people_like_me", profileId, body);
-    },
-    // job.run is stable
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [profileId, university, goals],
-  );
+  const { profile, goals, profileId, university, error: profileError, refresh } = useProfile();
+  const [runs, setRuns] = useState<RunsResponse | null>(null);
+  const [runsError, setRunsError] = useState<ApiError | null>(null);
+  const [snap, setSnap] = useState<SnapshotResponse | null>(null);
+  const [snapError, setSnapError] = useState<ApiError | null>(null);
+  const [nonce, setNonce] = useState(0);
+  const goalsKey = JSON.stringify(goals);
 
   useEffect(() => {
-    if (!profileId || !goals || started.current === profileId) return;
-    started.current = profileId;
-    run(params);
-  }, [profileId, goals, params, run]);
+    if (!profileId) return;
+    let alive = true;
+    api
+      .runs(profileId)
+      .then((r) => alive && (setRuns(r), setRunsError(null)))
+      .catch((e: unknown) => alive && setRunsError(e instanceof ApiError ? e : new ApiError(0, { code: "unknown", message: "We couldn't load your checks." })));
+    return () => {
+      alive = false;
+    };
+  }, [profileId, nonce]);
 
-  const apply = (p: Params) => {
-    setParams(p);
-    setAdjusting(false);
-    setFocus(null);
-    run(p);
-  };
-
-  const onAdjust = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const band = String(fd.get("band"));
-    const p: Params = { match: String(fd.get("match")) as MatchLevel };
-    if (band !== "any") p.exp_band = band.split("-").map(Number) as [number, number];
-    apply(p);
-  };
+  useEffect(() => {
+    if (!profileId || goalsKey === "null") return;
+    let alive = true;
+    api
+      .snapshot(profileId)
+      .then((s) => alive && (setSnap(s), setSnapError(null)))
+      .catch((e: unknown) => alive && setSnapError(e instanceof ApiError ? e : new ApiError(0, { code: "unknown", message: "We couldn't count just now." })));
+    return () => {
+      alive = false;
+    };
+  }, [profileId, goalsKey, nonce]);
 
   if (profileError) {
     return (
       <div className={styles.home}>
-        <div className={styles.pad}>
-          <InlineError title="We couldn't load your profile" message={profileError.message} hint={profileError.hint} onRetry={refresh} />
-        </div>
+        <InlineError title="We couldn't load your profile" message={profileError.message} hint={profileError.hint} onRetry={refresh} />
       </div>
     );
   }
 
-  const r = job.phase === "done" ? job.result : null;
-  const busy = !r && job.phase !== "error";
-  const moved = sec(r, "moved_abroad", "stat");
-  const size = sec(r, "cohort_size", "stat");
-  const countries = sec(r, "countries", "distribution");
-  const roles = sec(r, "roles", "ranked_table");
-  const employers = sec(r, "employers_target", "ranked_table");
-  const studied = sec(r, "degree_countries", "distribution");
-
-  const n = r?.cohort?.n_visible ?? size?.data.value ?? 0;
-  const coverage = r ? coverageOf(r) : null;
-  const thin = !!r && (n < 10 || r.confidence === "low");
-  const next = r?.next_steps[0];
-  const who = university ? "your graduates" : "people like you";
-  const Who = university ? "Your graduates" : "People like you";
   const name = profile ? firstName(profile.person.name) : "";
-  const aim = aimText(goals);
-  const lens = (t: string) => (university ? t.replace(/people like you/gi, "your graduates") : t);
-
-  const items: DistributionItem[] = (countries?.data.items ?? []).filter((i) => i.count > 0);
-  const target = university ? undefined : items.find((i) => i.target);
-  const abroad = items.filter((i) => !i.remainder);
-  const focused = items.find((i) => i.label === focus) ?? target ?? abroad[0];
-  const country = target?.label ?? goals?.target_countries[0];
-
-  const empRows = (employers?.data.rows ?? []).filter((x) => !x.rest);
-  const empNote = (employers?.data as Noted | undefined)?.note;
-  const roleRows = (roles?.data.rows ?? []).filter((x) => !x.rest);
-  const studiedIn = (label: string) => studied?.data.items.find((i) => i.label === label && !i.remainder);
-  const sampleN = (countries?.data as Noted | undefined)?.sample_n;
-  const ug = profile?.person.education.find((e) => /b\.?tech|b\.?e\b|bachelor|bsc/i.test(e.degree));
-  const ugShort = ug ? (/b\.?tech/i.test(ug.degree) ? "BTech" : /bachelor of engineering|b\.?e\b/i.test(ug.degree) ? "BE" : "Bachelor’s") : "Bachelor’s";
-  const gps = r?.next_steps.find((s) => s.tool === "reverse_gps");
-  const friendly = r?.next_steps.find((s) => s.tool === "indian_friendly");
-
-  /* ---------------- hero ---------------- */
-  const c = moved?.data.count;
-  const heroValue = c ? c.k : (size?.data.value ?? 0);
-  const least = c && c.share !== null ? "At least" : c ? "Only" : "We can see";
+  const noRole = !university && !!goals && !goals.target_roles.length;
+  const latest = new Map<ToolId, RunSummary>();
+  for (const r of runs?.runs ?? []) if (known(r.tool)) latest.set(r.tool, r);
+  const recent = (runs?.recent ?? []).filter((r) => known(r.tool)).slice(0, 5);
+  const doneSteps = STEPS.map((s) => s.tools.some((t) => latest.has(t)));
+  const doneCount = doneSteps.filter(Boolean).length;
+  const nextStep = doneSteps.indexOf(false);
+  const tileTools = [...TILE_ORDER.filter(known), ...TOOLS.map((t) => t.id).filter((id) => !TILE_ORDER.includes(id))];
+  const hrefFor = (tool: ToolId) => {
+    const r = latest.get(tool);
+    return toolHref(tool, r ? r.params : goalParams(tool, goals, university));
+  };
 
   return (
     <div className={styles.home}>
-      <section className={styles.top} aria-label="Your cohort">
-        <div className={styles.hero}>
-          <div className={styles.head}>
-            <div className={styles.h1row}>
-              <h1 className={styles.h1}>{name ? `Welcome back, ${name}.` : "Welcome back."}</h1>
-              <ExampleBadge />
-            </div>
-            {profile && (
-              <p className={styles.who}>
-                {university ? (
-                  <>
-                    {profile.derived.current_title} · following <b>{goals?.programs.join(", ") || "all programs"}</b>
-                  </>
-                ) : (
-                  <>
-                    {backgroundLine(profile)}
-                    {aim && (
-                      <>
-                        {" · "}
-                        <b>aiming: {aim}</b>
-                      </>
-                    )}
-                  </>
-                )}
-              </p>
-            )}
+      {/* ---------------- your goal ---------------- */}
+      <header className={styles.head}>
+        <h1 className={styles.h1}>{name ? `Your plan, ${name}` : "Your plan"}</h1>
+        <section className={styles.goal} aria-labelledby="goal-h">
+          <div className={styles.goalTop}>
+            <h2 id="goal-h" className={styles.kicker}>
+              {university ? "Your graduates" : "Your goal"}
+            </h2>
+            <Link href="/onboarding?edit=1" className={styles.edit}>
+              Edit
+            </Link>
           </div>
-
-          <aside className={styles.cohort} aria-labelledby="cohort-h">
-            <div className={styles.ch}>
-              <h2 id="cohort-h">{university ? "Your graduates" : "Your cohort"}</h2>
-              {r ? (
-                <EvidenceKey label={evidenceText(n, coverage, r.data_date)} n={n} coverage={coverage} date={r.data_date} evidence={r.evidence} note={r.coverage_note} />
+          {profile && goals ? (
+            <p className={styles.goalLine}>
+              {university ? (
+                <>
+                  <span>
+                    {compactSchool(goals.institution) || "Your institution"}
+                    {goals.programs.length ? ` · ${goals.programs.join(", ")}` : ""}
+                  </span>
+                  <span className={styles.arrow} aria-hidden="true">
+                    →
+                  </span>
+                  <span className="visually-hidden"> to </span>
+                  <b>{goals.target_countries.length ? goals.target_countries.map(placeName).join(", ") : "wherever they went"}</b>
+                </>
               ) : (
-                <span className={styles.counting}>counting</span>
+                <>
+                  <span>{fromLine(profile)}</span>
+                  <span className={styles.arrow} aria-hidden="true">
+                    →
+                  </span>
+                  <span className="visually-hidden"> to </span>
+                  <b>{toLine(goals)}</b>
+                </>
               )}
-            </div>
-            <p className={styles.def}>{r?.cohort?.definition ?? (busy ? "Working out who has your background…" : "We'll define your cohort from your profile.")}</p>
-            {!university && (
-              <button type="button" className={styles.adjust} aria-expanded={adjusting} aria-controls="adjust-cohort" onClick={() => setAdjusting((a) => !a)}>
-                {adjusting ? "Keep it as it is" : "Adjust who counts as like you"}
-              </button>
-            )}
-            {adjusting && (
-              <form id="adjust-cohort" className={styles.adjustForm} onSubmit={onAdjust}>
-                <Select name="match" label="College" options={MATCH_OPTIONS} defaultValue={params.match} />
-                <Select name="band" label="Experience" options={BAND_OPTIONS} defaultValue={params.exp_band ? params.exp_band.join("-") : "any"} />
-                <div className={styles.adjustActions}>
-                  <Button type="submit" size="sm">
-                    Recount
-                  </Button>
-                </div>
-              </form>
-            )}
-          </aside>
-
-          <div className={styles.num}>
-            {r && !thin ? (
-              <>
-                <p className={styles.least}>{least}</p>
-                <GridNumber value={heroValue} label={c ? c.display : fmtInt(heroValue)} className={styles.digits} />
-              </>
-            ) : (
-              <LoadingNumber busy={busy || profileLoading} done={job.job?.progress.done ?? 0} total={job.job?.progress.total ?? 1} who={who} />
-            )}
-          </div>
-
-          <div className={styles.say}>
-            {r && !thin && (
-              <>
-                <p className={styles.sentence}>
-                  {c ? `of ${fmtInt(c.n)} ${lens((moved?.data.label ?? "").replace(/^of\s+/i, ""))}.` : `${lens(size?.data.label ?? "visible profiles")}.`}
-                  {c && c.share === null && " Too few to compare."}
-                </p>
-                {next && (
-                  <ButtonLink size="lg" className={styles.cta} href={toolHref(next.tool, next.params)}>
-                    {next.label}
-                  </ButtonLink>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        {job.phase === "error" && job.error && (
-          <div className={styles.block}>
-            <InlineError title="We couldn't count your cohort just now" message={job.error.message} hint={job.error.hint} onRetry={() => run(params)} />
-          </div>
-        )}
-
-        {busy && (
-          <div className={[styles.block, styles.loadingStrip].join(" ")}>
-            <JobProgress phase={job.phase === "idle" ? "starting" : job.phase} job={job.job} cells={160} size={10} />
-          </div>
-        )}
-
-        {r && thin && (
-          <EmptyState
-            className={styles.block}
-            title={`Only ${fmtInt(n)} ${n === 1 ? "person matches" : "people match"} so far`}
-            actions={
-              <>
-                <Button onClick={() => apply({ match: "school_tier" })}>Include similar colleges</Button>
-                <Button variant="secondary" onClick={() => apply({ match: "field_only" })}>
-                  Same field, any college
-                </Button>
-              </>
-            }
-          >
-            <p>
-              That isn&apos;t a verdict on your plans. Few people with exactly this background have public profiles we can see, so any share would be
-              guesswork. Widening who counts as like you gives a fairer picture; we&apos;ll always say what we widened.
             </p>
-            {r.warnings.map((w) => (
-              <p key={w}>{w}</p>
-            ))}
-          </EmptyState>
-        )}
+          ) : (
+            <p className={styles.goalLine}>Loading your profile…</p>
+          )}
+          {noRole && (
+            <div className={styles.prompt} role="note">
+              <p>
+                <b>Add the role you’re aiming for.</b> Routes, postings and competition all need a role to answer, so half your plan is waiting on
+                it. A job title is enough, like Software Engineer.
+              </p>
+              <ButtonLink href="/onboarding?edit=1" size="sm">
+                Add a role
+              </ButtonLink>
+            </div>
+          )}
+        </section>
+      </header>
 
-        {r && !thin && countries && items.length > 0 && (
-          <PersonStrip
-            className={styles.block}
-            items={items}
-            n={countries.data.n}
-            label={`${Who} by current country`}
-            intro={`Each square is one ${university ? "graduate" : "person like you"}.`}
-            keyLabel={`N = ${fmtInt(countries.data.n)} · by country${sampleN && sampleN < n ? ` · read from ${fmtInt(sampleN)} of ${fmtInt(n)}` : ""}`}
-          />
+      {/* ---------------- right now (snapshot) ---------------- */}
+      <section className={styles.block} aria-labelledby="now-h">
+        <div className={styles.sectionHead}>
+          <h2 id="now-h" className={styles.h2}>
+            Right now
+          </h2>
+          <p className={styles.meta}>
+            {snap ? `Exact counts of visible profiles and postings, as of ${formatDate(snap.data_date)}.` : "Counting a few things for your goal…"}
+          </p>
+        </div>
+        {snapError ? (
+          <InlineError title="We couldn't count these just now" message={snapError.message} hint={snapError.hint} onRetry={() => setNonce((n) => n + 1)} />
+        ) : (
+          <div className={styles.nowGrid}>
+            {(snap?.tiles ?? Array.from({ length: university ? 2 : 3 }, () => null)).map((t, i) => (
+              <NowTile key={t?.key ?? i} tile={t} />
+            ))}
+            {university && (
+              <ConversionTile run={latest.get("internship_chances")} href={hrefFor("internship_chances")} />
+            )}
+          </div>
         )}
       </section>
 
-      {r && !thin && abroad.length > 0 && (
+      {/* ---------------- at a glance (latest runs) ---------------- */}
+      {runsError ? (
+        <div className={styles.block}>
+          <InlineError title="We couldn't load your checks" message={runsError.message} hint={runsError.hint} onRetry={() => setNonce((n) => n + 1)} />
+        </div>
+      ) : (
         <TileRow
           className={styles.bandRow}
           band
-          dim
-          title={university ? "Where your graduates went" : "Where people like you went"}
-          note={`${items.length} ${items.length === 1 ? "group" : "destinations"} · every count is “at least”, of ${fmtInt(countries!.data.n)}`}
-          label="Destinations"
+          title="At a glance"
+          note="The headline from the last time you ran each check. Opening one brings its full answer back."
+          count={runs ? `${latest.size} of ${tileTools.length} checked` : undefined}
+          label="Your checks"
         >
-          {items.map((it) => {
-            const on = it === focused;
-            const tok = drillOf(it);
-            const master = studiedIn(it.label);
-            const isTarget = !!target && it === target;
-            return (
-              <PosterTile
-                key={it.label}
-                variant="poster"
-                tone="band"
-                title={it.label}
-                art={<PlaceArt place={it.label} shape="portrait" />}
-                expandedArt={<PlaceArt place={it.label} shape="wide" />}
-                count={it.count}
-                unit={it.count === 1 ? (university ? "graduate" : "person") : university ? "graduates" : "people"}
-                expanded={on}
-                badge={isTarget ? "Your target" : undefined}
-                countLine={`at least ${fmtInt(it.count)} of ${fmtInt(countries!.data.n)} ${who}`}
-                drill={tok}
-                drillLabel={`See the ${fmtInt(it.count)} ${it.count === 1 ? "person" : "people"}`}
-                onSelect={on ? undefined : () => setFocus(it.label)}
-                details={
-                  on ? (
-                    <FocusDetails
-                      employers={isTarget ? empRows : []}
-                      employerNote={isTarget && !empRows.length ? empNote : null}
-                      roles={OTHER.test(it.label) || it.remainder ? [] : roleRows}
-                      master={master}
-                      masterOf={studied?.data.n}
-                      remainder={!!it.remainder}
-                    />
-                  ) : undefined
-                }
-              />
-            );
-          })}
+          {tileTools.map((tool) => (
+            <GlanceTile key={tool} tool={tool} run={latest.get(tool)} loading={!runs} href={hrefFor(tool)} blocked={noRole && NEEDS_ROLE.includes(tool)} />
+          ))}
         </TileRow>
       )}
 
-      {r && !thin && country && employers && (
-        <TileRow
-          title={university ? "Companies that hire your graduates" : "Companies that hire people like you"}
-          note={`in ${country} · ${who} working there now`}
-          label="Companies"
-        >
-          {empRows.map((row) => {
-            const label = rowLabel(row, "employer");
-            const k = rowCount(row);
-            return (
-              <PosterTile
-                key={row.id ?? label}
-                variant="card"
-                title={label}
-                art={<CompanyMark name={label} />}
-                count={k}
-                unit={k === 1 ? "person" : "people"}
-                badge={row.you ? "Where you work" : undefined}
-                drill={drillOf(row)}
-              />
-            );
-          })}
-          {!empRows.length && (
-            <div className={["ad-dots", styles.noteTile].join(" ")} data-tile="">
-              <div className={styles.noteCard}>
-                <p className={styles.noteTitle}>No single employer stands out yet</p>
-                <p>{empNote ?? `No employer in ${country} has 5 or more ${who} in the profiles we read, so none is listed.`}</p>
-                {target && drillOf(target) && (
-                  <DrillButton token={drillOf(target)!} label={target.label}>
-                    See the {fmtInt(target.count)} in {target.label}
-                  </DrillButton>
-                )}
-              </div>
-            </div>
-          )}
-          <LinkTile question="Which of these sponsor visas?" label="Indian-Friendly Companies" href={toolHref("indian_friendly", friendly?.params ?? { country })} />
-        </TileRow>
-      )}
-
-      {r && !thin && studied && studied.data.items.some((i) => !i.remainder && i.count > 0) && (
-        <TileRow
-          title={university ? "Routes your graduates took" : "Routes that fit you"}
-          note={`from a ${ugShort}: where ${who} took a master’s, of ${fmtInt(studied.data.n)} who took one`}
-          label="Routes"
-        >
-          {studied.data.items
-            .filter((i) => !i.remainder && i.count > 0)
-            .map((i, k) => {
-              const steps = [ugShort, OTHER.test(i.label) ? "Master’s in another country" : `Master’s in ${i.label}`];
+      {/* ---------------- path + recent ---------------- */}
+      <div className={styles.lower}>
+        <section className={styles.panel} aria-labelledby="path-h">
+          <div className={styles.panelHead}>
+            <h2 id="path-h" className={styles.h3}>
+              Your path, step by step
+            </h2>
+            <span className={styles.progressText}>
+              {doneCount} of {STEPS.length} done
+            </span>
+          </div>
+          <div className={styles.progress} aria-hidden="true">
+            {STEPS.map((s, i) => (
+              <i key={s.title} className={doneSteps[i] ? styles.on : undefined} />
+            ))}
+          </div>
+          <ol className={styles.steps}>
+            {STEPS.map((s, i) => {
+              const done = doneSteps[i];
+              const tool = s.tools.find((t) => latest.has(t)) ?? s.tools[0];
+              const when = s.tools.map((t) => latest.get(t)?.finished_at).filter(Boolean).sort().pop();
+              const isNext = i === nextStep;
               return (
-                <RouteTile
-                  key={i.label}
-                  title={steps.join(" → ")}
-                  steps={[...steps, "Work"]}
-                  people={i.count}
-                  hue={((k % 4) + 1) as 1 | 2 | 3 | 4}
-                  badge={i.target && !university ? "Fits you best" : undefined}
-                  drill={drillOf(i)}
-                />
+                <li key={s.title} className={[styles.step, done && styles.stepDone, isNext && styles.stepNext].filter(Boolean).join(" ")}>
+                  <span className={styles.stepMark} aria-hidden="true">
+                    {done ? "✓" : i + 1}
+                  </span>
+                  <div className={styles.stepText}>
+                    <p className={styles.stepTitle}>
+                      {university ? s.titleUni : s.title}
+                      <span className="visually-hidden">{done ? " (done)" : " (not done yet)"}</span>
+                    </p>
+                    <p className={styles.stepWhy}>
+                      {university ? s.whyUni : s.why}
+                      {done && when ? ` Checked ${ago(when)}.` : ""}
+                    </p>
+                  </div>
+                  <ButtonLink href={hrefFor(tool)} size="sm" variant={isNext ? "primary" : "secondary"} slash={isNext} chevron={!isNext}>
+                    {done ? "Open" : isNext ? "Start here" : "Start"}
+                  </ButtonLink>
+                </li>
               );
             })}
-          {gps && <LinkTile question="Which steps led to the job?" label="Reverse Career GPS" href={toolHref(gps.tool, gps.params)} />}
-        </TileRow>
-      )}
+          </ol>
+        </section>
 
-      {r && (
-        <footer className={styles.foot}>
-          <p>
-            {r.coverage_note} Data as of {formatDate(r.data_date)}.
-          </p>
-          <EvidenceKey tone="ink" label="How we count" n={n} coverage={coverage} date={r.data_date} evidence={r.evidence} note={r.coverage_note} />
-        </footer>
-      )}
+        <section className={styles.panel} aria-labelledby="recent-h">
+          <div className={styles.panelHead}>
+            <h2 id="recent-h" className={styles.h3}>
+              Pick up where you left off
+            </h2>
+          </div>
+          {!runs && !runsError && <GridFill done={1} total={3} cells={48} size={10} />}
+          {runs && !recent.length && <p className={styles.empty}>Nothing yet. Your checks will show up here, so you can come back to any of them.</p>}
+          {recent.length > 0 && (
+            <ul className={styles.recent} role="list">
+              {recent.map((r) => (
+                <li key={r.job_id}>
+                  <Link href={toolHref(r.tool as ToolId, r.params)} className={styles.recentLink}>
+                    <span className={styles.recentTool}>{toolName(r.tool as ToolId)}</span>
+                    <span className={styles.recentQ}>{r.question}</span>
+                    <span className={styles.recentWhen}>{ago(r.finished_at)}</span>
+                    <Chevron className={styles.recentChev} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      <footer className={styles.foot}>
+        <p>
+          “Right now” counts are exact totals of visible profiles and postings; groups under 5 people are never shown. Everything else is the
+          headline of a check you ran; open it for its people count, coverage and date.
+        </p>
+      </footer>
     </div>
   );
 }
 
-function DrillButton({ token, label, children }: { token: DrillToken; label: string; children: ReactNode }) {
-  const d = useDrill();
-  if (!d.enabled) return null;
+/* ---------------- tiles ---------------- */
+
+function Big({ h }: { h: { value?: number | null; display?: string | null } }) {
+  const v = h.value;
+  if (typeof v === "number" && Number.isInteger(v) && v >= 0 && v < 1e9) return <CellDigits value={v} pitch={6} gap={1} tone="current" label={fmtInt(v)} />;
+  return <span className={styles.bigText}>{h.display}</span>;
+}
+
+const NEEDS_TEXT: Partial<Record<SnapshotTile["status"], string>> = {
+  needs_role: "Add a target role to count this.",
+  needs_country: "Add a target country to count this.",
+  needs_institution: "Add your institution to count this.",
+};
+
+function NowTile({ tile }: { tile: SnapshotTile | null }) {
+  if (!tile) {
+    return (
+      <div className={styles.now} aria-busy="true">
+        <GridFill done={1} total={2} cells={40} size={10} />
+        <p className={styles.nowLabel}>Counting…</p>
+      </div>
+    );
+  }
+  const href = toolHref(tile.tool as ToolId, tile.params);
+  if (tile.status === "ok" || tile.status === "too_few") {
+    return (
+      <Link href={href} className={styles.now}>
+        {tile.lead && tile.status === "ok" && <span className={styles.lead}>{tile.lead}</span>}
+        <span className={styles.nowNum}>{tile.status === "ok" ? <Big h={tile} /> : <span className={styles.bigText}>{tile.display}</span>}</span>
+        <span className={styles.nowLabel}>{tile.label}</span>
+        {tile.detail && <span className={styles.nowDetail}>{tile.detail}</span>}
+        <span className={styles.nowGo}>
+          Open {known(tile.tool) ? toolName(tile.tool) : "the tool"} <Chevron size={14} />
+        </span>
+      </Link>
+    );
+  }
   return (
-    <Button size="sm" variant="secondary" chevron onClick={() => d.open(token, label)}>
-      {children}
-    </Button>
+    <div className={["ad-dots", styles.now, styles.nowEmpty].join(" ")}>
+      <div className={styles.nowCard}>
+        <p className={styles.nowLabel}>{tile.label.charAt(0).toUpperCase() + tile.label.slice(1)}</p>
+        <p className={styles.nowDetail}>{tile.status === "unavailable" ? (tile.detail ?? "We couldn't count this just now.") : NEEDS_TEXT[tile.status]}</p>
+        {tile.status !== "unavailable" && (
+          <ButtonLink href="/onboarding?edit=1" size="sm" variant="secondary" chevron>
+            Edit your goal
+          </ButtonLink>
+        )}
+      </div>
+    </div>
   );
 }
 
-function FocusDetails({
-  employers,
-  employerNote,
-  roles,
-  master,
-  masterOf,
-  remainder,
-}: {
-  employers: RankedRow[];
-  employerNote?: string | null;
-  roles: RankedRow[];
-  master?: DistributionItem;
-  masterOf?: number;
-  remainder: boolean;
-}) {
-  const hasCols = employers.length > 0 || roles.length > 0;
-  return (
-    <>
-      {hasCols && (
-        <div className={styles.fcols}>
-          {employers.length > 0 && (
-            <dl>
-              <dt>Top employers</dt>
-              {employers.slice(0, 3).map((e) => (
-                <dd key={e.id ?? rowLabel(e, "employer")}>
-                  <span>{rowLabel(e, "employer")}</span>
-                  <CellDigits value={rowCount(e)} pitch={2} tone="current" />
-                </dd>
-              ))}
-            </dl>
-          )}
-          {roles.length > 0 && (
-            <dl>
-              <dt>Roles abroad</dt>
-              {roles.slice(0, employers.length ? 3 : 4).map((e) => (
-                <dd key={e.id ?? rowLabel(e, "role")}>
-                  <span>{rowLabel(e, "role")}</span>
-                  <CellDigits value={rowCount(e)} pitch={2} tone="current" />
-                </dd>
-              ))}
-            </dl>
-          )}
+function ConversionTile({ run, href }: { run?: RunSummary; href: string }) {
+  const h = run?.headline;
+  if (!h) {
+    return (
+      <div className={["ad-dots", styles.now, styles.nowEmpty].join(" ")}>
+        <div className={styles.nowCard}>
+          <p className={styles.nowLabel}>Internship conversion for your graduates</p>
+          <p className={styles.nowDetail}>Not checked yet.</p>
+          <ButtonLink href={href} size="sm" variant="secondary" chevron>
+            Check
+          </ButtonLink>
         </div>
-      )}
-      {employerNote && <p className={styles.fnote}>No single employer has 5 or more people here yet, so none is named.</p>}
-      {master && (
-        <p className={styles.froute}>
-          <b>Master’s here:</b> {fmtInt(master.count)}
-          {masterOf ? ` of the ${fmtInt(masterOf)} who took one` : ""}
-        </p>
-      )}
-      {remainder && <p className={styles.froute}>Still in India, or no current country abroad on their profile.</p>}
-    </>
+      </div>
+    );
+  }
+  return (
+    <Link href={href} className={styles.now}>
+      {h.lead && <span className={styles.lead}>{h.lead}</span>}
+      <span className={styles.nowNum}>
+        <Big h={h} />
+      </span>
+      <span className={styles.nowLabel}>{h.label}</span>
+      <span className={styles.nowGo}>
+        Open Internship → Job <Chevron size={14} />
+      </span>
+    </Link>
   );
 }
 
-/** While counting: the headline number's 17 x 7 grid fills with the job's progress. */
-function LoadingNumber({ busy, done, total, who }: { busy: boolean; done: number; total: number; who: string }) {
-  const cells = 17 * 7;
-  const filled = busy ? Math.round((Math.min(done + 0.5, total) / Math.max(1, total)) * cells) : 0;
+function GlanceTile({ tool, run, loading, href, blocked }: { tool: ToolId; run?: RunSummary; loading: boolean; href: string; blocked: boolean }) {
+  const name = toolName(tool);
+  const h: Headline | null | undefined = run?.headline;
+  if (run && h) {
+    return (
+      <Link href={href} className={styles.glance} data-tile="">
+        <span className={styles.glanceTool}>{name}</span>
+        <span className={styles.glanceBody}>
+          {h.lead && <span className={styles.lead}>{h.lead}</span>}
+          {h.display && (
+            <span className={styles.glanceNum}>
+              <Big h={h} />
+            </span>
+          )}
+          <span className={styles.glanceLabel}>{h.label}</span>
+        </span>
+        <span className={styles.glanceFoot}>
+          <span>Checked {ago(run.finished_at)}</span>
+          <Chevron size={14} />
+        </span>
+      </Link>
+    );
+  }
   return (
-    <div className={styles.loading} aria-hidden="true">
-      <p className={styles.least}>{busy ? `Counting ${who}` : " "}</p>
-      <div className={styles.loadingGrid}>
-        {Array.from({ length: cells }, (_, i) => (
-          <i key={i} className={i < filled ? styles.full : undefined} />
-        ))}
+    <div className={["ad-dots", styles.glance, styles.glanceEmpty].join(" ")} data-tile="">
+      <span className={styles.glanceTool}>{name}</span>
+      <div className={styles.glanceCard}>
+        <p className={styles.glanceLabel}>{loading ? "Looking for your last check…" : run ? "Checked, but there’s no single number to show." : "Not checked yet"}</p>
+        {!loading && (
+          <>
+            {blocked && !run && <Tag tone="soft">Needs a role</Tag>}
+            <ButtonLink href={href} size="sm" variant="secondary" chevron>
+              {run ? "Open" : "Check"}
+            </ButtonLink>
+          </>
+        )}
       </div>
     </div>
   );

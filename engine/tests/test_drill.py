@@ -289,3 +289,54 @@ async def test_drill_people_stored_with_capped_ttl(api, settings):
     # Old drill results (they hold anonymised paths) are purged too.
     app.state.store._exec("UPDATE jobs SET created_at = '2020-01-01T00:00:00Z' WHERE tool = 'drill'")
     assert app.state.store.purge_old_drill_jobs(7 * 86400) >= 1
+
+
+async def test_college_paths_rows_drill_to_the_same_count(api, fake):
+    _, client = api
+    pid = await onboard(client)
+    r = await client.post("/api/tools/college-paths", json={"profile_id": pid, "role": "Data Engineer", "country": "Germany"})
+    job = await wait_job(client, r.json()["job_id"])
+    assert job["status"] == "done", job["error"]
+    sec = {s["id"]: s["data"] for s in job["result"]["sections"]}
+    for sid in ("universities", "programmes"):
+        row = next(x for x in sec[sid]["rows"] if x.get("drill"))
+        res = await drill_ok(client, pid, row["drill"])
+        key = "in_goal" if sid == "universities" else "people"
+        assert res["count"]["k"] == row["cells"][key], (sid, res["title"])
+        assert res["count"]["n"] == job["result"]["sections"][0]["data"]["value"]
+        assert res["context"]["origin_tool"] == "college_paths"
+        assert res["people"] and res["listing_blocked_reason"] is None
+        assert_no_personal_data({"people": res["people"], "sections": res["sections"]}, fake)
+
+
+async def test_degree_country_drill_uses_a_separate_school_entry(make_ctx, crustdata):
+    ctx = make_ctx({"match": "field_only"}, profile=riya_profile())
+    sc = await build_origin(ctx, "people_like_me", ctx.params)
+    apply_step(ctx, sc, {"dimension": "degree_country", "value": "Germany", "label": "Germany"})
+    f = sc.people_filters()
+    assert f["op"] == "all_of" or any(c.get("op") == "all_of" for c in f["conditions"])  # the master's abroad is not forced onto the same school entry as the Indian bachelor's
+
+
+async def test_route_drills_are_exact(api, fake):
+    """Career Routes: a route / edge drill shows exactly the people the route page counted (same cached sample)."""
+    _, client = api
+    pid = await onboard(client)
+    r = await client.post("/api/tools/reverse-gps", json={"profile_id": pid, "goal_text": "Data engineer in Berlin"})
+    job = await wait_job(client, r.json()["job_id"])
+    assert job["status"] == "done", job["error"]
+    sec = {s["id"]: s["data"] for s in job["result"]["sections"]}
+    route = sec["routes"]["routes"][0]
+    res = await drill_ok(client, pid, route["drill"])
+    assert res["count"]["k"] == route["people"]["k"] and res["count"]["n"] == route["people"]["n"]
+    assert res["route"]["kind"] == "route" and res["route"]["exact"] is True
+    assert [s["label"] for s in res["route"]["steps"]] == [s["label"] for s in route["steps"]]
+    assert len(res["people"]) == res["count"]["k"] or res["listing_blocked_reason"]
+    edge = sec["graph"]["edges"][0]
+    assert edge["drill"]["path"][-1]["dimension"] == "route_edge"
+    res_e = await drill_ok(client, pid, edge["drill"])
+    assert res_e["count"]["k"] == edge["count"]
+    assert_no_personal_data({"people": res_e["people"], "sections": res_e["sections"]}, fake)
+    node = next(n for n in sec["graph"]["nodes"] if n.get("drill"))
+    res_n = await drill_ok(client, pid, node["drill"])
+    assert res_n["route"]["kind"] == "step" and res_n["count"]["k"] >= max(e["count"] for e in sec["graph"]["edges"]
+                                                                          if e["from"] == node["id"] or e["to"] == node["id"])
