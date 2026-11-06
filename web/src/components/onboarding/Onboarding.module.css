@@ -34,7 +34,7 @@
   display: flex;
   list-style: none;
   border: 1px solid var(--ad-ink);
-  background: var(--ad-orange);
+  background: var(--ad-field);
 }
 .step {
   display: flex;

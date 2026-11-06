@@ -120,6 +120,7 @@
   --stage-fulltime: #ff5a1f;
   --stage-gap: #e4dfda;
   --stage-edge: #111111;
+  --ad-rail-edge: #111111;
 }
 
 /* ------------------------------------------------------------------
@@ -139,18 +140,18 @@
   --ad-on-field: #161b24;
   --ad-on-field-muted: #3a4558;
 
-  --ad-rail: #1c2433;
+  --ad-rail: #121826;
   --ad-rail-text: #e4e9f2;
   --ad-rail-muted: #a9b4c6;
-  --ad-rail-rule: #333e52;
-  --ad-rail-hover: #283246;
+  --ad-rail-rule: #2b3549;
+  --ad-rail-hover: #1f2738;
   --ad-rail-active: #2d5bd3;
   --ad-rail-active-ink: #ffffff;
 
-  --ad-band: #1c2433;
+  --ad-band: #2a3a5e;
   --ad-band-text: #e4e9f2;
-  --ad-band-muted: #a9b4c6;
-  --ad-band-rule: #8d9ab0;
+  --ad-band-muted: #b9c4d8;
+  --ad-band-rule: #5d6f93;
   --ad-band-control: #e4e9f2;
 
   --ad-accent: #2d5bd3;
@@ -226,6 +227,7 @@
   --stage-fulltime: #2d5bd3;
   --stage-gap: #dce2eb;
   --stage-edge: #1c2433;
+  --ad-rail-edge: #2d5bd3;
 }
 
 /* ------------------------------------------------------------------
@@ -234,30 +236,30 @@
    "ink" is the warm off-white text.
    ------------------------------------------------------------------ */
 [data-palette="night"] {
-  --ad-field: #1e2229;
-  --ad-grid-line: rgb(48 54 64 / 0.9);
-  --ad-paper: #2a2f37;
+  --ad-field: #1a1d23;
+  --ad-grid-line: rgb(255 255 255 / 0.045);
+  --ad-paper: #262b33;
   --ad-ink: #e8e4dc;
-  --ad-rule: #3a404a;
-  --ad-rule-soft: #353b44;
+  --ad-rule: #414854;
+  --ad-rule-soft: #333943;
   --ad-muted: #a9a49b;
   --ad-hollow: #6a717c;
-  --ad-paper-sunk: #23272e;
+  --ad-paper-sunk: #20242b;
   --ad-on-field: #e8e4dc;
   --ad-on-field-muted: #a9a49b;
 
-  --ad-rail: #16191e;
+  --ad-rail: #0e1013;
   --ad-rail-text: #d9d4cb;
   --ad-rail-muted: #a9a49b;
-  --ad-rail-rule: #2a2f37;
-  --ad-rail-hover: #20242b;
+  --ad-rail-rule: #262b33;
+  --ad-rail-hover: #1a1d23;
   --ad-rail-active: #e0a458;
   --ad-rail-active-ink: #16191e;
 
-  --ad-band: #262b33;
+  --ad-band: #2c323c;
   --ad-band-text: #e8e4dc;
   --ad-band-muted: #a9a49b;
-  --ad-band-rule: #4a515c;
+  --ad-band-rule: #56606d;
   --ad-band-control: #e8e4dc;
 
   --ad-accent: #e0a458;
@@ -333,4 +335,5 @@
   --stage-fulltime: #e0a458;
   --stage-gap: #3a404a;
   --stage-edge: #e8e4dc;
+  --ad-rail-edge: #3a414c;
 }

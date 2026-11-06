@@ -9,9 +9,9 @@ export function BrandMark({ size = 22 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 22 22" aria-hidden="true" focusable="false">
       {cells.map(([x, y, filled]) =>
         filled ? (
-          <rect key={`${x}${y}`} x={x * 8} y={y * 8} width="6" height="6" fill="var(--ad-orange)" />
+          <rect key={`${x}${y}`} x={x * 8} y={y * 8} width="6" height="6" fill="var(--ad-rail-active)" />
         ) : (
-          <rect key={`${x}${y}`} x={x * 8 + 0.5} y={y * 8 + 0.5} width="5" height="5" fill="none" stroke="var(--ad-paper)" />
+          <rect key={`${x}${y}`} x={x * 8 + 0.5} y={y * 8 + 0.5} width="5" height="5" fill="none" stroke="var(--ad-rail-text)" />
         ),
       )}
     </svg>

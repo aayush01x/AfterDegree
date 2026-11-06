@@ -1,6 +1,7 @@
 """1. People Like Me: the cohort sharing the user's background, and where they are now."""
 
 from __future__ import annotations
+import asyncio
 
 from collections import Counter
 
@@ -16,6 +17,13 @@ from .common import company_value, counts_table_section, distribution_section, p
 TOOL = "people_like_me"
 HOME = "India"
 DEGREE_LABEL = {"Master's": "MS / MSc / MEng", "MBA": "MBA", "PhD": "PhD"}
+
+
+COMMON_DESTINATIONS = [
+    "United States", "United Kingdom", "Germany", "Canada", "Netherlands", "Ireland", "Australia",
+    "Singapore", "United Arab Emirates", "France", "Switzerland", "Sweden", "New Zealand", "Japan",
+]
+MAX_COUNTRY_QUERIES = 14
 
 
 async def run(ctx: ToolContext) -> Result:
@@ -44,6 +52,28 @@ async def run(ctx: ToolContext) -> Result:
     abroad_counts = Counter({c: k for c, k in countries.items() if c != HOME})
     home_count = countries.get(HOME, 0)
     n_c = sum(countries.values())
+    country_ev = list(ev_s)
+    country_sample_n: int | None = len(people)
+    unexplained_abroad = 0
+    # Exact counts per destination (count-only searches), so the breakdown agrees with the
+    # headline "moved abroad" figure instead of reflecting a small, skewed profile sample.
+    if n_loc and k_abroad is not None:
+        candidates: list[str] = []
+        for c in [target, *[c for c, _ in abroad_counts.most_common()], *COMMON_DESTINATIONS]:
+            if c and c != HOME and c not in candidates:
+                candidates.append(c)
+        candidates = candidates[:MAX_COUNTRY_QUERIES]
+        found = await asyncio.gather(*(
+            ctx.count_people_safe(cohort.filters(F.person_country(c)), f"Cohort members now in {c}") for c in candidates
+        ))
+        exact = {c: k for c, (k, _ev) in zip(candidates, found) if k}
+        if exact:
+            abroad_counts = Counter(exact)
+            home_count = max(0, n_loc - k_abroad)
+            n_c = n_loc
+            unexplained_abroad = max(0, k_abroad - sum(exact.values()))
+            country_ev = [ev for (_k, ev) in found if ev] + [e for e in (ev_abroad, ev_loc) if e]
+            country_sample_n = None
     abroad_people = [pp for pp in people if pp.country and pp.country != HOME]
     top_abroad = next((c for c, _ in abroad_counts.most_common()), None)
     employer_country = target or top_abroad
@@ -106,11 +136,11 @@ async def run(ctx: ToolContext) -> Result:
         sections.append(stat_section("moved_abroad", "Moved abroad", f"{who} now live outside India", count=abroad_count,
                                      note="Counted over every visible profile in the group that shows a location."))
     sections += [
-        distribution_section("countries", f"Where the {n_c} are now", abroad_counts, n_c, ev_s, unit="people",
+        distribution_section("countries", f"Where the {n_c:,} are now", abroad_counts, n_c, country_ev, unit="people",
                              caption=("Each square is one person. Abroad first" + ("; your target is highlighted." if target else "."))
-                             + (f" Read from {n_read:,} of {cohort.n:,} profiles." if read_note else ""),
+                             + (f" Read from {n_read:,} of {cohort.n:,} profiles." if read_note and country_sample_n else ""),
                              other_label="Other countries", target=target, remainders={"Still in India": home_count},
-                             drill=country_drill, sample_n=n_read),
+                             drill=country_drill, sample_n=country_sample_n),
         counts_table_section("roles", "What they do now", "role", "Role", roles, len(abroad_people), ev_s,
                              you_label=tx.display_role(target_role) if target_role else None, other_label="Other roles", caption="abroad",
                              drill=lambda label: ctx.drill("role", label), sample_n=n_read,
@@ -131,6 +161,20 @@ async def run(ctx: ToolContext) -> Result:
                              drill=lambda label: ctx.drill("degree_country", label), sample_n=n_read),
     ]
 
+    if unexplained_abroad:
+        # People abroad in countries we didn't query individually: fold them into "Other countries".
+        for sec in sections:
+            if getattr(sec, "id", None) == "countries":
+                items = sec.data["items"]
+                other = next((i for i in items if i["label"] == "Other countries"), None)
+                if other:
+                    other["count"] += unexplained_abroad
+                    other["share"] = other["count"] / n_c if n_c else None
+                else:
+                    pos = next((ix for ix, i in enumerate(items) if i.get("remainder")), len(items))
+                    items.insert(pos, {"label": "Other countries", "count": unexplained_abroad,
+                                       "share": unexplained_abroad / n_c if n_c else None, "target": False, "remainder": False})
+
     next_country = target or top_abroad
     top_role = target_role or next((r for r, _ in roles.most_common() if r != "Intern / Working Student"), None)
     next_steps = []
@@ -150,7 +194,7 @@ async def run(ctx: ToolContext) -> Result:
     if abroad_count:
         facts.append(f"Now living outside India: {pct(abroad_count)}.")
     if abroad_counts:
-        facts.append("Most common countries abroad in the sample: " + ", ".join(f"{c} ({k})" for c, k in abroad_counts.most_common(3) if k >= 5))
+        facts.append("Most common countries abroad: " + ", ".join(f"{c} ({k})" for c, k in abroad_counts.most_common(3) if k >= 5))
     if degree_countries:
         facts.append("Master's countries in the sample: " + ", ".join(f"{c} ({k})" for c, k in degree_countries.most_common(3) if k >= 5))
 

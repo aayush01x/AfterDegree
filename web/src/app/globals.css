@@ -5,7 +5,7 @@
 :root,
 [data-palette] {
   /* Colour lives in palettes.css. Legacy names stay as aliases. */
-  --ad-orange: var(--ad-field);
+  --ad-orange: var(--ad-accent);
   --ad-blue: var(--ad-key);
   --ad-grid: var(--ad-grid-line);
   --ad-ink-hover: var(--ad-rail-hover);
