@@ -270,7 +270,7 @@ class ToolContext:
         if want < cap and used < total and used >= want:
             self.warn(
                 f"To stay within this run's data budget I read {used} of the {total:,} matching profiles; "
-                "breakdowns are computed over the profiles read."
+                "totals and country counts cover every matching profile; panels marked as a sample use the profiles read."
             )
         source_note = note or "Profiles read"
         ev = self.add_evidence(

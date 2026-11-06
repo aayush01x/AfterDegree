@@ -41,6 +41,26 @@ async def run(ctx: ToolContext) -> Result:
         cohort.filters(F.person_has_country(), F.person_not_country(HOME)), "Cohort members now located outside India"
     )
 
+    # Exact counts per destination (count-only searches), run BEFORE the profile sample so the
+    # sample can never use up their budget; the breakdown then agrees with the headline.
+    exact: dict[str, int] = {}
+    exact_ev: list[str] = []
+    target_country = None if university else ((ctx.goals.get("target_countries") or [None])[0])
+    if n_loc and k_abroad:
+        candidates: list[str] = []
+        for c in [target_country, *COMMON_DESTINATIONS]:
+            if c and c != HOME and c not in candidates:
+                candidates.append(c)
+        found = await asyncio.gather(*(
+            ctx.count_people_safe(cohort.filters(F.person_country(c)), f"Cohort members now in {c}")
+            for c in candidates[:MAX_COUNTRY_QUERIES]
+        ))
+        for c, (k, ev) in zip(candidates, found):
+            if k:
+                exact[c] = k
+            if ev:
+                exact_ev.append(ev)
+
     await ctx.step("Reading a sample of their profiles")
     sample = await ctx.sample_people(cohort.filters(), note="Cohort profiles", reserve=0.5)
     people = sample.people
@@ -55,25 +75,13 @@ async def run(ctx: ToolContext) -> Result:
     country_ev = list(ev_s)
     country_sample_n: int | None = len(people)
     unexplained_abroad = 0
-    # Exact counts per destination (count-only searches), so the breakdown agrees with the
-    # headline "moved abroad" figure instead of reflecting a small, skewed profile sample.
-    if n_loc and k_abroad is not None:
-        candidates: list[str] = []
-        for c in [target, *[c for c, _ in abroad_counts.most_common()], *COMMON_DESTINATIONS]:
-            if c and c != HOME and c not in candidates:
-                candidates.append(c)
-        candidates = candidates[:MAX_COUNTRY_QUERIES]
-        found = await asyncio.gather(*(
-            ctx.count_people_safe(cohort.filters(F.person_country(c)), f"Cohort members now in {c}") for c in candidates
-        ))
-        exact = {c: k for c, (k, _ev) in zip(candidates, found) if k}
-        if exact:
-            abroad_counts = Counter(exact)
-            home_count = max(0, n_loc - k_abroad)
-            n_c = n_loc
-            unexplained_abroad = max(0, k_abroad - sum(exact.values()))
-            country_ev = [ev for (_k, ev) in found if ev] + [e for e in (ev_abroad, ev_loc) if e]
-            country_sample_n = None
+    if exact:
+        abroad_counts = Counter(exact)
+        home_count = max(0, (n_loc or 0) - (k_abroad or 0))
+        n_c = n_loc or 0
+        unexplained_abroad = max(0, (k_abroad or 0) - sum(exact.values()))
+        country_ev = exact_ev + [e for e in (ev_abroad, ev_loc) if e]
+        country_sample_n = None
     abroad_people = [pp for pp in people if pp.country and pp.country != HOME]
     top_abroad = next((c for c, _ in abroad_counts.most_common()), None)
     employer_country = target or top_abroad
