@@ -1,6 +1,19 @@
 .shell {
   min-height: 100vh;
 }
+/* The rail is fixed to the viewport; paint its column down the full page too, so long pages
+   (and full-page screenshots or prints) never show the rail ending part way. */
+@media (min-width: 900px) {
+  .shell {
+    background: linear-gradient(
+      to right,
+      var(--ad-rail) calc(var(--ad-rail-w) - 1px),
+      var(--ad-rail-edge, var(--ad-rail)) calc(var(--ad-rail-w) - 1px),
+      var(--ad-rail-edge, var(--ad-rail)) var(--ad-rail-w),
+      transparent var(--ad-rail-w)
+    );
+  }
+}
 .rail {
   --ad-focus: var(--ad-paper);
   position: fixed;
