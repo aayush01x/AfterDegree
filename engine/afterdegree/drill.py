@@ -1288,7 +1288,7 @@ async def _route_slice(ctx: ToolContext, token: DrillToken, path: list[dict]) ->
     if not gp["use_like"]:
         ctx.warn("Too few Indian-educated people were visible in this exact position, so the routes include people from any background.")
     sections: list[dict] = []
-    if dim == "route":  # secondary context: everyone whose profile shows all these steps (a search, so extra steps allowed)
+    if False:  # a search-based "superset" undercounts (role locations are free text), so it would contradict the exact count
         sc = Scope("reverse_gps", "people in your goal position", base=[gp["like_filters"] if gp["use_like"] else gp["target"]])
         try:
             apply_step(ctx, sc, last)

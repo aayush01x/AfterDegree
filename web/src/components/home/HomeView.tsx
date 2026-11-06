@@ -165,7 +165,7 @@ const STEPS: Step[] = [
 
 /* ---------------- view ---------------- */
 
-/** "Your plan": the goal, a few fresh numbers, the headline of every check, the path and recent runs. */
+/** "Your plan": the goal, a few fresh numbers, the headline of every check and the path. */
 export function HomeView() {
   const { profile, goals, profileId, university, error: profileError, refresh } = useProfile();
   const [runs, setRuns] = useState<RunsResponse | null>(null);
@@ -211,7 +211,6 @@ export function HomeView() {
   const noRole = !university && !!goals && !goals.target_roles.length;
   const latest = new Map<ToolId, RunSummary>();
   for (const r of runs?.runs ?? []) if (known(r.tool)) latest.set(r.tool, r);
-  const recent = (runs?.recent ?? []).filter((r) => known(r.tool)).slice(0, 5);
   const doneSteps = STEPS.map((s) => s.tools.some((t) => latest.has(t)));
   const doneCount = doneSteps.filter(Boolean).length;
   const nextStep = doneSteps.indexOf(false);
@@ -321,7 +320,7 @@ export function HomeView() {
         </TileRow>
       )}
 
-      {/* ---------------- path + recent ---------------- */}
+      {/* ---------------- path ---------------- */}
       <div className={styles.lower}>
         <section className={styles.panel} aria-labelledby="path-h">
           <div className={styles.panelHead}>
@@ -365,30 +364,6 @@ export function HomeView() {
               );
             })}
           </ol>
-        </section>
-
-        <section className={styles.panel} aria-labelledby="recent-h">
-          <div className={styles.panelHead}>
-            <h2 id="recent-h" className={styles.h3}>
-              Pick up where you left off
-            </h2>
-          </div>
-          {!runs && !runsError && <GridFill done={1} total={3} cells={48} size={10} />}
-          {runs && !recent.length && <p className={styles.empty}>Nothing yet. Your checks will show up here, so you can come back to any of them.</p>}
-          {recent.length > 0 && (
-            <ul className={styles.recent} role="list">
-              {recent.map((r) => (
-                <li key={r.job_id}>
-                  <Link href={toolHref(r.tool as ToolId, r.params)} className={styles.recentLink}>
-                    <span className={styles.recentTool}>{toolName(r.tool as ToolId)}</span>
-                    <span className={styles.recentQ}>{r.question}</span>
-                    <span className={styles.recentWhen}>{ago(r.finished_at)}</span>
-                    <Chevron className={styles.recentChev} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
         </section>
       </div>
 

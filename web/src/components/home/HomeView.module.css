@@ -259,7 +259,8 @@ a.glance:hover .glanceFoot {
 /* ---------------- path + recent ---------------- */
 .lower {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  max-width: 960px;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--ad-cell);
   align-items: start;
 }
